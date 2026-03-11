@@ -1,0 +1,4 @@
+canonicalId,name,description,module,path,install_to_bmad
+"bmad-help","bmad-help","Analyzes what is done and the users query and offers advice on what to do next. Use if user says what should I do next or what do I do now","core","_bmad/core/tasks/bmad-help/SKILL.md","true"
+"bmad-review-adversarial-general","bmad-review-adversarial-general","Perform a Cynical Review and produce a findings report. Use when the user requests a critical review of something","core","_bmad/core/tasks/bmad-review-adversarial-general/SKILL.md","true"
+"bmad-review-edge-case-hunter","bmad-review-edge-case-hunter","Walk every branching path and boundary condition in content, report only unhandled edge cases. Orthogonal to adversarial review - method-driven not attitude-driven.","core","_bmad/core/tasks/bmad-review-edge-case-hunter/SKILL.md","true"
