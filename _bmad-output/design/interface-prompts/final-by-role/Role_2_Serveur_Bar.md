@@ -4,6 +4,16 @@
 
 ---
 
+## 🔐 00. Enregistrement & Onboarding (Pilot Recruitment)
+
+### Prompt 000-A : Profil du Serveur (Vigie Profile)
+"Minimalist registration form for BarPilote Server. Fields: Circle for 'Profile Photo', 'Nom', 'Postnom', 'Prénom', 'Sexe' (Segmented control: M/F), 'Numéro de téléphone'. Background is deep black (Dark Mode optimized). Active inputs highlighted with an orange glow. Accent color: Vibrant Orange. Typography: SF Pro."
+
+### Prompt 000-B : Scan "Affiliation Bar" (The Docking Flow)
+"Onboarding step: 'Connecting to your Airbase'. The screen shows a live camera view window with a refined orange square bracket frame for QR scanning. Instruction below: 'Scan the Bar's QR code to link your account to the establishment'. Apple-style blur effect on the background. Success feedback shows the Bar's Logo and Name."
+
+---
+
 ## 📥 01. La Vigie (Pilot's Control Board)
 
 - **Prompt 024 : Le Tableau des Commandes (Main View)**
