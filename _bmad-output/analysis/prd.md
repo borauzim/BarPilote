@@ -1,4 +1,4 @@
-stepsCompleted: ['step-01-init', 'step-02-discovery', 'step-02b-vision', 'step-02c-executive-summary', 'step-03-success', 'step-04-journeys', 'step-05-domain', 'step-06-innovation', 'step-07-project-type']
+stepsCompleted: ['step-01-init', 'step-02-discovery', 'step-02b-vision', 'step-02c-executive-summary', 'step-03-success', 'step-04-journeys', 'step-05-domain', 'step-06-innovation', 'step-07-project-type', 'step-08-scoping', 'step-09-functional', 'step-10-nonfunctional', 'step-11-polish', 'step-12-complete']
 inputDocuments:
   - /home/mapendo-borauzima/Bureau/barpilote/_bmad-output/analysis/product-brief-barpilote.md
   - /home/mapendo-borauzima/Bureau/barpilote/_bmad-output/analysis/research/technical-bralima-bracongo-prices-2026-03-11.md
@@ -33,6 +33,7 @@ BarPilote se distingue par trois piliers majeurs :
 1. **Visibilité "Live Stock"** : Permet aux gestionnaires d'anticiper le ravitaillement en temps réel, évitant les ruptures de stock en plein service.
 2. **Excellence du Service** : Élimine les erreurs humaines et les oublis de commandes grâce à une synchronisation temps réel entre les clients et le personnel (Serveurs/Protocoles).
 3. **IA de Croissance** : Contrairement aux caisses classiques, BarPilote intègre une intelligence stratégique qui propose des plans d'agrandissement basés sur les données de consommation.
+4. **Esthétique "Apple-style"** : Une interface ultra-épurée, minimaliste et premium qui valorise l'établissement.
 
 ## Project Classification
 
@@ -58,7 +59,7 @@ BarPilote se distingue par trois piliers majeurs :
 
 *   **Fiabilité** : Fonctionnement 100% offline (PWA) pour pallier l'instabilité du réseau Wi-Fi/4G.
 *   **Performance** : Latence de synchronisation des stocks et des commandes inférieure à 500ms.
-*   **Sécurité** : Intégrité totale des transactions garantie par le Sceau de Confiance et le Badge-Scan.
+*   **Sécurité** : Intégrité des transactions garantie par l'identification client et le Badge-Scan serveur.
 
 ### Measurable Outcomes
 
@@ -71,11 +72,12 @@ BarPilote se distingue par trois piliers majeurs :
 ### MVP - Minimum Viable Product
 
 *   **Gestion de Stock Hybride** : Conversion automatique Casiers/Bouteilles et Bouteilles/cl (pour spiritueux).
-*   **Prise de Commande QR** : Interface client simplifiée et sécurisée.
+*   **Prise de Commande QR** : Interface client simplifiée (Nom, Prénom, Tel sans vérification).
 *   **Interface "Vigie" (Serveur)** : Tableau de bord des commandes filtré par zone/table.
 *   **Tableau de bord Patron** : Visibilité du stock live et rapports financiers basiques.
 *   **Mode Offline (PWA)** : Support du stockage local et synchro asynchrone.
-*   **Mode "Invitations" (Events)** : Gestion de stock pour manifestations sans facturation client.
+*   **Mode "Invitations" (Events)** : Gestion de stock pour manifestations avec **affectation du personnel** (assigner X tables à un serveur spécifique).
+*   **Boucle de Commande (Loop)** : Possibilité pour le client de programmer une commande récurrente (ex: "X bouteilles toutes les 2 heures").
 
 ### Growth Features (Post-MVP)
 
@@ -100,7 +102,7 @@ BarPilote se distingue par trois piliers majeurs :
 ### 2. Tshala, la Serveuse "Vigie" (Le Serveur)
 - **Opening Scene**: Tshala gère 10 tables en terrasse. Elle n'a plus besoin de courir pour prendre les commandes ou de chercher son carnet.
 - **Rising Action**: Son smartphone vibre : "Commande Table 4 (Jean)". Elle voit l'heure de la commande et le détail exact.
-- **Climax**: Elle prépare le plateau. Avant de servir, elle scanne son **Badge-Scan** sur la tablette centrale pour confirmer qu'elle sort 1 bouteille et 1 verre du stock.
+- **Climax**: Elle prépare le plateau. Avant de servir, elle valide sur son interface pour confirmer qu'elle sort 1 bouteille et 1 verre du stock.
 - **Resolution**: Elle sert Jean, récupère le cash, et marque la commande comme "Payée" sur son interface. Le stock se met à jour instantanément pour le patron.
 
 ### 3. Grace, l'Ange du Protocole (Le Mode Events)
@@ -129,7 +131,7 @@ BarPilote se distingue par trois piliers majeurs :
 
 ### Technical Constraints
 - **Résilience Réseau (PWA)** : Stockage local des commandes et synchronisation en arrière-plan (Background Sync) indispensable pour les zones à faible couverture.
-- **Sécurité Anti-Fraude** : Sceau de confiance dynamique (couleurs changeantes) pour empêcher l'utilisation d'interfaces client pirates.
+- **Sécurité Anti-Fraude** : Identification obligatoire du client pour corréler chaque vente cash à une personne physique.
 
 ### Integration Requirements
 - **Stock Hybride** : Règles de conversion complexes entre unités de gros (Casiers de 12/24) et unités de détail (Bouteille, cl).
@@ -156,14 +158,19 @@ BarPilote se distingue par trois piliers majeurs :
 
 ### PWA & Real-Time Logistics
 - **Offline Feedback** : En cas de perte réseau, l'interface client doit afficher visuellement le statut **"En attente de synchronisation"** pour chaque commande.
-- **Low Latency Stock Update** : Mise à jour du menu client en "temps réel" (< 500ms) dès qu'un article est épuisé en stock pour éviter les commandes de produits indisponibles.
+- **Low Latency Stock Update** : Mise à jour du menu client en "temps réel" (< 500ms).
+- **Design Language** : Style **Minimaliste Apple** (Espaces blancs généreux, typographie San Francisco ou équivalent, icônes premium, micro-animations discrètes).
+
+### Boucle de Commande (Recursive Ordering)
+- **Logique** : Le client peut activer un mode "Abonnement de table" pour une durée déterminée.
+- **Exemple** : "Servir 3 Turbos et 2 Beauforts toutes les 90 minutes".
+- **Validation** : Le système génère une pré-commande automatique dans la file d'attente du serveur à l'intervalle choisi.
 
 ## Innovation & Novel Patterns
 
 ### Detected Innovation Areas
 
-1. **Le Sceau de Confiance Dynamique** : Une innovation de sécurité visuelle. Le client et le serveur voient une icône et une couleur qui changent selon un algorithme secret (ex: toutes les 5 minutes). Cela empêche quiconque de créer un faux site QR pour encaisser l'argent à la place du bar.
-2. **L'IA de Croissance Stratégique** : Intégration d'un agent IA qui ne se contente pas de compter les bouteilles, mais suggère au patron : "Vos ventes de Moet augmentent le samedi soir, vous devriez agrandir votre zone VIP". C'est du **SaaS B2B avec Agent Intelligent**.
+1. **IA de Croissance Stratégique** : Intégration d'un agent IA qui ne se contente pas de compter les bouteilles, mais suggère au patron : "Vos ventes de Moet augmentent le samedi soir, vous devriez agrandir votre zone VIP". C'est du **SaaS B2B avec Agent Intelligent**.
 3. **Logistique Hybride "Kin-Stock"** : Modélisation unique de la conversion Casier (12/24) ↔ Bouteille ↔ cl (centilitre) en temps réel, adaptée aux habitudes de consommation locales.
 4. **Le Mode "Invitation" (Protocoles)** : Détournement d'un logiciel de vente pour en faire un outil de logistique pure pour évènements (zéro facture), ce qui rationalise le travail du personnel de protocole.
 
@@ -172,5 +179,43 @@ BarPilote se distingue par trois piliers majeurs :
 - **Notre avantage** : BarPilote est "Offline-First" et "Security-First" par design.
 
 ### Validation Approach
-- **Phase Alpha** : Test du sceau dynamique dans 1 bar pilote pour vérifier que les clients comprennent le code couleur.
+- **Phase Alpha** : Test des flux de commande dans 1 bar pilote pour vérifier la fluidité de l'identification minimale.
 - **Audit Stock** : Comparaison hebdomadaire entre l'IA et les inventaires manuels pour affiner les algorithmes de prédiction.
+
+## Non-Functional Requirements
+
+### Performance
+- **Réactivité Stock** : Le recalcul des casiers/bouteilles après une vente s'affiche en moins de **100ms**.
+- **Vitesse de Commande** : Envoi et réception de commande (< 500ms) pour garantir la fluidité en terrasse.
+
+### Security
+- **Audit Trail & Intégrité** : Chaque sortie de stock est liée de manière indélébile à un `Client_ID` et un `Serveur_ID`.
+- **RBAC (Role-Based Access Control)** : Seul le **Patron** (Admin) peut supprimer des ventes ou modifier les prix/stocks.
+
+### Reliability & Availability
+- **Offline-First (24h Autonomous)** : Le système doit fonctionner 24h sans internet via PWA (IndexedDB) pour garantir la continuité du service à Kinshasa.
+- **Auto-Sync** : Synchronisation transparente vers le cloud du Patron dès le retour d'une connexion internet.
+
+### Scalability
+- **Elasticité Multi-Bar** : Architecture supportant **100 établissements simultanés** sur une instance serveur standard sans dégradation de performance.
+
+## Functional & Technical Requirements
+
+### 1. Moteur de Calcul de Stock (Casiers & Bouteilles)
+- **Logique de Vente** : Lorsqu'une bouteille est vendue (ex: Primus), le système décrémente instantanément le stock de bouteilles.
+- **Recalcul Dynamique** : Le système doit afficher en permanence :
+    - Nombre de casiers **complets** restants (ex: 2 casiers de 12).
+    - Nombre de bouteilles **isolées** (incomplètes) restantes (ex: 3 bouteilles).
+- **Gestion des Vides** : Les bouteilles vides ne sont **pas suivies** dans le MVP. Le focus est sur le contenu (le plein).
+
+### 2. Identification Client Simplifiée
+- **Champs Obligatoires** : Nom, Prénom, Numéro de téléphone.
+- **Vérification** : **Zéro vérification** (pas de SMS OTP). Le but est la rapidité et la traçabilité nominale simplifiée.
+
+### 3. Files d'Attente Temps Réel & Affectation
+- **Interface Serveur** : Liste chronologique des commandes entrantes limitée aux **tables assignées** (ex: Tshala ne voit que les commandes des tables 1, 2 et 3 si elles lui ont été affectées).
+- **Mise à Jour** : Notification immédiate (vibration/son) sur l'appareil du serveur à chaque nouvelle commande.
+
+### 4. Logistique Évènementielle (Mode Events)
+- **Allocation du Personnel** : L'organisateur peut définir des zones ou des groupes de tables et les assigner à un ou plusieurs serveurs/protocoles.
+- **Visibilité Organisateur** : Vue d'ensemble montrant quel serveur est responsable de quelle zone et le stock consommé par zone.
