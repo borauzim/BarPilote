@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  /* Couleurs BarPilote - Executive Design System */
+  --color-surface-container-low: #f3f3f5;
+  --color-tertiary: #0061a4;
+  --color-on-surface: #1a1c1d;
+  --color-primary-container: #ff5e00;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #732600;
+  --color-outline: #8f7065;
+  --color-background: #f9f9fb;
+  --color-on-error: #ffffff;
+  --color-on-primary-container: #531900;
+  --color-surface-variant: #e2e2e4;
+  --color-surface-bright: #f9f9fb;
+  --color-primary: #a63b00;
+  --color-inverse-on-surface: #f0f0f2;
+  --color-surface: #f9f9fb;
+  --color-on-surface-variant: #5b4137;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-dim: #d9dadc;
+  --color-error: #ba1a1a;
+  --color-surface-container-high: #e8e8ea;
+  --color-outline-variant: #e4bfb1;
+  --color-surface-container: #eeeef0;
+  --color-surface-container-highest: #e2e2e4;
+
+  /* Font Families */
+  --font-sans: var(--font-inter);
+}
+
+@layer utilities {
+  .glass-nav {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  
+  .executive-shadow {
+    box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+  }
+  
+  .citrus-gradient {
+    background: linear-gradient(145deg, #ff5e00 0%, #a63b00 100%);
+  }
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-on-surface);
+    -webkit-font-smoothing: antialiased;
+    min-height: max(884px, 100dvh);
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+}
