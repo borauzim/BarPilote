@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#7d2d04",
+              "on-secondary": "#ffffff",
+              "inverse-surface": "#2f3132",
+              "inverse-on-surface": "#f0f0f2",
+              "tertiary-container": "#0097fb",
+              "surface-dim": "#d9dadc",
+              "surface-tint": "#a63b00",
+              "secondary-fixed-dim": "#ffb599",
+              "tertiary-fixed-dim": "#9fcaff",
+              "secondary-fixed": "#ffdbce",
+              "secondary-container": "#fd8d5f",
+              "on-primary-fixed-variant": "#7f2b00",
+              "primary-fixed-dim": "#ffb599",
+              "error-container": "#ffdad6",
+              "secondary": "#9c431c",
+              "on-surface-variant": "#5b4137",
+              "error": "#ba1a1a",
+              "tertiary": "#0061a4",
+              "primary-fixed": "#ffdbce",
+              "outline-variant": "#e4bfb1",
+              "on-primary-container": "#531900",
+              "surface-variant": "#e2e2e4",
+              "surface-container-highest": "#e2e2e4",
+              "surface-bright": "#f9f9fb",
+              "on-secondary-fixed": "#370e00",
+              "on-primary-fixed": "#370e00",
+              "tertiary-fixed": "#d1e4ff",
+              "surface": "#f9f9fb",
+              "primary-container": "#ff5e00",
+              "surface-container": "#eeeef0",
+              "on-tertiary-fixed": "#001d36",
+              "primary": "#a63b00",
+              "on-tertiary-fixed-variant": "#00497d",
+              "on-background": "#1a1c1d",
+              "on-primary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "background": "#f9f9fb",
+              "on-error": "#ffffff",
+              "surface-container-high": "#e8e8ea",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#8f7065",
+              "on-surface": "#1a1c1d",
+              "on-error-container": "#93000a",
+              "surface-container-low": "#f3f3f5",
+              "on-tertiary-container": "#002d51",
+              "inverse-primary": "#ffb599",
+              "on-secondary-container": "#732600"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9fb;
+            color: #1a1c1d;
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .glass-header {
+            background: rgba(245, 245, 247, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .orange-gradient {
+            background: linear-gradient(145deg, #ff5e00 0%, #a63b00 100%);
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 glass-header flex justify-between items-center px-6 py-4 w-full executive-shadow">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface">menu</span>
+<h1 class="text-lg font-semibold text-[#1A1C1D] tracking-tight">Abonnement</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-[#FF5E00] font-bold text-sm">PLAN PRO</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="Owner Profile" class="w-full h-full object-cover" data-alt="Professional user profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDw0QqcNTUWfJu78Nn06eaIuyeQ5YAkLF--dn6RaNQ2l_jAfXUWe3HeP2GpINDJSO7V89Ke2E3a-fncr3CXOMK4XMUwiC_BMbq4S2q24_JdzVO2BoV_jBRTJ1iIEvECXe278ERsy39N9kGka2b54MVWlzsrSGQ0IbqS4GMNFGyI0gUVZWNNkhgttRCMUZypxzO1H_OGjWMdNMMHRqhxmdQOXjEWyAljL5a_NAMdz9fDey7wwwDvfQH3bXyUe2j6OQPcp4No8XcWc7aX"/>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-5xl mx-auto space-y-8">
+<!-- Current Subscription Card -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="md:col-span-2 bg-surface-container-lowest p-8 rounded-3xl executive-shadow relative overflow-hidden flex flex-col justify-between min-h-[240px]">
+<div class="absolute top-0 right-0 p-8">
+<span class="material-symbols-outlined text-primary-container opacity-20 text-8xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div>
+<p class="text-[0.6875rem] font-bold tracking-widest text-slate-400 uppercase mb-2">PLAN ACTUEL</p>
+<h2 class="text-4xl font-extrabold text-on-surface tracking-tight mb-4">Opérations Bar Élite</h2>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-black text-primary-container">$2</span>
+<span class="text-xl font-medium text-slate-500">/table</span>
+</div>
+</div>
+<div class="flex gap-6 mt-8">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span>
+<span class="text-sm font-medium">48 Tables Actives</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span>
+<span class="text-sm font-medium">Support Prioritaire</span>
+</div>
+</div>
+</div>
+<!-- Renewal Countdown Bento -->
+<div class="bg-surface-container-lowest p-8 rounded-3xl executive-shadow flex flex-col items-center justify-center text-center space-y-4">
+<p class="text-[0.6875rem] font-bold tracking-widest text-slate-400 uppercase">RENOUVELLEMENT DANS</p>
+<div class="relative flex items-center justify-center">
+<!-- Progress ring (simplified) -->
+<svg class="w-32 h-32 transform -rotate-90">
+<circle class="text-surface-container" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary-container" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-dasharray="364.4" stroke-dashoffset="100" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-bold">245</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase">JOURS</span>
+</div>
+</div>
+<p class="text-sm font-medium text-on-surface-variant">Prévu pour le 12 oct. 2024</p>
+</div>
+</section>
+<!-- Billing Stats / Benefits Asymmetric Row -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="md:col-span-4 bg-surface-container p-6 rounded-3xl flex flex-col justify-between">
+<p class="text-[0.6875rem] font-bold tracking-widest text-slate-500 uppercase">DERNIÈRE FACTURE</p>
+<div>
+<h3 class="text-2xl font-bold">$96.00</h3>
+<p class="text-sm text-on-surface-variant">Payée le 1er juin</p>
+</div>
+</div>
+<div class="md:col-span-8 bg-primary-container text-on-primary rounded-3xl p-8 relative overflow-hidden flex items-center">
+<div class="z-10 flex-1">
+<h3 class="text-xl font-bold mb-2 leading-tight">Augmentez votre capacité sans effort.</h3>
+<p class="text-primary-fixed-dim text-sm max-w-md">Votre tarif de 2$/table est garanti pour les 12 prochains mois. Pas de frais cachés, juste une transparence opérationnelle totale.</p>
+</div>
+<div class="z-10">
+<button class="bg-white text-primary font-bold px-6 py-3 rounded-full text-sm executive-shadow active:scale-95 transition-all">Voir les Détails</button>
+</div>
+<!-- Abstract pattern -->
+<div class="absolute -right-10 -bottom-10 w-48 h-48 bg-primary opacity-30 rounded-full blur-3xl"></div>
+</div>
+</section>
+<!-- Subscription Management Section -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-2xl font-bold tracking-tight">Inventaire des Tables</h2>
+<p class="text-on-surface-variant text-sm">Étendez votre capacité en quelques secondes.</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-3xl executive-shadow overflow-hidden">
+<div class="p-6 flex items-center justify-between hover:bg-surface-container/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">grid_view</span>
+</div>
+<div>
+<p class="font-bold">Capacité Salle Principale</p>
+<p class="text-xs text-on-surface-variant">32 Tables Configurées</p>
+</div>
+</div>
+<span class="text-sm font-bold">$64/mo</span>
+</div>
+<div class="p-6 flex items-center justify-between hover:bg-surface-container/30 transition-colors border-t border-surface-container/50">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">deck</span>
+</div>
+<div>
+<p class="font-bold">Patio &amp; Terrasse</p>
+<p class="text-xs text-on-surface-variant">16 Tables Configurées</p>
+</div>
+</div>
+<span class="text-sm font-bold">$32/mo</span>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="pt-4 flex flex-col items-center gap-4">
+<button class="orange-gradient w-full py-5 rounded-3xl text-white font-extrabold text-lg flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(255,94,0,0.2)] active:scale-95 duration-200">
+<span class="material-symbols-outlined">add_circle</span>
+                Ajouter 10 Tables
+            </button>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ACTIVATION IMMÉDIATE • MISE À JOUR DE FACTURATION AUTO</p>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-[24px] glass-header shadow-[0_-10px_30px_rgba(26,28,29,0.04)] pb-safe h-20 flex justify-around items-center px-4">
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-[#FF5E00] transition-colors">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['SF_Pro','Inter'] text-[10px] font-medium tracking-wide uppercase mt-1">TABLEAU</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-[#FF5E00] transition-colors">
+<span class="material-symbols-outlined">liquor</span>
+<span class="font-['SF_Pro','Inter'] text-[10px] font-medium tracking-wide uppercase mt-1">STOCK</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#FF5E00] bg-[#FF5E00]/10 rounded-xl px-3 py-1 active:scale-90 duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="font-['SF_Pro','Inter'] text-[10px] font-medium tracking-wide uppercase mt-1">FACTURATION</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-[#FF5E00] transition-colors">
+<span class="material-symbols-outlined">group</span>
+<span class="font-['SF_Pro','Inter'] text-[10px] font-medium tracking-wide uppercase mt-1">ÉQUIPE</span>
+</div>
+</nav>
+<!-- Decorative Elements -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10">
+<div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-container/5 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-tertiary-container/5 blur-[120px] rounded-full"></div>
+</div>
+</body></html>

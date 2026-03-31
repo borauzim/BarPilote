@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sélection du type d'établissement - BarPilote</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-surface": "#2f3132",
+              "surface-variant": "#e2e2e4",
+              "error": "#ba1a1a",
+              "surface-container-high": "#e8e8ea",
+              "on-secondary-container": "#732600",
+              "on-primary-fixed-variant": "#7f2b00",
+              "on-tertiary-fixed-variant": "#00497d",
+              "on-error": "#ffffff",
+              "on-surface-variant": "#5b4137",
+              "primary-fixed": "#ffdbce",
+              "on-tertiary-container": "#002d51",
+              "on-secondary": "#ffffff",
+              "inverse-on-surface": "#f0f0f2",
+              "background": "#f9f9fb",
+              "secondary-fixed-dim": "#ffb599",
+              "tertiary-container": "#0097fb",
+              "surface-dim": "#d9dadc",
+              "surface": "#f9f9fb",
+              "on-tertiary": "#ffffff",
+              "inverse-primary": "#ffb599",
+              "on-primary-container": "#531900",
+              "secondary-fixed": "#ffdbce",
+              "on-tertiary-fixed": "#001d36",
+              "on-surface": "#1a1c1d",
+              "on-background": "#1a1c1d",
+              "surface-tint": "#a63b00",
+              "on-primary": "#ffffff",
+              "outline-variant": "#e4bfb1",
+              "tertiary": "#0061a4",
+              "tertiary-fixed-dim": "#9fcaff",
+              "outline": "#8f7065",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "surface-container": "#eeeef0",
+              "tertiary-fixed": "#d1e4ff",
+              "surface-container-low": "#f3f3f5",
+              "surface-container-highest": "#e2e2e4",
+              "secondary": "#9c431c",
+              "primary-fixed-dim": "#ffb599",
+              "on-error-container": "#93000a",
+              "on-primary-fixed": "#370e00",
+              "on-secondary-fixed": "#370e00",
+              "surface-bright": "#f9f9fb",
+              "primary": "#a63b00",
+              "surface-container-lowest": "#ffffff",
+              "primary-container": "#ff5e00",
+              "error-container": "#ffdad6",
+              "secondary-container": "#fd8d5f"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+      }
+      .active-selection .material-symbols-outlined {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#F5F5F7]/80 backdrop-blur-xl docked full-width top-0 sticky z-50 shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+<div class="flex justify-between items-center w-full px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="Executive Profile" class="w-full h-full object-cover" data-alt="Minimalist executive profile avatar icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCns9IZ1yiR_SS3192c1M3tIPhdAjIq8BXNgWvbEYey0rW0jVhfQJolaSTK65ISWKL3rtF8Y5ocU8UeFO2kAcF_KYGeBbXBNRhxDX42Moto_jrWx_bz_9EHF5ZmzsULrxYt9y7mJz5PZ-l0y6wVhh6pwcRa95-WlrqGOCppa1NbJyCsTQRrdvqGu3CwL_rog4jvWPJ76JZD9Wdy5x9fn38xs76jgFlqamxdSnl5A8hruZ3no4dSad2qqLZ1ElIV15lCWnxMRMlHkhNQ"/>
+</div>
+<span class="text-xl font-black tracking-tighter text-[#1A1C1D]">Digital Sommelier</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-[#1A1C1D] hover:opacity-70 transition-all active:scale-98 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center px-6 py-12 max-w-5xl mx-auto w-full">
+<!-- Editorial Header -->
+<div class="text-center mb-16 space-y-4">
+<span class="text-[0.6875rem] font-medium uppercase tracking-[0.15em] text-primary">CONFIGURATION</span>
+<h1 class="text-[2.75rem] font-extrabold tracking-tight leading-none text-on-surface">Choisir l'Établissement</h1>
+<p class="text-[1rem] text-on-surface-variant max-w-md mx-auto font-medium">Ceci nous aide à ajuster votre stratégie IA pour une gestion de salle et une croissance optimales.</p>
+</div>
+<!-- Selection Grid: Bento Style -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+<!-- Lounge: Active State -->
+<button class="active-selection group relative flex flex-col items-start p-8 rounded-xl bg-surface-container-lowest shadow-[0_10px_30px_rgba(26,28,29,0.04)] ring-2 ring-primary-container transition-all duration-300 text-left">
+<div class="mb-12 p-4 rounded-2xl bg-primary-container/10 text-primary-container transition-colors group-hover:bg-primary-container/20">
+<span class="material-symbols-outlined text-4xl" data-icon="chair" style="font-variation-settings: 'FILL' 1;">chair</span>
+</div>
+<div>
+<h3 class="text-1.5rem font-bold tracking-tight mb-2 text-on-surface">Lounge</h3>
+<p class="text-body-md text-on-surface-variant leading-relaxed">Ambiance décontractée axée sur les cocktails premium et le confort.</p>
+</div>
+<div class="absolute top-6 right-6 text-primary-container">
+<span class="material-symbols-outlined" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</button>
+<!-- Nightclub -->
+<button class="group relative flex flex-col items-start p-8 rounded-xl bg-surface-container-lowest shadow-[0_10px_30px_rgba(26,28,29,0.04)] hover:shadow-xl transition-all duration-300 text-left">
+<div class="mb-12 p-4 rounded-2xl bg-surface-container text-on-surface-variant transition-colors group-hover:bg-primary-container/10 group-hover:text-primary-container">
+<span class="material-symbols-outlined text-4xl" data-icon="celebration">celebration</span>
+</div>
+<div>
+<h3 class="text-1.5rem font-bold tracking-tight mb-2 text-on-surface">Discothèque</h3>
+<p class="text-body-md text-on-surface-variant leading-relaxed">Environnement à fort volume avec services VIP et divertissements.</p>
+</div>
+</button>
+<!-- Local Bar -->
+<button class="group relative flex flex-col items-start p-8 rounded-xl bg-surface-container-lowest shadow-[0_10px_30px_rgba(26,28,29,0.04)] hover:shadow-xl transition-all duration-300 text-left">
+<div class="mb-12 p-4 rounded-2xl bg-surface-container text-on-surface-variant transition-colors group-hover:bg-primary-container/10 group-hover:text-primary-container">
+<span class="material-symbols-outlined text-4xl" data-icon="sports_bar">sports_bar</span>
+</div>
+<div>
+<h3 class="text-1.5rem font-bold tracking-tight mb-2 text-on-surface">Bar de Quartier</h3>
+<p class="text-body-md text-on-surface-variant leading-relaxed">Lieu communautaire axé sur un service rapide et une clientèle fidèle.</p>
+</div>
+</button>
+<!-- Event Hall -->
+<button class="group relative flex flex-col items-start p-8 rounded-xl bg-surface-container-lowest shadow-[0_10px_30px_rgba(26,28,29,0.04)] hover:shadow-xl transition-all duration-300 text-left">
+<div class="mb-12 p-4 rounded-2xl bg-surface-container text-on-surface-variant transition-colors group-hover:bg-primary-container/10 group-hover:text-primary-container">
+<span class="material-symbols-outlined text-4xl" data-icon="festival">festival</span>
+</div>
+<div>
+<h3 class="text-1.5rem font-bold tracking-tight mb-2 text-on-surface">Salle d'Évènement</h3>
+<p class="text-body-md text-on-surface-variant leading-relaxed">Espace polyvalent pour les réservations privées à grande échelle et les galas.</p>
+</div>
+</button>
+</div>
+<!-- Primary Action -->
+<div class="mt-16 w-full max-w-md">
+<button class="w-full bg-gradient-to-br from-primary-container to-primary text-white py-5 px-8 rounded-full font-bold text-[1rem] shadow-lg hover:shadow-xl transition-all active:scale-95 duration-200">
+                Continuer vers le Moteur Stratégique
+            </button>
+<p class="text-center mt-6 text-label-sm uppercase tracking-widest text-on-surface-variant/60 font-semibold">Étape 1 sur 4</p>
+</div>
+</main>
+<!-- BottomNavBar (Visible on Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 backdrop-blur-2xl rounded-t-[24px] z-50 shadow-[0_-10px_30px_rgba(26,28,29,0.04)]">
+<div class="flex flex-col items-center justify-center text-[#FF5E00] bg-[#FF5E00]/10 rounded-2xl px-4 py-2">
+<span class="material-symbols-outlined" data-icon="business_center" style="font-variation-settings: 'FILL' 1;">business_center</span>
+<span class="text-[0.6875rem] font-medium uppercase tracking-[0.05em] mt-1">ÉTABLISSEMENTS</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-400 px-4 py-2 hover:text-[#FF5E00] transition-colors">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="text-[0.6875rem] font-medium uppercase tracking-[0.05em] mt-1">STRATÉGIE</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-400 px-4 py-2 hover:text-[#FF5E00] transition-colors">
+<span class="material-symbols-outlined" data-icon="liquor">liquor</span>
+<span class="text-[0.6875rem] font-medium uppercase tracking-[0.05em] mt-1">STOCKS</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-400 px-4 py-2 hover:text-[#FF5E00] transition-colors">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+<span class="text-[0.6875rem] font-medium uppercase tracking-[0.05em] mt-1">RÉGLAGES</span>
+</div>
+</nav>
+<!-- Background Decoration -->
+<div class="fixed top-0 right-0 -z-10 w-1/2 h-1/2 bg-gradient-to-b from-primary-container/5 to-transparent blur-3xl pointer-events-none"></div>
+<div class="fixed bottom-0 left-0 -z-10 w-1/3 h-1/3 bg-gradient-to-t from-primary/5 to-transparent blur-3xl pointer-events-none"></div>
+</body></html>

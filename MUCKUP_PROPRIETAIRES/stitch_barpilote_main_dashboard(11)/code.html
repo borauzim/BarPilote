@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Alertes de Stock | Gestion Proactive Executive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface-variant": "#5b4137",
+              "on-tertiary-container": "#002d51",
+              "on-primary-fixed": "#370e00",
+              "error": "#ba1a1a",
+              "surface-bright": "#f9f9fb",
+              "error-container": "#ffdad6",
+              "surface-container-lowest": "#ffffff",
+              "background": "#f9f9fb",
+              "tertiary-fixed-dim": "#9fcaff",
+              "tertiary-container": "#0097fb",
+              "primary-fixed-dim": "#ffb599",
+              "tertiary": "#0061a4",
+              "surface-container-high": "#e8e8ea",
+              "outline-variant": "#e4bfb1",
+              "inverse-surface": "#2f3132",
+              "surface": "#f9f9fb",
+              "on-error": "#ffffff",
+              "primary": "#a63b00",
+              "on-secondary-fixed": "#370e00",
+              "secondary-container": "#fd8d5f",
+              "on-primary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "on-tertiary-fixed-variant": "#00497d",
+              "surface-tint": "#a63b00",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "surface-container-highest": "#e2e2e4",
+              "on-tertiary-fixed": "#001d36",
+              "on-error-container": "#93000a",
+              "secondary": "#9c431c",
+              "secondary-fixed-dim": "#ffb599",
+              "surface-variant": "#e2e2e4",
+              "on-primary-container": "#531900",
+              "on-surface": "#1a1c1d",
+              "on-secondary-container": "#732600",
+              "on-background": "#1a1c1d",
+              "surface-dim": "#d9dadc",
+              "primary-container": "#ff5e00",
+              "on-secondary": "#ffffff",
+              "secondary-fixed": "#ffdbce",
+              "outline": "#8f7065",
+              "primary-fixed": "#ffdbce",
+              "inverse-primary": "#ffb599",
+              "on-primary-fixed-variant": "#7f2b00",
+              "inverse-on-surface": "#f0f0f2",
+              "tertiary-fixed": "#d1e4ff",
+              "surface-container-low": "#f3f3f5",
+              "surface-container": "#eeeef0"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .stock-meter-track { height: 6px; border-radius: 9999px; }
+        .executive-shadow { box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04); }
+        .glass-nav { backdrop-filter: blur(20px); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+<div class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-orange-50 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-orange-600">menu</span>
+</button>
+<h1 class="text-2xl font-bold tracking-tighter text-orange-600 dark:text-orange-500">Alertes de Stock</h1>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-slate-400 dark:text-slate-500 text-sm font-medium hover:text-orange-600 transition-colors" href="#">Tableau</a>
+<a class="text-slate-400 dark:text-slate-500 text-sm font-medium hover:text-orange-600 transition-colors" href="#">Stock</a>
+<a class="text-orange-600 dark:text-orange-500 font-bold text-sm" href="#">Alertes</a>
+<a class="text-slate-400 dark:text-slate-500 text-sm font-medium hover:text-orange-600 transition-colors" href="#">Rapports</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="hidden sm:block text-right">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Profil Exécutif</p>
+<p class="text-sm font-semibold">Julian Vane</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border-2 border-white executive-shadow">
+<img alt="" class="w-full h-full object-cover" data-alt="Close up portrait of a professional manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAP_vxEBbAHha7arvJAfGDdFQz7Dxr55VV9gENFoj1831g9qGr6ZmnEV2Je0yNZD7osc74fL79pZnz3Zz72JOWfC11CkbuqpZfzJU4XTgc2p-SttyCJWDstcWj0QRRwvZg7yoEpRYoMM_SP0dKMAuVJPkK0swyi7LK2LfeqEJj8K7rftKTlYNWPxdjzUTnBhgXP-rzT46yjoXkc9hQu32ENPmJuhjZngdYmaC7ABIT9h6UJn32mShxRuDuYO9Aso9PtyiwgaMRNwDA0"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-28 px-6 max-w-7xl mx-auto">
+<!-- Hero Section: Proactive Summary Bento -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<!-- Main At-Risk Card -->
+<div class="md:col-span-2 bg-surface-container-lowest p-8 rounded-2xl executive-shadow relative overflow-hidden">
+<div class="relative z-10">
+<span class="text-[11px] font-bold uppercase tracking-[0.15em] text-orange-600 mb-2 block">Statut Critique</span>
+<h2 class="text-4xl font-extrabold tracking-tight mb-6">14 Articles à Risque</h2>
+<div class="flex flex-wrap gap-8">
+<div>
+<p class="text-3xl font-bold text-on-surface">9</p>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Spiritueux sous le seuil</p>
+</div>
+<div class="w-px h-10 bg-surface-container-highest hidden sm:block"></div>
+<div>
+<p class="text-3xl font-bold text-on-surface">5</p>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Fûts de bière critiques</p>
+</div>
+<div class="w-px h-10 bg-surface-container-highest hidden sm:block"></div>
+<div>
+<p class="text-3xl font-bold text-primary">1,2k $</p>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Perte estimée</p>
+</div>
+</div>
+<button class="mt-8 px-8 py-3 bg-gradient-to-br from-primary-container to-primary text-white font-bold rounded-full shadow-lg shadow-orange-500/20 active:scale-95 transition-all">
+                    Générer la liste de commande
+                </button>
+</div>
+<!-- Abstract Design Element -->
+<div class="absolute -right-16 -bottom-16 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl"></div>
+</div>
+<!-- Efficiency Card -->
+<div class="bg-surface-container-lowest p-8 rounded-2xl executive-shadow flex flex-col justify-between">
+<div>
+<span class="text-[11px] font-bold uppercase tracking-[0.15em] text-tertiary mb-2 block">Vélocité des stocks</span>
+<h3 class="text-xl font-bold mb-1">Rotation Élevée</h3>
+<p class="text-sm text-slate-500 leading-relaxed">Grey Goose et Patron Silver se vendent 22% plus vite cette semaine.</p>
+</div>
+<div class="mt-6">
+<div class="flex items-end gap-1 h-12 mb-2">
+<div class="flex-1 bg-tertiary/10 rounded-t-sm h-1/2"></div>
+<div class="flex-1 bg-tertiary/10 rounded-t-sm h-2/3"></div>
+<div class="flex-1 bg-tertiary/10 rounded-t-sm h-3/4"></div>
+<div class="flex-1 bg-tertiary-container rounded-t-sm h-full"></div>
+</div>
+<p class="text-[10px] font-bold text-tertiary uppercase tracking-tighter">Voir les prévisions</p>
+</div>
+</div>
+</section>
+<!-- Categorized Inventory Management -->
+<section class="space-y-12">
+<!-- Category: Spirits -->
+<div>
+<div class="flex items-center justify-between mb-6 px-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-orange-600 bg-orange-50 p-2 rounded-xl">liquor</span>
+<h2 class="text-xl font-bold tracking-tight">Spiritueux Premium</h2>
+</div>
+<button class="text-sm font-semibold text-primary flex items-center gap-1 hover:underline">
+                    Ajuster tous les seuils <span class="material-symbols-outlined text-sm">settings</span>
+</button>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl executive-shadow overflow-hidden">
+<div class="grid grid-cols-1 divide-y divide-surface-container">
+<!-- Row 1 -->
+<div class="p-6 flex flex-col sm:flex-row sm:items-center gap-6 hover:bg-slate-50/50 transition-colors">
+<div class="flex items-center gap-4 flex-1">
+<div class="w-12 h-12 rounded-xl bg-surface-container overflow-hidden flex-shrink-0">
+<img alt="" class="w-full h-full object-cover" data-alt="High end vodka bottle on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5CJlNRKZugR9Tfe0SMiGIShQqqGHPmA0FHahk8H3kuXo7v8Qut2I7OZk0_wIT5doO5xbgvS_FLMV7MgIyfiMe0FU-L6MZvhsC_ADGPI_gsrlGqI03rdOQLfKhdqrcYs_OXut1mbpGPRkgP6WhOi1OWHB57hKJNg3tYT4cRlkoAvzAo9J5QF1Y_2pBU2YGyc-B49cTz9IaSoBJbHJcedxnSbT44e_ySwcgz1dLlE7E7jgVRRRDmFb_tb52tBuQCi6YkwCt2Or8IJeN"/>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Grey Goose Vodka</h4>
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">750ML • FRANCE</p>
+</div>
+</div>
+<div class="flex flex-1 flex-col gap-1.5">
+<div class="flex justify-between text-[11px] font-bold uppercase tracking-wider">
+<span class="text-error">Critique : 2 en stock</span>
+<span class="text-slate-400">Par: 12</span>
+</div>
+<div class="stock-meter-track bg-surface-container-highest w-full overflow-hidden">
+<div class="h-full bg-error rounded-full" style="width: 16%;"></div>
+</div>
+</div>
+<div class="flex items-center gap-6 sm:w-48 justify-end">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-400 uppercase">Seuil</p>
+<div class="flex items-center gap-2">
+<span class="text-sm font-bold">Bas (15%)</span>
+<div class="w-8 h-4 bg-primary rounded-full relative">
+<div class="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container-highest active:scale-90 transition-all">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="p-6 flex flex-col sm:flex-row sm:items-center gap-6 hover:bg-slate-50/50 transition-colors">
+<div class="flex items-center gap-4 flex-1">
+<div class="w-12 h-12 rounded-xl bg-surface-container overflow-hidden flex-shrink-0">
+<img alt="" class="w-full h-full object-cover" data-alt="Tequila bottle with amber liquid" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkl4ztWIIPHDsStiY-ZltNaVIM2x8W63nVzLq_9brvfgQv3CaVIXcf5Zt0YbBL0ZJWLCWqU3Ce3j0mXW0qof4PKz_sdqmwcrBrGhtO9dUmQkJhbigYIIW-PCIux7F2v3GbdOez-TwXRWYf31EdADdKQiPKDwFp1hjRpxLgd--8iSRY_wl-g0AexoRhphByFtTBNGx4c_vtbP85HLIb2omC4ist6irBTJQhsPePCrABEYWh-kaLjwebgp1pVZeErZZXQvNvBVFF_FwW"/>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Casamigos Reposado</h4>
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">750ML • MEXICO</p>
+</div>
+</div>
+<div class="flex flex-1 flex-col gap-1.5">
+<div class="flex justify-between text-[11px] font-bold uppercase tracking-wider">
+<span class="text-primary">Attention : 6 en stock</span>
+<span class="text-slate-400">Par: 10</span>
+</div>
+<div class="stock-meter-track bg-surface-container-highest w-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 60%;"></div>
+</div>
+</div>
+<div class="flex items-center gap-6 sm:w-48 justify-end">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-400 uppercase">Seuil</p>
+<div class="flex items-center gap-2">
+<span class="text-sm font-bold">Moyen (25%)</span>
+<div class="w-8 h-4 bg-primary rounded-full relative">
+<div class="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container-highest active:scale-90 transition-all">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Category: Beer & Wine -->
+<div>
+<div class="flex items-center justify-between mb-6 px-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-orange-600 bg-orange-50 p-2 rounded-xl">sports_bar</span>
+<h2 class="text-xl font-bold tracking-tight">Pression &amp; Cave</h2>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl executive-shadow overflow-hidden">
+<div class="grid grid-cols-1 divide-y divide-surface-container">
+<!-- Row 1 -->
+<div class="p-6 flex flex-col sm:flex-row sm:items-center gap-6 hover:bg-slate-50/50 transition-colors">
+<div class="flex items-center gap-4 flex-1">
+<div class="w-12 h-12 rounded-xl bg-surface-container overflow-hidden flex-shrink-0">
+<img alt="" class="w-full h-full object-cover" data-alt="Draft beer tap in a dimly lit bar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuSo66ALawZ5UFDd82Bx1Lns2vcQBiLjNlojTUdfp8Qn4AoudnkM9QMhfxsiTxF7S6IVowRUaBmZziRwkQGsBCb8BZDMnmc-kV5dPjhZLDE5HPlUbQoeD0as7RRXI_HEQALFlkpkMzk_h0VckOzvYoEflDXAFtMMhPCnkOyKkIEn8RwxZBPBaN68O6rsP6EgUpjSUFTH-cYcvlz0CMNm6hJUsVN7ySi-wFgCIL7S31GZOLT8ZBOelotnXAu0qqC-w8f9I-vZ6mHHw5"/>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Lagunitas IPA</h4>
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">50L KEG • CA, USA</p>
+</div>
+</div>
+<div class="flex flex-1 flex-col gap-1.5">
+<div class="flex justify-between text-[11px] font-bold uppercase tracking-wider">
+<span class="text-slate-600">Stable : 4 en stock</span>
+<span class="text-slate-400">Par: 4</span>
+</div>
+<div class="stock-meter-track bg-surface-container-highest w-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+<div class="flex items-center gap-6 sm:w-48 justify-end">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-400 uppercase">Seuil</p>
+<div class="flex items-center gap-2">
+<span class="text-sm font-bold">Auto</span>
+<div class="w-8 h-4 bg-surface-container-highest rounded-full relative">
+<div class="absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container-highest active:scale-90 transition-all">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB for quick action -->
+<button class="fixed bottom-32 right-8 w-14 h-14 bg-primary text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+<!-- BottomNavBar (Mobile Only) -->
+<footer class="md:hidden fixed bottom-0 left-0 w-full z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl px-8 pb-8 pt-4 flex justify-around items-center rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-70 hover:text-orange-500 transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[11px] font-semibold uppercase tracking-wider mt-1">Tableau</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-70 hover:text-orange-500 transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">liquor</span>
+<span class="text-[11px] font-semibold uppercase tracking-wider mt-1">Stock</span>
+</div>
+<div class="flex flex-col items-center justify-center text-orange-600 dark:text-orange-400 scale-110 transition-transform active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+<span class="text-[11px] font-semibold uppercase tracking-wider mt-1">Alertes</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-70 hover:text-orange-500 transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[11px] font-semibold uppercase tracking-wider mt-1">Rapports</span>
+</div>
+</footer>
+</body></html>

@@ -1,275 +1,228 @@
+"use client";
+
+import React from "react";
+import { useRouter } from "next/navigation";
+
 export default function DashboardPage() {
+  const router = useRouter();
+
   return (
-    <>
-      {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
-        <div className="flex items-center justify-between px-6 h-16 w-full max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <div
-              className="w-8 h-8 bg-orange-600 dark:bg-orange-500"
-              style={{
-                WebkitMaskImage: 'url(/logobarpilote.png)',
-                WebkitMaskSize: 'contain',
-                WebkitMaskRepeat: 'no-repeat',
-                WebkitMaskPosition: 'center',
-                maskImage: 'url(/logobarpilote.png)',
-                maskSize: 'contain',
-                maskRepeat: 'no-repeat',
-                maskPosition: 'center',
-              }}
+    <div className="bg-[#f8f9fa] min-h-screen text-[#1a1c1d] font-sans pb-32">
+      {/* NEW HEADER - MATCHING MOCKUP */}
+      <header className="px-6 pt-8 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-2 border-orange-500 overflow-hidden shadow-sm">
+            <img
+              src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100"
+              alt="Profile"
+              className="w-full h-full object-cover"
             />
-            <span className="text-2xl font-bold tracking-tight text-orange-600 dark:text-orange-500">
-              BarPilote
-            </span>
           </div>
-          <nav className="hidden md:flex items-center gap-8">
-            <a
-              className="text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 font-semibold hover:text-orange-500 transition-colors"
-              href="#"
-            >
-              Tableau
-            </a>
-            <a
-              className="text-gray-500 dark:text-gray-400 font-medium hover:text-orange-500 transition-colors"
-              href="#"
-            >
-              Stocks
-            </a>
-            <a
-              className="text-gray-500 dark:text-gray-400 font-medium hover:text-orange-500 transition-colors"
-              href="#"
-            >
-              Équipe
-            </a>
-            <a
-              className="text-gray-500 dark:text-gray-400 font-medium hover:text-orange-500 transition-colors"
-              href="#"
-            >
-              Réglages
-            </a>
-          </nav>
-          <button className="flex items-center justify-center p-2 rounded-full hover:bg-surface-container transition-colors active:scale-95 duration-200">
-            <span className="material-symbols-outlined text-on-surface" data-icon="notifications">
-              notifications
-            </span>
-          </button>
+          <span className="text-xl font-black tracking-tight text-[#FF5E00]">BarPilote</span>
         </div>
+        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+          <span className="material-symbols-outlined text-2xl">settings</span>
+        </button>
       </header>
-      <main className="pt-24 px-6 max-w-7xl mx-auto space-y-8">
-        {/* Live Revenue Section (The Digital Sommelier Hero) */}
-        <section className="bg-surface-container-lowest rounded-xl p-8 executive-shadow flex flex-col md:flex-row md:items-end justify-between gap-6 overflow-hidden relative">
-          <div className="relative z-10">
-            <p className="text-[0.6875rem] font-bold uppercase tracking-wider text-on-surface-variant mb-2">
-              REVENU EN DIRECT
-            </p>
-            <div className="flex items-baseline gap-4">
-              <h1 className="text-[2.75rem] md:text-[4rem] font-black tracking-tight leading-none text-on-surface">
-                $245.00
-              </h1>
-              <div className="flex items-center text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-sm font-semibold">
-                <span className="material-symbols-outlined text-sm mr-1" data-icon="trending_up">
-                  trending_up
-                </span>
-                +12%
-              </div>
-            </div>
-            <p className="mt-4 text-on-surface-variant/60 font-medium text-sm">
-              Dernière transaction traitée il y a 2 min
-            </p>
+
+      <main className="px-6 mt-10 space-y-6">
+        {/* TITLE & LIVE TAG */}
+        <section>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Aperçu en temps réel</p>
+          <h1 className="text-4xl font-extrabold tracking-tight leading-tight mb-4 text-[#1a1c1d]">
+            Analytique des Ventes
+          </h1>
+          <div className="inline-flex items-center gap-2 bg-white px-4 py-1.5 rounded-full shadow-sm border border-slate-100">
+            <span className="w-2 h-2 bg-[#FF5E00] rounded-full animate-pulse"></span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Session en Direct</span>
           </div>
-          {/* Asymmetric Momentum: Trend Sparkline Visual */}
-          <div className="hidden md:block w-48 h-24 opacity-20">
-            <svg className="w-full h-full" viewBox="0 0 100 40">
+        </section>
+
+        {/* MAIN REVENUE CARD */}
+        <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.03)] border border-slate-50 relative overflow-hidden">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Revenu Net</span>
+            <div className="text-right">
+              <div className="flex items-center gap-1 text-[#FF5E00] font-black">
+                <span className="material-symbols-outlined text-sm">trending_up</span>
+                <span className="text-lg">+12.4%</span>
+              </div>
+              <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-300">vs hier soir</p>
+            </div>
+          </div>
+          <h2 className="text-5xl font-black tracking-tighter mb-4">$4,820.50</h2>
+
+          {/* PIC CALLOUT */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-[#FF5E00] text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg relative group">
+              Pic: $1,240 (23h)
+              <div className="absolute top-full left-1/2 -translate-x-1/2 w-0.5 h-6 bg-[#FF5E00]/30"></div>
+            </div>
+          </div>
+
+          {/* CHART VISUAL (SVG) */}
+          <div className="h-32 w-full mt-4">
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 100 40">
               <path
-                d="M0 35 Q 20 30, 40 38 T 80 10 T 100 5"
+                d="M0 35 Q 20 32, 40 30 T 55 15 T 70 20 T 100 25"
                 fill="none"
                 stroke="#FF5E00"
+                strokeWidth="2.5"
                 strokeLinecap="round"
-                strokeWidth="3"
-              ></path>
+              />
+              <circle cx="55" cy="15" r="3" fill="#FF5E00" className="animate-pulse" />
             </svg>
           </div>
-          {/* Absolute decorative element */}
-          <div className="absolute top-0 right-0 w-32 h-32 citrus-gradient opacity-[0.03] rounded-full -mr-16 -mt-16"></div>
+
+          {/* TIME LABELS */}
+          <div className="flex justify-between mt-4 text-[9px] font-bold uppercase tracking-widest text-slate-300 px-2">
+            <span>6 PM</span>
+            <span>8 PM</span>
+            <span>10 PM</span>
+            <span className="text-[#FF5E00]">PIC</span>
+            <span>12 AM</span>
+            <span>2 AM</span>
+          </div>
         </section>
-        {/* Bento Grid: Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Active Tables Card */}
-          <div className="bg-surface-container-lowest p-8 rounded-xl executive-shadow group hover:translate-y-[-4px] transition-transform duration-300">
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-3 rounded-2xl bg-orange-50 text-orange-600">
-                <span className="material-symbols-outlined" data-icon="table_restaurant">
-                  table_restaurant
-                </span>
+
+        {/* BEST SELLER CARD */}
+        <section className="bg-[#FF5E00] rounded-[2rem] p-8 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group active:scale-[0.98] transition-all">
+          <div className="absolute right-0 bottom-0 top-0 w-1/2 opacity-10 pointer-events-none">
+            <span className="material-symbols-outlined text-[120px] absolute -right-4 -bottom-4 rotate-12">liquor</span>
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-2">Meilleure Vente</p>
+          <h3 className="text-3xl font-black tracking-tight mb-4">Heineken</h3>
+          <div className="flex items-end gap-2">
+            <span className="text-5xl font-black tracking-tighter leading-none">45</span>
+            <p className="text-[11px] font-bold uppercase tracking-tight leading-4 opacity-80 mb-1">Unités Vendues<br />Aujourd&apos;hui</p>
+          </div>
+        </section>
+
+        {/* PERFORMANCE SESSION CARD */}
+        <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-50">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 mb-6">Performance de la Session</h3>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-slate-100 rounded-xl text-slate-600">
+                  <span className="material-symbols-outlined">groups</span>
+                </div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Fréquentation</span>
               </div>
-              <span
-                className="material-symbols-outlined text-surface-variant group-hover:text-orange-600 transition-colors"
-                data-icon="arrow_outward"
-              >
-                arrow_outward
-              </span>
+              <span className="text-sm font-black">342 Clients</span>
             </div>
-            <h3 className="text-sm font-semibold tracking-wide text-on-surface-variant mb-1 uppercase">
-              TABLES ACTIVES
-            </h3>
-            <p className="text-[2.75rem] font-bold text-on-surface tracking-tight leading-none">
-              12
-            </p>
-            <div className="mt-4 h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
-              <div className="h-full bg-orange-600 rounded-full w-[75%]"></div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-slate-100 rounded-xl text-slate-600">
+                  <span className="material-symbols-outlined">payments</span>
+                </div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Panier Moyen</span>
+              </div>
+              <span className="text-sm font-black">$14.10</span>
             </div>
-            <p className="mt-3 text-[11px] font-semibold text-on-surface-variant/50 uppercase tracking-widest">
-              75% DE CAPACITÉ
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-slate-100 rounded-xl text-slate-600">
+                  <span className="material-symbols-outlined">hourglass_top</span>
+                </div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Attente Max</span>
+              </div>
+              <span className="text-sm font-black">4.2 min</span>
+            </div>
+          </div>
+          <button className="w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest mt-8 hover:bg-slate-200 transition-colors">
+            View Detailed Log
+          </button>
+        </section>
+
+        {/* INVENTORY / PROGRESS SECTIONS */}
+        <div className="space-y-4">
+          {/* BIERES */}
+          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-4">Inventaire Bières</p>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-xs font-bold">Blondes</span>
+              <span className="text-xs font-black text-[#FF5E00]">12%</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3">
+              <div className="h-full bg-[#FF5E00] rounded-full w-[12%]"></div>
+            </div>
+            <p className="text-[10px] font-bold text-red-600 flex items-center gap-1">
+              <span className="material-symbols-outlined text-xs">warning</span>
+              Alerte Stock Faible
             </p>
           </div>
-          {/* Orders in Flight Card */}
-          <div className="bg-surface-container-lowest p-8 rounded-xl executive-shadow group hover:translate-y-[-4px] transition-transform duration-300">
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-3 rounded-2xl bg-orange-50 text-orange-600">
-                <span className="material-symbols-outlined" data-icon="liquor">
-                  liquor
-                </span>
-              </div>
-              <span
-                className="material-symbols-outlined text-surface-variant group-hover:text-orange-600 transition-colors"
-                data-icon="arrow_outward"
-              >
-                arrow_outward
-              </span>
+
+          {/* SPIRITUEUX */}
+          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-4">Stock Spiritueux</p>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-xs font-bold">Bourbon</span>
+              <span className="text-xs font-black">88%</span>
             </div>
-            <h3 className="text-sm font-semibold tracking-wide text-on-surface-variant mb-1 uppercase">
-              COMMANDES EN COURS
-            </h3>
-            <p className="text-[2.75rem] font-bold text-on-surface tracking-tight leading-none">
-              4
-            </p>
-            <div className="flex gap-2 mt-4">
-              <div className="h-2 w-8 bg-orange-600 rounded-full"></div>
-              <div className="h-2 w-8 bg-orange-600 rounded-full"></div>
-              <div className="h-2 w-8 bg-orange-600 rounded-full"></div>
-              <div className="h-2 w-8 bg-orange-600 rounded-full"></div>
-              <div className="h-2 w-8 bg-surface-container-highest rounded-full"></div>
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3">
+              <div className="h-full bg-[#FF5E00] rounded-full w-[88%]"></div>
             </div>
-            <p className="mt-3 text-[11px] font-semibold text-on-surface-variant/50 uppercase tracking-widest">
-              PRÉP. MOYENNE : 4:20M
-            </p>
+            <p className="text-[10px] font-bold text-emerald-600">Niveaux sains</p>
+          </div>
+
+          {/* RENDEMENT COCKTAILS */}
+          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-4">Rendement Cocktails</p>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-xs font-bold">Efficacité</span>
+              <span className="text-xs font-black">94%</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3">
+              <div className="h-full bg-[#FF5E00] rounded-full w-[94%] shadow-[0_0_10px_rgba(255,94,0,0.3)]"></div>
+            </div>
+            <p className="text-[10px] font-bold text-slate-400">+2% par rapport à la base</p>
+          </div>
+
+          {/* PERTES */}
+          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-4">Suivi des Pertes</p>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-xs font-bold">% Perte</span>
+              <span className="text-xs font-black">0.8%</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3">
+              <div className="h-full bg-[#FF5E00] rounded-full w-[10%] opacity-40"></div>
+            </div>
+            <p className="text-[10px] font-bold text-slate-400">Coulage minimal</p>
           </div>
         </div>
-        {/* Recent Sales Section */}
-        <section className="bg-surface-container-lowest rounded-xl p-8 executive-shadow">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-1.5rem font-bold tracking-tight text-on-surface">Ventes Récentes</h2>
-            <button className="text-orange-600 text-sm font-semibold hover:underline">
-              Tout voir
-            </button>
-          </div>
-          <div className="space-y-1">
-            {/* Sale Item 1 */}
-            <div className="flex items-center justify-between p-4 rounded-xl hover:bg-surface-container transition-colors group">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-orange-600 overflow-hidden">
-                  <img
-                    alt="Margarita"
-                    className="w-full h-full object-cover"
-                    data-alt="Close up of a fresh lime margarita with salt rim"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtPup9hyrYdrwhf8YEGNLNYwyTZK2JgHJ1ijmqIA84TiMEmEaf5WSPqX5eIOodqe5y3n1Ftr4HHuRIXYvs0alIR_dohGigQpSNXixDcap2brV5DIsQvAAljtj1EgRVG2jYRRVwt0Wd-el6mDDC0K4P3ujQBvNJ0KVDuR-F5vsOWAJaCAd-sArZbIaBCEvKzYdowozNPasrf6VVUJep7nXdKla4nCQBqafTMBrTJEKz0wXvJsy6unDYegiUzl699rtOKMLahvdzWYKs"
-                  />
-                </div>
-                <div>
-                  <p className="font-semibold text-on-surface">Margarita</p>
-                  <p className="text-xs text-on-surface-variant/60">Table 4 • 2:45 PM</p>
-                </div>
-              </div>
-              <p className="text-lg font-bold text-on-surface">$14.00</p>
-            </div>
-            {/* Sale Item 2 */}
-            <div className="flex items-center justify-between p-4 rounded-xl hover:bg-surface-container transition-colors group">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-orange-600 overflow-hidden">
-                  <img
-                    alt="IPA Pint"
-                    className="w-full h-full object-cover"
-                    data-alt="Craft beer pint with thick foam head"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCR7qjAnJp72tzbXZIL-WMOEZE9TssBWmRKnaxLVEZ1Ef4fsL-307niBmUdIt26u2psHI2sAdlvFHwKYuU9y91B3WDgqnRNM5JTI1qCZVjXp4vWwxJ_HS8r7rr9MKWhIxQt-ngWiYimcE6MlY7eANHYYS6eyckQNg39fGmTtgitulhMrlp50UjQlZatfRmjGt3Zb_pBajlVotX0C1V0w6JNSLtVOZYGB0hddMNnVYzPgnX3aN_FMFmTNZLESJhCjmXVd4_C3kMo1wYo"
-                  />
-                </div>
-                <div>
-                  <p className="font-semibold text-on-surface">IPA Pint</p>
-                  <p className="text-xs text-on-surface-variant/60">Bar Seat 2 • 2:42 PM</p>
-                </div>
-              </div>
-              <p className="text-lg font-bold text-on-surface">$8.00</p>
-            </div>
-            {/* Sale Item 3 */}
-            <div className="flex items-center justify-between p-4 rounded-xl hover:bg-surface-container transition-colors group">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-orange-600 overflow-hidden">
-                  <img
-                    alt="Old Fashioned"
-                    className="w-full h-full object-cover"
-                    data-alt="Classic old fashioned cocktail with orange peel"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA664ds8plNvX2FPof-KGfPcV8q3i8h09dHVcVHtPxO1vchMlG47e9fit3FiKN3o3ZzCBpqj9jO_AgX-GH81VmhKGOFndhHuDdlGDhmindBm7UxpgVm2kGXtR-XKrY2QPA_zHw7zzdtTp6kYHcyCS3bfDxJkCgbosVdHcps0jpxdWtGunMSk6wc5mOANRSHa_J0MMSRrK7qC-lUGNXxIZVmlIQEK1tXcnWNC4OONn0b6sZ_WfOeRvWSXmCp7lxQ7RnqJYPb6iOlRC1R"
-                  />
-                </div>
-                <div>
-                  <p className="font-semibold text-on-surface">Old Fashioned</p>
-                  <p className="text-xs text-on-surface-variant/60">Table 12 • 2:38 PM</p>
-                </div>
-              </div>
-              <p className="text-lg font-bold text-on-surface">$16.00</p>
-            </div>
-          </div>
-        </section>
       </main>
-      {/* BottomNavBar (Mobile Only) */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full glass-nav flex justify-around items-center px-6 pb-8 pt-4 rounded-t-[24px] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] z-50">
-        <a
-          className="flex flex-col items-center justify-center text-orange-600 dark:text-orange-500 scale-110 active:scale-90 duration-150 ease-out"
-          href="#"
+
+      {/* BOTTOM NAV - MATCHING MOCKUP */}
+      <nav className="fixed bottom-0 left-0 w-full bg-white flex justify-around items-center px-4 pb-10 pt-4 rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.04)] z-50">
+        <button
+          onClick={() => router.push("/")}
+          className="flex flex-col items-center justify-center p-2 opacity-30 active:scale-90 transition-all"
         >
-          <span
-            className="material-symbols-outlined"
-            data-icon="dashboard"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            dashboard
-          </span>
-          <span className="text-[11px] font-semibold uppercase tracking-wider mt-1">Tableau</span>
-        </a>
-        <a
-          className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 active:scale-90 duration-150 ease-out"
-          href="#"
+          <span className="material-symbols-outlined text-2xl">grid_view</span>
+          <span className="text-[8px] font-black uppercase tracking-widest mt-1">Tableau</span>
+        </button>
+        <button
+          onClick={() => router.push("/inventory")}
+          className="flex flex-col items-center justify-center p-2 opacity-30 active:scale-90 transition-all"
         >
-          <span className="material-symbols-outlined" data-icon="inventory_2">
-            inventory_2
-          </span>
-          <span className="text-[11px] font-semibold uppercase tracking-wider mt-1">Stocks</span>
-        </a>
-        <a
-          className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 active:scale-90 duration-150 ease-out"
-          href="#"
+          <span className="material-symbols-outlined text-2xl">liquor</span>
+          <span className="text-[8px] font-black uppercase tracking-widest mt-1">Stocks</span>
+        </button>
+        <button
+          className="flex flex-col items-center justify-center p-2 opacity-30 active:scale-90 transition-all"
         >
-          <span className="material-symbols-outlined" data-icon="badge">
-            badge
-          </span>
-          <span className="text-[11px] font-semibold uppercase tracking-wider mt-1">Équipe</span>
-        </a>
-        <a
-          className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 active:scale-90 duration-150 ease-out"
-          href="#"
+          <span className="material-symbols-outlined text-2xl">groups</span>
+          <span className="text-[8px] font-black uppercase tracking-widest mt-1">Équipe</span>
+        </button>
+        <button
+          className="flex flex-col items-center justify-center p-2 active:scale-90 transition-all bg-orange-50 text-[#FF5E00] rounded-2xl px-6"
         >
-          <span className="material-symbols-outlined" data-icon="settings">
-            settings
-          </span>
-          <span className="text-[11px] font-semibold uppercase tracking-wider mt-1">Réglages</span>
-        </a>
+          <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>bar_chart_4_bars</span>
+          <span className="text-[8px] font-black uppercase tracking-widest mt-1">Rapports</span>
+        </button>
       </nav>
-      {/* Contextual FAB (Dashboard relevant action) */}
-      <button className="fixed bottom-24 right-6 md:bottom-12 md:right-12 citrus-gradient text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-all z-40">
-        <span className="material-symbols-outlined" data-icon="add">
-          add
-        </span>
-      </button>
-    </>
+    </div>
   );
 }

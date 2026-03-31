@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Maître de la Cave - Podium Exécutif</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed": "#ffdbce",
+                        "on-tertiary-container": "#002d51",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#d1e4ff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#531900",
+                        "surface-bright": "#f9f9fb",
+                        "on-tertiary-fixed": "#001d36",
+                        "primary": "#a63b00",
+                        "outline-variant": "#e4bfb1",
+                        "on-tertiary-fixed-variant": "#00497d",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#a63b00",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#ffb599",
+                        "tertiary-fixed-dim": "#9fcaff",
+                        "inverse-surface": "#2f3132",
+                        "on-surface": "#1a1c1d",
+                        "on-secondary-fixed-variant": "#7d2d04",
+                        "surface-container": "#eeeef0",
+                        "on-primary-fixed": "#370e00",
+                        "primary-fixed": "#ffdbce",
+                        "on-secondary-fixed": "#370e00",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f3f3f5",
+                        "secondary-fixed-dim": "#ffb599",
+                        "secondary-container": "#fd8d5f",
+                        "primary-container": "#ff5e00",
+                        "on-error-container": "#93000a",
+                        "surface": "#f9f9fb",
+                        "background": "#f9f9fb",
+                        "tertiary-container": "#0097fb",
+                        "on-surface-variant": "#5b4137",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#732600",
+                        "surface-variant": "#e2e2e4",
+                        "outline": "#8f7065",
+                        "secondary": "#9c431c",
+                        "surface-dim": "#d9dadc",
+                        "tertiary": "#0061a4",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e2e2e4",
+                        "surface-container-high": "#e8e8ea",
+                        "inverse-on-surface": "#f0f0f2",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-background": "#1a1c1d",
+                        "inverse-primary": "#ffb599"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F7;
+        }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .orange-gradient-btn {
+            background: linear-gradient(145deg, #ff5e00 0%, #a63b00 100%);
+        }
+        .gold-glow {
+            color: #D4AF37;
+            text-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="text-on-surface antialiased pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-lg shadow-zinc-500/5">
+<div class="flex items-center justify-between px-6 py-4 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-zinc-100 p-2 rounded-full transition-colors">menu</span>
+<h1 class="text-xl font-bold tracking-tighter text-orange-600 dark:text-orange-500">Maître de la Cave</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-orange-600 font-bold text-sm tracking-wide" href="#">Équipe</a>
+<a class="text-zinc-400 text-sm tracking-wide hover:text-orange-500 transition-colors" href="#">Plan</a>
+<a class="text-zinc-400 text-sm tracking-wide hover:text-orange-500 transition-colors" href="#">Stock</a>
+<a class="text-zinc-400 text-sm tracking-wide hover:text-orange-500 transition-colors" href="#">Analyses</a>
+</nav>
+<div class="h-10 w-10 rounded-full bg-zinc-200 overflow-hidden border-2 border-white shadow-sm">
+<img alt="Profil Manager" data-alt="Close up professional portrait of a bar manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1Jh_FnvEP4TcDpPq6aC3kFWeiRTcXYsV45UMgENKXARTdXkJskSalcmzuGxSjuvo8fCK_8pjWuaqaiPgFrSxJoWLgsv04E7s6iJl7vBxnqHXEhzYbXSDgbhfWyzvyWgSRQRA7TO4RbnUnseFyg--VWo3wVCXVMQiooPI0Lnd1aYy9dmP9UyUCu2RBD3DsteIU4F4HP4tQQW9xPxetiLvcbbHeXEE-dEWrebWVF8IsWYd_IB8XFMvs3L90VNLXayYuH-_8yztoJyWx"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 px-4 max-w-7xl mx-auto">
+<!-- Executive Header Section -->
+<header class="mb-12 text-center md:text-left">
+<p class="text-[0.6875rem] font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-2">Intelligence de Performance</p>
+<h2 class="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface">Podium Exécutif</h2>
+<p class="text-on-surface-variant mt-3 max-w-2xl font-medium">Mesures de leadership en temps réel pour l'équipe d'excellence.</p>
+</header>
+<!-- Podium Section -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-8 items-end mb-16 px-4">
+<!-- Rank 2 -->
+<div class="order-2 md:order-1 flex flex-col items-center">
+<div class="relative mb-6">
+<div class="w-24 h-24 rounded-full border-4 border-zinc-200 overflow-hidden executive-shadow">
+<img alt="Avatar Marcus" data-alt="Portrait of a male staff member Marcus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCRZs27xaTtf0pFZz4aKs6zRV9YpJHIfcX1gkHlf04OaBeGghRiPhIuEyV09qsJwjO8B9ZEBydA1JgcdQffgQJ-RECYqTOFrwyemDMyY4Gt5pGajI6NC11dPTTPkOvKFdEdPHSryfKfaHZYqawjXAfMfkHAlCM006ildXBvHMDYhrl4B84M117PG7UMAFK97_OqrRjH4qMTkTK1rQ95wq2UGfhJVHP8b4PiCMjlaSqZPCsMoBNI4l47iwf4Z9h3Ue1Uv7L-rV88myM"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-zinc-300 w-10 h-10 rounded-full flex items-center justify-center border-4 border-background">
+<span class="material-symbols-outlined text-white text-lg">workspace_premium</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-2xl executive-shadow w-full text-center border border-zinc-100">
+<p class="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Rang Argent</p>
+<h3 class="text-xl font-bold mb-1">Marcus</h3>
+<p class="text-orange-600 font-semibold text-sm mb-4">94.2 Indice de Performance</p>
+<div class="flex justify-between text-xs font-medium text-on-surface-variant border-t border-zinc-50 pt-4">
+<span>Vélocité : 4.2m</span>
+<span>Marge : 22%</span>
+</div>
+</div>
+</div>
+<!-- Rank 1: Grace -->
+<div class="order-1 md:order-2 flex flex-col items-center scale-110">
+<div class="relative mb-8">
+<div class="w-32 h-32 rounded-full border-4 border-orange-500 overflow-hidden shadow-xl shadow-orange-500/20">
+<img alt="Avatar Grace" data-alt="Portrait of professional female staff member Grace" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJosghHW7WsHCkosSrOss4QljWvfYKgMRwo8p7Bl2QDJJfLKZoRE4XW2X3FwCdC3R7C7AUnKsD2unkeS-NuA0IyhTrSkAqJzaB2AY5TEI6OVNwdrHgZoEAoVByC-seeRu0WSvgmuKWw66GVHRijc5_PSg65Z29brWeelGQd7jfCzUvAz5YP7yG9yVHdaqaeUxGcHk1mQSBEqK_-HY5Z0px7ZFr077frSVGV9yUPzsdD60n9YGEzl7Bsq8GjTfo-xznnKAMQ4RmssTQ"/>
+</div>
+<div class="absolute -bottom-3 -right-3 bg-orange-500 w-12 h-12 rounded-full flex items-center justify-center border-4 border-background">
+<span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-100 text-orange-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap">Excellence Exécutive</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-2xl executive-shadow w-full text-center border-2 border-orange-50">
+<p class="text-[10px] font-bold uppercase tracking-widest text-orange-500 mb-1">Leader Rang Or</p>
+<h3 class="text-2xl font-extrabold mb-1">Grace</h3>
+<p class="text-orange-600 font-bold text-lg mb-6">98.8 Indice de Performance</p>
+<div class="grid grid-cols-2 gap-4 border-t border-zinc-50 pt-6">
+<div class="text-left">
+<p class="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Vélocité de Service</p>
+<p class="text-lg font-bold text-on-surface">3.8m</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Marge de Vente</p>
+<p class="text-lg font-bold gold-glow">31.4%</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Rank 3 -->
+<div class="order-3 md:order-3 flex flex-col items-center">
+<div class="relative mb-6">
+<div class="w-24 h-24 rounded-full border-4 border-orange-200/50 overflow-hidden executive-shadow">
+<img alt="Avatar Leo" data-alt="Portrait of a male staff member Leo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqqSZHk2upHPWozGngR-RDmr9_GUYBfZIuVR8Q3nwiU-qkzWdTcp-40Z_F1lkj2YistXf3yG7UeQ0IpXoiK6sCdpovB-ykTIWq2dKVIgOE5HYxrrMirs_-eoHAJyv1frSJhD09QHyMU6VypyWYpKjl4ndc6WichmGRstvmGiBPUZnSdB34arlNvSXaYM6QvmbPCa80WnF0lKhtjQDWb0bobAn8v8yfiloEpPFFn703n93U5ojZKxsquziLYuEnWhabHzcllqe5P3tP"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-orange-200 w-10 h-10 rounded-full flex items-center justify-center border-4 border-background">
+<span class="material-symbols-outlined text-orange-800 text-lg">workspace_premium</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-2xl executive-shadow w-full text-center border border-zinc-100">
+<p class="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Rang Bronze</p>
+<h3 class="text-xl font-bold mb-1">Leo</h3>
+<p class="text-orange-600 font-semibold text-sm mb-4">91.5 Indice de Performance</p>
+<div class="flex justify-between text-xs font-medium text-on-surface-variant border-t border-zinc-50 pt-4">
+<span>Vélocité : 4.9m</span>
+<span>Marge : 18%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Performance List Header -->
+<div class="flex items-center justify-between mb-6 px-4">
+<h3 class="text-xl font-bold tracking-tight">Mesures de l'Équipe Complète</h3>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface-container-high rounded-full text-xs font-bold uppercase tracking-wider text-on-surface hover:bg-zinc-200 transition-colors">Hebdomadaire</button>
+<button class="px-4 py-2 bg-orange-600 rounded-full text-xs font-bold uppercase tracking-wider text-white">Mensuel</button>
+</div>
+</div>
+<!-- Detailed List -->
+<div class="bg-surface-container-lowest rounded-2xl executive-shadow border border-zinc-100 overflow-hidden mb-12">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Rang</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Membre</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Statut</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Vélocité moy.</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Marge</th>
+<th class="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Indice PI</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-zinc-50">
+<tr class="hover:bg-zinc-50 transition-colors group">
+<td class="px-6 py-6 font-bold text-zinc-400">#4</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<img alt="Sarah" class="w-8 h-8 rounded-full" data-alt="Small round headshot of Sarah" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpLD4_7mbZJxFaCdxATuEZXzZ8uBukgBRU5m38qGEtKsMv1Ax6SeVP8y-AuL6vfG5J458T-2lO3GMiIW7wTdqtSaB5y0O0pZBn1WOkjQj31GGvcA8-giRY__fswypAiNRe6H_oIREHhXbqQ8T9sTqxkUrqFvm3COgINDx87kFcC2GVYkbqEP5O3VK593hRKDY-i0T3P_f_l4rI_WsL-0GQCGTJLRDFgKYdo1bz7WPAJVQKQ4q9w60pCLJuLjsAaN6irx3OaibG03iS"/>
+<span class="font-bold">Sarah Jenkins</span>
+</div>
+</td>
+<td class="px-6 py-6"><span class="px-3 py-1 bg-green-50 text-green-700 text-[10px] font-bold rounded-full uppercase tracking-tighter">Au-dessus</span></td>
+<td class="px-6 py-6 font-medium">5.2m</td>
+<td class="px-6 py-6 font-medium">17.2%</td>
+<td class="px-6 py-6 text-right font-bold text-on-surface">88.4</td>
+</tr>
+<tr class="hover:bg-zinc-50 transition-colors group">
+<td class="px-6 py-6 font-bold text-zinc-400">#5</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<img alt="David" class="w-8 h-8 rounded-full" data-alt="Small round headshot of David" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk7oWVfbSLgQkQlFLC2ITpISjcr92Kufi3f8-5kKDyQUCqoFlFnfGr_hl8G0uvHXFqoqmrXGIzn9tJT58XswCpCUd3_-88nDjXMIvKwwYgfM9yEeDLh9kUyOQuFU2C7CF_nKGCQYl-8QnmBPj1wsM1Y8PMkcDElzFk-5Ty6g036KkaiHzE0qwuUZQXGvdf2AYHGxq_6gGD6gN54huEKh8GRvWW0-xAwX32L63zG7A7YDAgHssJ0vMbCe8HKKf2CJYUFKYqYMP6T_c1"/>
+<span class="font-bold">David Chen</span>
+</div>
+</td>
+<td class="px-6 py-6"><span class="px-3 py-1 bg-zinc-100 text-zinc-600 text-[10px] font-bold rounded-full uppercase tracking-tighter">En ligne</span></td>
+<td class="px-6 py-6 font-medium">5.8m</td>
+<td class="px-6 py-6 font-medium">16.5%</td>
+<td class="px-6 py-6 text-right font-bold text-on-surface">84.2</td>
+</tr>
+<tr class="hover:bg-zinc-50 transition-colors group">
+<td class="px-6 py-6 font-bold text-zinc-400">#6</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<img alt="Elena" class="w-8 h-8 rounded-full" data-alt="Small round headshot of Elena" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7ssD8VKmOa08w8-SwTJCy4-FQT8KwdMdjNvaIpWYQX1BPviuW6TCU71PE7H1hgmkMYHzOJihUJvEuRsoWfmMVyKlp-qohskZfwVbeUyPTaL9frHYHHCNT14v1yKBIILFxa-PYRs7Y8V1XM5sz3-I4BxHHLlY-LBeO-8YVVnH5xIez68fpFGx5DR5LVTjx9T84fjFjE4DZU5yFtRq7zpkQcQle6bjMDaqdXApWW9yK_uo0vX-wKocnAhU5cSZwoAw4gl9ZpUyRTEVB"/>
+<span class="font-bold">Elena Rodriguez</span>
+</div>
+</td>
+<td class="px-6 py-6"><span class="px-3 py-1 bg-orange-50 text-orange-700 text-[10px] font-bold rounded-full uppercase tracking-tighter">À revoir</span></td>
+<td class="px-6 py-6 font-medium">6.4m</td>
+<td class="px-6 py-6 font-medium">14.1%</td>
+<td class="px-6 py-6 text-right font-bold text-on-surface">79.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Stock Meter Callout (Specialized Component) -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+<div class="bg-surface-container-lowest p-8 rounded-2xl executive-shadow border border-zinc-100">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h4 class="text-lg font-bold">Santé de l'Inventaire Premium</h4>
+<p class="text-sm text-on-surface-variant font-medium">Focus : Scotch Single Malt</p>
+</div>
+<span class="material-symbols-outlined text-orange-600">liquor</span>
+</div>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-xs font-bold uppercase tracking-wider">Macallan 18</span>
+<span class="text-xs font-bold text-orange-600">Stock Bas (12%)</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="bg-error h-full rounded-full" style="width: 12%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-xs font-bold uppercase tracking-wider">Lagavulin 16</span>
+<span class="text-xs font-bold text-on-surface-variant">Sain (88%)</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 88%"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-orange-600 p-8 rounded-2xl executive-shadow relative overflow-hidden flex flex-col justify-center">
+<div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+<h4 class="text-white text-2xl font-extrabold mb-2 tracking-tight">Générer le Rapport de Shift</h4>
+<p class="text-white/80 text-sm mb-6 max-w-xs">Compilez instantanément les mesures du podium et les données de vélocité pour examen exécutif.</p>
+<button class="w-fit px-6 py-3 bg-white text-orange-600 font-bold rounded-full text-sm hover:scale-105 transition-transform active:scale-95">Télécharger le Rapport PDF</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 h-20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] pb-safe">
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-orange-500 dark:hover:text-orange-300 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-semibold uppercase tracking-widest Inter mt-1">Plan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-2xl px-3 py-1.5 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">workspace_premium</span>
+<span class="text-[10px] font-semibold uppercase tracking-widest Inter mt-1">Équipe</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-orange-500 dark:hover:text-orange-300 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">liquor</span>
+<span class="text-[10px] font-semibold uppercase tracking-widest Inter mt-1">Stock</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-orange-500 dark:hover:text-orange-300 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="text-[10px] font-semibold uppercase tracking-widest Inter mt-1">Analyses</span>
+</a>
+</nav>
+</body></html>

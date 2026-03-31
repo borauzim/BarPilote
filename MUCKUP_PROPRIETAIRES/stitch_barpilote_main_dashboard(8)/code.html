@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-primary": "#ffb599",
+              "secondary-fixed-dim": "#ffb599",
+              "secondary": "#9c431c",
+              "on-primary-fixed": "#370e00",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-fixed": "#001d36",
+              "on-secondary-container": "#732600",
+              "tertiary-fixed-dim": "#9fcaff",
+              "primary-fixed": "#ffdbce",
+              "tertiary": "#0061a4",
+              "outline": "#8f7065",
+              "surface-tint": "#a63b00",
+              "on-primary-fixed-variant": "#7f2b00",
+              "error-container": "#ffdad6",
+              "inverse-surface": "#2f3132",
+              "surface-container-high": "#e8e8ea",
+              "secondary-fixed": "#ffdbce",
+              "secondary-container": "#fd8d5f",
+              "on-error": "#ffffff",
+              "tertiary-container": "#0097fb",
+              "primary-container": "#ff5e00",
+              "on-primary": "#ffffff",
+              "outline-variant": "#e4bfb1",
+              "surface-container-low": "#f3f3f5",
+              "error": "#ba1a1a",
+              "on-secondary": "#ffffff",
+              "background": "#f9f9fb",
+              "on-tertiary-fixed-variant": "#00497d",
+              "surface-container-highest": "#e2e2e4",
+              "tertiary-fixed": "#d1e4ff",
+              "surface-variant": "#e2e2e4",
+              "primary": "#a63b00",
+              "inverse-on-surface": "#f0f0f2",
+              "primary-fixed-dim": "#ffb599",
+              "on-secondary-fixed": "#370e00",
+              "surface-container": "#eeeef0",
+              "on-primary-container": "#531900",
+              "on-surface-variant": "#5b4137",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "on-surface": "#1a1c1d",
+              "surface-dim": "#d9dadc",
+              "on-background": "#1a1c1d",
+              "on-error-container": "#93000a",
+              "surface-bright": "#f9f9fb",
+              "on-tertiary": "#ffffff",
+              "surface": "#f9f9fb",
+              "on-tertiary-container": "#002d51"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "16px", "xl": "24px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .orange-gradient {
+            background: linear-gradient(145deg, #ff5e00 0%, #a63b00 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body antialiased min-h-screen pb-40">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 w-full z-50 bg-[#F5F5F7]/80 backdrop-blur-md flex items-center justify-between px-6 h-16 w-full no-border">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 duration-200 text-[#1A1C1D] hover:opacity-70 transition-opacity">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline font-bold text-lg tracking-tight text-[#1A1C1D]">Détails du Produit</h1>
+</div>
+<button class="active:scale-95 duration-200 text-[#FF5E00] hover:opacity-70 transition-opacity">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</header>
+<main class="pt-24 px-6 max-w-2xl mx-auto space-y-6">
+<!-- Hero Visual Section -->
+<section class="relative h-64 w-full rounded-xl overflow-hidden executive-shadow bg-surface-container-lowest">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-on-surface/10 z-10"></div>
+<img alt="Primus Bouteille Product Shot" class="w-full h-full object-cover" data-alt="Une bouteille de bière ambrée rafraîchissante posée sur un bar en bois sombre" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI9wXrcDpdvMaYtJ6LYIoFOGg7fgRZuZ_MaYoaaUyKiqTo7SRGTdIErrRazeZjC90vXfVs0_2l1-iSwGuAfmD0DHAqlptU2DtHPp2ncZHKtn9kvnI2g4NtesFBVqCJQVQddd082h-BPiyl-1dDGkfK_Kal5MGXDlvN5XCrtnciTxliCKo7US8Zg9nyo3NwHifq0Z3NZpOZilcqrjpyiiNfeIo_p0RLNsRx1KhZYXd4G9M6s2XeNe5jysmKk9s1Qvd2l6Qld8jKF3th"/>
+<div class="absolute bottom-6 left-6 z-20">
+<p class="text-xs font-bold tracking-[0.05em] uppercase text-white/80 mb-1">Catégorie: Boissons</p>
+<h2 class="text-3xl font-extrabold text-white tracking-tight">Primus Bouteille</h2>
+</div>
+</section>
+<!-- Card 1: Stock Status (The Stock Meter) -->
+<div class="bg-surface-container-lowest rounded-xl p-6 executive-shadow space-y-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">inventory_2</span>
+<h3 class="text-on-surface font-semibold text-base">État des Stocks</h3>
+</div>
+<span class="px-3 py-1 bg-primary-container/10 text-primary-container text-[11px] font-bold rounded-full uppercase tracking-wide">Optimal</span>
+</div>
+<div class="space-y-1">
+<p class="text-on-surface-variant text-sm">Actuellement en stock:</p>
+<p class="text-xl font-bold text-on-surface">3 Casiers, 5 Bouteilles</p>
+</div>
+<div class="space-y-2 pt-2">
+<div class="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-tight">
+<span>Niveau de Stock</span>
+<span>85%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-[85%] orange-gradient rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Card 2: Financial Metrics (Bento Style) -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Purchase & Sale -->
+<div class="col-span-2 bg-surface-container-lowest rounded-xl p-6 executive-shadow">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary-container">payments</span>
+<h3 class="text-on-surface font-semibold text-base">Indicateurs Financiers</h3>
+</div>
+<div class="grid grid-cols-2 gap-8">
+<div class="space-y-1">
+<p class="text-[11px] font-bold text-slate-500 uppercase tracking-[0.05em]">Prix d'achat</p>
+<p class="text-2xl font-bold text-on-surface tracking-tight">2,500 <span class="text-sm font-medium opacity-50">FC</span></p>
+</div>
+<div class="space-y-1">
+<p class="text-[11px] font-bold text-slate-500 uppercase tracking-[0.05em]">Prix de vente</p>
+<p class="text-2xl font-bold text-on-surface tracking-tight">4,000 <span class="text-sm font-medium opacity-50">FC</span></p>
+</div>
+</div>
+</div>
+<!-- Margin Metric (Highlight Card) -->
+<div class="col-span-2 bg-primary-container text-white rounded-xl p-6 executive-shadow relative overflow-hidden">
+<div class="absolute -right-4 -top-4 opacity-10">
+<span class="material-symbols-outlined !text-9xl">trending_up</span>
+</div>
+<div class="relative z-10 flex justify-between items-end">
+<div class="space-y-1">
+<p class="text-[11px] font-bold text-white/70 uppercase tracking-[0.05em]">Marge Bénéficiaire</p>
+<p class="text-4xl font-extrabold tracking-tighter">1,500 <span class="text-xl font-medium opacity-70">FC</span></p>
+</div>
+<div class="text-right">
+<p class="text-[11px] font-bold text-white/70 uppercase tracking-[0.05em]">Rentabilité</p>
+<p class="text-xl font-bold">+60%</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Technical Specs / Metadata -->
+<div class="bg-surface-container-low rounded-xl p-6 space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-slate-500">info</span>
+<h3 class="text-on-surface font-semibold text-base">Spécifications</h3>
+</div>
+<div class="grid grid-cols-2 gap-y-4 text-sm">
+<div>
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Fournisseur</p>
+<p class="font-medium">Bralima S.A.</p>
+</div>
+<div>
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Format</p>
+<p class="font-medium">72cl Verre</p>
+</div>
+<div>
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Unité/Casier</p>
+<p class="font-medium">12 Bouteilles</p>
+</div>
+<div>
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Dernier Mouvement</p>
+<p class="font-medium">Il y a 2h</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Fixed Bottom Section: Réapprovisionnement -->
+<div class="fixed bottom-0 left-0 right-0 bg-surface-container-lowest/90 backdrop-blur-xl border-t border-surface-container-highest/30 px-6 pt-6 pb-10 z-50 rounded-t-[32px] executive-shadow">
+<div class="max-w-2xl mx-auto space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold text-on-surface tracking-tight">Réapprovisionnement</h3>
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Ajuster le stock</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container rounded-full p-2">
+<button class="w-14 h-14 rounded-full bg-white executive-shadow flex items-center justify-center active:scale-90 duration-200">
+<span class="material-symbols-outlined text-on-surface font-bold">remove</span>
+</button>
+<div class="flex flex-col items-center">
+<span class="text-4xl font-extrabold text-primary-container tracking-tighter">12</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Unités</span>
+</div>
+<button class="w-14 h-14 rounded-full bg-white executive-shadow flex items-center justify-center active:scale-90 duration-200">
+<span class="material-symbols-outlined text-on-surface font-bold">add</span>
+</button>
+</div>
+<button class="w-full h-14 rounded-full orange-gradient text-white font-bold text-base executive-shadow active:scale-95 duration-200 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">check_circle</span>
+                Confirmer l'ajout
+            </button>
+</div>
+</div>
+<!-- Bottom Navigation Shell (Filter Applied: Suppressed for Details View) -->
+<!-- Navigation suppressed per 'Destination Rule' and 'UX Goal' for task-focused sub-page -->
+</body></html>

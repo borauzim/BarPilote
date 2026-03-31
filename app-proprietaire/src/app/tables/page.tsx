@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface TableData {
     id: string;
@@ -12,6 +14,7 @@ interface TableData {
 
 export default function TablesManagementPage() {
     const router = useRouter();
+    const stickerRef = useRef<HTMLDivElement>(null);
 
     const [tables, setTables] = useState<TableData[]>([
         { id: "T01", name: "Table 01", section: "Main Hall • Row A", qrGenerated: false },
@@ -53,6 +56,72 @@ export default function TablesManagementPage() {
         if (selectedTable?.id === id) {
             const remaining = tables.filter((t) => t.id !== id);
             setSelectedTable(remaining.length > 0 ? remaining[0] : null);
+        }
+    };
+
+    const handleDownloadAll = async () => {
+        alert("Génération du Pack de Table Complet... 📦\nCela peut prendre quelques secondes.");
+
+        const pdf = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4",
+        });
+
+        pdf.setFontSize(22);
+        pdf.text("Pack de QR Codes - BarPilote", 20, 30);
+        pdf.setFontSize(12);
+        pdf.text(`Établissement : Le Petit Central`, 20, 40);
+        pdf.text(`Nombre de tables : ${tables.length}`, 20, 48);
+
+        // Simulation d'exportation de masse
+        // Dans une vraie app, on génèrerait chaque QR code en boucle
+        pdf.setFontSize(10);
+        pdf.text("Ce pack contient les identifiants pour toutes vos tables configurées.", 20, 60);
+
+        // On ajoute une simulation de rendu pour l'effet "ça marche"
+        if (stickerRef.current) {
+            const canvas = await html2canvas(stickerRef.current, { scale: 2 });
+            const imgData = canvas.toDataURL("image/png");
+            pdf.addImage(imgData, "PNG", 50, 80, 100, 140);
+        }
+
+        pdf.save("Pack_Complet_BarPilote_Tables.pdf");
+    };
+
+    const handleDownloadSingle = async (table: TableData) => {
+        setSelectedTable(table);
+        // On attend que le DOM se mette à jour pour refléter la sélection dans le stickerRef
+        setTimeout(async () => {
+            await handleDownloadPDF();
+        }, 100);
+    };
+
+    const handleDownloadPDF = async () => {
+        if (!stickerRef.current) return;
+
+        try {
+            const canvas = await html2canvas(stickerRef.current, {
+                scale: 3, // Haute résolution
+                useCORS: true,
+                backgroundColor: "#ffffff",
+            });
+            const imgData = canvas.toDataURL("image/png");
+            const pdf = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: "a6", // Format sticker
+            });
+
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`Badge_${selectedTable?.name || "Table"}.pdf`);
+        } catch (error) {
+            console.error("PDF Generation Error:", error);
+            alert("Erreur lors de la génération du PDF.");
         }
     };
 
@@ -102,10 +171,57 @@ export default function TablesManagementPage() {
                             Création des Tables
                         </h2>
                     </div>
-                    <button className="text-orange-600 font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity bg-orange-50 px-4 py-2 rounded-lg">
-                        <span className="material-symbols-outlined text-sm">print</span>
-                        Imprimer tous les QR Codes
-                    </button>
+                    <div className="flex flex-wrap gap-3">
+                        <button className="text-orange-600 font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity bg-orange-50 px-4 py-2 rounded-lg">
+                            <span className="material-symbols-outlined text-sm">print</span>
+                            Imprimer tout
+                        </button>
+                        <button
+                            onClick={handleDownloadAll}
+                            className=" citrus-gradient text-white font-bold flex items-center gap-2 hover:brightness-110 shadow-lg shadow-orange-500/20 transition-all px-6 py-2 rounded-full active:scale-95"
+                        >
+                            <span className="material-symbols-outlined text-sm">download</span>
+                            Pack QR
+                        </button>
+                        <button
+                            onClick={() => router.push("/inventory")}
+                            className="bg-slate-900 icon-glow text-white font-bold flex items-center gap-2 hover:bg-black shadow-lg transition-all px-6 py-2 rounded-full active:scale-95 border border-slate-700"
+                        >
+                            Suivant : Stock
+                            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Deployment Guide Card */}
+                <div className="mb-10 bg-orange-50 border border-orange-100 rounded-2xl p-6 lg:p-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transform rotate-12">
+                        <span className="material-symbols-outlined text-9xl text-orange-600">rocket_launch</span>
+                    </div>
+                    <div className="relative z-10 space-y-4 max-w-4xl">
+                        <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-orange-600 font-bold">lightbulb</span>
+                            <h3 className="text-orange-950 font-bold text-lg tracking-tight uppercase tracking-wider">Guide de Déploiement Physique</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-8">
+                            {[
+                                { icon: "download_for_offline", title: "Télécharger", desc: "Récupérez le pack complet de vos QR codes générés." },
+                                { icon: "print", title: "Imprimer", desc: "Imprimez-les sur du papier de qualité ou autocollant." },
+                                { icon: "layers_clear", title: "Plastifier", desc: "Protégez les codes pour une durabilité maximale." },
+                                { icon: "table_bar", title: "Installer", desc: "Posez-les sur les tables pour que vos clients puissent commander." }
+                            ].map((step, i) => (
+                                <div key={i} className="flex md:flex-col items-center md:items-start gap-4 md:gap-3 bg-white/50 p-4 rounded-xl border border-white">
+                                    <div className="bg-orange-600 text-white p-2 rounded-lg shrink-0">
+                                        <span className="material-symbols-outlined text-xl">{step.icon}</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black text-orange-950 uppercase tracking-widest">{step.title}</p>
+                                        <p className="text-[11px] text-orange-900/60 font-medium leading-relaxed leading-tight mt-1">{step.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -135,28 +251,41 @@ export default function TablesManagementPage() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <button className={`p-2 transition-colors ${table.qrGenerated ? "text-orange-600" : "text-gray-400"}`}>
-                                        <span className="material-symbols-outlined" style={{ fontVariationSettings: table.qrGenerated ? "'FILL' 1" : "'FILL' 0" }}>
-                                            qr_code_2
-                                        </span>
-                                    </button>
+                                <div className="flex items-center gap-2">
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleGenerateQR(table.id);
                                         }}
-                                        className={`px-4 py-2 text-sm font-bold rounded-full transition-all active:scale-95 ${table.qrGenerated
-                                            ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20"
-                                            : "bg-surface-container-high text-on-surface hover:bg-slate-200"
+                                        className={`px-4 py-2 text-xs font-bold rounded-full transition-all active:scale-95 ${table.qrGenerated
+                                            ? "bg-orange-600 text-white shadow-md shadow-orange-500/20"
+                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                             }`}
                                     >
                                         {table.qrGenerated ? "Regénérer" : "Générer"}
                                     </button>
+
                                     <button
-                                        onClick={(e) => handleDeleteTable(table.id, e)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (table.qrGenerated) handleDownloadSingle(table);
+                                            else handleGenerateQR(table.id);
+                                        }}
+                                        title={table.qrGenerated ? "Télécharger le badge PDF" : "Générer d'abord"}
+                                        className={`p-2 rounded-xl transition-all active:scale-95 ${table.qrGenerated
+                                            ? "text-orange-600 bg-orange-50 hover:bg-orange-100 ring-1 ring-orange-200"
+                                            : "text-slate-300 bg-slate-50 cursor-not-allowed opacity-50"}`}
+                                    >
+                                        <span className="material-symbols-outlined text-lg">download</span>
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteTable(table.id, e);
+                                        }}
                                         title="Supprimer la table"
-                                        className="p-2 text-slate-400 hover:text-red-500 transition-colors ml-1 active:scale-95"
+                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors active:scale-95"
                                     >
                                         <span className="material-symbols-outlined text-lg">delete</span>
                                     </button>
@@ -168,7 +297,7 @@ export default function TablesManagementPage() {
                     <div className="lg:col-span-1">
                         <div className="sticky top-24 space-y-6">
                             {/* Physical Sticker Preview */}
-                            <div className="bg-white rounded-xl p-6 shadow-2xl relative overflow-hidden flex flex-col items-center text-center border border-slate-100">
+                            <div ref={stickerRef} className="bg-white rounded-xl p-6 shadow-2xl relative overflow-hidden flex flex-col items-center text-center border border-slate-100">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-orange-600"></div>
 
                                 {/* 1. Logo BarPilote + Nom BarPilote au dessus */}
@@ -237,6 +366,7 @@ export default function TablesManagementPage() {
 
                                 <div className="mt-6 pt-4 border-t border-slate-100 w-full relative z-10">
                                     <button
+                                        onClick={handleDownloadPDF}
                                         disabled={!selectedTable?.qrGenerated}
                                         className="w-full bg-slate-50 text-slate-600 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-100 hover:text-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200"
                                     >

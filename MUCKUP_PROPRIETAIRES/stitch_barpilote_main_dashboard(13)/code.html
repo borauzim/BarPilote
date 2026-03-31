@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-fixed-dim": "#9fcaff",
+              "surface-container-high": "#e8e8ea",
+              "primary-fixed-dim": "#ffb599",
+              "surface-dim": "#d9dadc",
+              "tertiary-fixed": "#d1e4ff",
+              "on-primary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "surface-tint": "#a63b00",
+              "secondary": "#9c431c",
+              "error": "#ba1a1a",
+              "on-error": "#ffffff",
+              "on-primary-fixed-variant": "#7f2b00",
+              "tertiary": "#0061a4",
+              "on-primary-container": "#531900",
+              "on-secondary-fixed": "#370e00",
+              "background": "#f9f9fb",
+              "surface-container": "#eeeef0",
+              "primary-fixed": "#ffdbce",
+              "surface-container-low": "#f3f3f5",
+              "surface-bright": "#f9f9fb",
+              "inverse-on-surface": "#f0f0f2",
+              "error-container": "#ffdad6",
+              "secondary-container": "#fd8d5f",
+              "on-surface": "#1a1c1d",
+              "outline-variant": "#e4bfb1",
+              "on-secondary": "#ffffff",
+              "on-primary-fixed": "#370e00",
+              "surface": "#f9f9fb",
+              "primary": "#a63b00",
+              "on-tertiary-fixed": "#001d36",
+              "surface-container-lowest": "#ffffff",
+              "primary-container": "#ff5e00",
+              "on-background": "#1a1c1d",
+              "surface-container-highest": "#e2e2e4",
+              "secondary-fixed": "#ffdbce",
+              "secondary-fixed-dim": "#ffb599",
+              "on-tertiary-container": "#002d51",
+              "on-surface-variant": "#5b4137",
+              "inverse-surface": "#2f3132",
+              "on-tertiary-fixed-variant": "#00497d",
+              "on-secondary-container": "#732600",
+              "inverse-primary": "#ffb599",
+              "outline": "#8f7065",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "on-error-container": "#93000a",
+              "tertiary-container": "#0097fb",
+              "surface-variant": "#e2e2e4"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f7;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#F5F5F7]/80 backdrop-blur-xl dark:bg-gray-950/80 shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+<div class="flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img alt="Admin Profile Image" class="w-full h-full object-cover" data-alt="Professional corporate headshot of a staff administrator" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC05FhDJ26qez2NMVCsG8QC0Q4cN7J--px6vfUDKHeQRd3XqQ4yqQ8xkuYh7BxeZo6bzXBsT2xP5hguqSTQglyH2C3sXqSWLsaOr88HrNfOVRuoMEm4Bi9G6ZnwHJwxy56p82M7IlSGnklucV8bJiaIpsQ8rMXVwPQY-aktF_oNUflyh6YrNoIqwDlYA7PDjLyZzkcOh3lOCHRhlRZWlV52sQAhmxjQd2qfWaa_EuzK7cFozr-KKnPFvThOHBso4n5l1KP96I6v1rOe"/>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Staff Management</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-gray-200/50 transition-all active:scale-95 duration-200 text-gray-500">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Dashboard Header -->
+<section class="mb-10">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<span class="text-[0.6875rem] font-medium uppercase tracking-[0.05em] text-on-surface-variant">Live Operations</span>
+<h2 class="text-[2.75rem] font-bold tracking-tight leading-tight text-on-surface">Liste des Serveurs Actifs</h2>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex -space-x-3">
+<img class="w-8 h-8 rounded-full border-2 border-surface-container-lowest" data-alt="Staff member profile 1" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHiH1jBjujlYVcG6AQWJ-dY_wf2lhybw051xyCQX9xb4u90MJ0IbfjduoHIMFKIsoFT49Wjs0RG3EF_eP3KMIz68FpZQoOmvSr4yjbaKkDn9_BMMkdRKfEsTuKnclNj2iI9DfvYkSppKOuOoEfvxiSAi6r6qhpY8JIi8q_IS2Nikh9tu6nLd0jsKs8y_nAP9bw7Eqm07DmcPQZcw7KqdyqM5Cqc3gFBHe9_7-vIh6Nm8AhHzRM-4MiyusAtFI8tMYsdMnJKbdIityx"/>
+<img class="w-8 h-8 rounded-full border-2 border-surface-container-lowest" data-alt="Staff member profile 2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAh1xigvdrK0yaLp7BQP1cx5n9JoJsMDV6MnMMLfJGa35hgsd44gEfWheqTE_0qXxgWonzHPx5S_dWr2H6pgdHGiYTTcMLCHfot2grFcyKV3hFK5tr1a7WdQ7z8J3imhBHvFKNnIBOn4dNqkpCIRJxYVx-Do-jXykrr1zqPBJ7QgEg3wW6EDwdc8aTosEavJTNjXL_UNb-oLxNLgKAOTz1WcqnY7AyNyqMl885wh0WjsAQ17d1oAwZAD39z1ZV8A3627R_cmJoz_BvN"/>
+<img class="w-8 h-8 rounded-full border-2 border-surface-container-lowest" data-alt="Staff member profile 3" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC34Ljgz_CTMDE5xk6aRNhMZAEnMrtaIFZALNWYzHhS0rH_s4UDRWQB2a3CqdijSZrKn7Bz2z_61wMwb9tc50CftNpnCdEGsJLbPAo2RtPzP7wSoGSNRqek3AEpF-HgzPmKgWrvr38Wl71VsrFeuNWD9fo6tj6atbj8ioS-Tvo402zDAdxaig8sH2oL9VHiRY0y8n2-i3ivAaayxHLQcfmXpc_cTSrSPkv5ffPTKQfHOBChEkBsO76YYLqkiQdY1k3uWFjQsXyH19A8"/>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container-high flex items-center justify-center text-[10px] font-bold">+5</div>
+</div>
+<button class="bg-gradient-to-br from-[#FF5E00] to-[#A63B00] text-white px-6 py-2.5 rounded-full font-semibold shadow-lg shadow-orange-500/20 active:scale-95 transition-transform text-sm">
+                        Assign Shift
+                    </button>
+</div>
+</div>
+</section>
+<!-- Bento Grid Server Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Server Card 1 (Active Highlight) -->
+<div class="bg-surface-container-lowest rounded-3xl p-5 executive-shadow relative overflow-hidden group hover:scale-[1.02] transition-all duration-300 ring-2 ring-primary/10 border border-primary-fixed">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img class="w-14 h-14 rounded-2xl object-cover bg-surface-container" data-alt="Portrait of server Julian S." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhi0iisXjK1aGUkFv-yJ-fTR7BwwKPI5jHDJ5VqwktQJFRMOu2KqussA7NL2SnBKPWOjzOLOyMQC4n0Fb2QLBDwVu5Cn1yMRQFE1Ez3fpRJJEhiYXgL0Smbn_fgBBkSDC8wQzM1c_OJQ7bktc3x2cneSGxhyM2yFC9kB8nQp2rcvDm-3n4KVTrW7OaUGW2K0pHCsuwTVgTYZ3KfQO_zmb-JToJrRUedB5TCqqwyVXbrMtzYgpyYt-qvBW9KNIao99rQJ4OFT5AhlHC"/>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-on-surface leading-none">Julian S.</h3>
+<span class="text-xs text-on-surface-variant font-medium mt-1 inline-block">Floor Lead</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="more_vert">more_vert</span>
+</div>
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-surface-container-low rounded-2xl p-3">
+<span class="text-[0.625rem] font-bold uppercase tracking-wider text-on-surface-variant">Tables</span>
+<p class="text-2xl font-bold text-on-surface">6</p>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-3">
+<span class="text-[0.625rem] font-bold uppercase tracking-wider text-on-surface-variant">Sales</span>
+<p class="text-2xl font-bold text-primary">$412</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-tertiary" data-icon="schedule">schedule</span>
+<span class="text-xs font-medium text-on-surface-variant">Active 4h 12m</span>
+</div>
+<button class="text-primary font-bold text-sm tracking-tight hover:underline">Details</button>
+</div>
+</div>
+<!-- Server Card 2 -->
+<div class="bg-surface-container-lowest rounded-3xl p-5 executive-shadow group hover:scale-[1.02] transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img class="w-14 h-14 rounded-2xl object-cover bg-surface-container" data-alt="Portrait of server Ana M." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuRhSZ0hU-VPqM2eMJePExJnsxWbrv0jIhhNj1-B7BlePEpt-DOL5TH3BO_IE4TznkF5sNJjrp9Ele9IRndxW37TzPvUv5DJ6Ml1PGlyQzFZSM0I3j0Yk9BLWssr3UOZPz7atGiwCO9yTayzTaeAGlT1Q73z5GeAPGGYcZCv-hjS1JCDH2GLcGXuNVXDuiXEIvK6VXbjkWOipzcBBql6nD3RfhojGLSHLklQ9k6zN2LWJw4yBsx_1IwU1ab9Hf0h-Rj7eKfMvlvdCf"/>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-on-surface leading-none">Ana M.</h3>
+<span class="text-xs text-on-surface-variant font-medium mt-1 inline-block">Waitstaff</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/40" data-icon="more_vert">more_vert</span>
+</div>
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-surface-container-low rounded-2xl p-3">
+<span class="text-[0.625rem] font-bold uppercase tracking-wider text-on-surface-variant">Tables</span>
+<p class="text-2xl font-bold text-on-surface">4</p>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-3">
+<span class="text-[0.625rem] font-bold uppercase tracking-wider text-on-surface-variant">Sales</span>
+<p class="text-2xl font-bold text-on-surface">$285</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-tertiary" data-icon="schedule">schedule</span>
+<span class="text-xs font-medium text-on-surface-variant">Active 2h 45m</span>
+</div>
+<button class="text-on-surface-variant font-semibold text-sm">View</button>
+</div>
+</div>
+<!-- Server Card 3 (Break State) -->
+<div class="bg-surface-container-lowest rounded-3xl p-5 executive-shadow group opacity-70">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img class="w-14 h-14 rounded-2xl object-cover bg-surface-container grayscale" data-alt="Portrait of server Kevin B." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDX97drmAcB5C9-7255cHLMalRqoqc3tP4-_QDc-zV2AD1cHRkTHDdL2KSEO2dg2AV0u5TyJk1lmm3hBuVMv7_nseFR3yeQgUn9SZCOSiJdbnGcWVbT-77OoPTWnU2nNL4bWhGWuNAyxDTmdrcNDC38JLpdi3zOLH7qLqQ81I8pyuTWxDaMNwP_h_v0LqWsngWM9bbMMafHzogimJYwJcuscgsGeIaNS3_QcrADnbtVb5lPY6aCH14uR82mFyu8-_Sg19hQ6QZ_VgPP"/>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-400 border-2 border-white rounded-full"></span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-on-surface leading-none">Kevin B.</h3>
+<span class="text-xs text-error font-bold mt-1 inline-block uppercase tracking-wider">On Break</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/40" data-icon="more_vert">more_vert</span>
+</div>
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-surface-container-low rounded-2xl p-3">
+<span class="text-[0.625rem] font-bold uppercase tracking-wider text-on-surface-variant">Tables</span>
+<p class="text-2xl font-bold text-on-surface">0</p>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-3">
+<span class="text-[0.625rem] font-bold uppercase tracking-wider text-on-surface-variant">Sales</span>
+<p class="text-2xl font-bold text-on-surface">$120</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-error" data-icon="timer">timer</span>
+<span class="text-xs font-medium text-error">Remaining: 08:24</span>
+</div>
+</div>
+</div>
+<!-- Server Card 4 -->
+<div class="bg-surface-container-lowest rounded-3xl p-5 executive-shadow group hover:scale-[1.02] transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img class="w-14 h-14 rounded-2xl object-cover bg-surface-container" data-alt="Portrait of server Leo C." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBJ5IdIVauI8vdQdrHbCe0cTvIL5Pspl0-wteMt7VsMFDFxPGFLL45iYqJJiftYQCphiPNtodARNIB9aDTF01-jWzRbY4oqE6s51mkS4n0hNYSxVTq9EgBomTIab2POLqEqaq1kUNMEX8ccWLgV3eDoOVjXMpWH1M54KdGoIofEXPPg_Mbg9XTGResPNzL2X7ymlsKgf28zI1qPo_3pmvLqinBG-aLTb7qpyDsqNCoTnyqVAcI3QXuaCJe_p7UY-K-d7EaVXmsGHk9"/>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-on-surface leading-none">Leo C.</h3>
+<span class="text-xs text-on-surface-variant font-medium mt-1 inline-block">Waitstaff</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/40" data-icon="more_vert">more_vert</span>
+</div>
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-surface-container-low rounded-2xl p-3">
+<span class="text-[0.625rem] font-bold uppercase tracking-wider text-on-surface-variant">Tables</span>
+<p class="text-2xl font-bold text-on-surface">3</p>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-3">
+<span class="text-[0.625rem] font-bold uppercase tracking-wider text-on-surface-variant">Sales</span>
+<p class="text-2xl font-bold text-on-surface">$194</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-tertiary" data-icon="schedule">schedule</span>
+<span class="text-xs font-medium text-on-surface-variant">Active 1h 20m</span>
+</div>
+<button class="text-on-surface-variant font-semibold text-sm">View</button>
+</div>
+</div>
+</div>
+<!-- Secondary Performance Metrics Section -->
+<section class="mt-12 bg-surface-container-low rounded-[32px] p-8">
+<h3 class="text-xl font-bold mb-6 text-on-surface">Performance Global</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="flex flex-col">
+<span class="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-on-surface-variant mb-2">Total Serveurs</span>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-extrabold text-on-surface">12</span>
+<span class="text-sm font-semibold text-green-600">+2 vs Hier</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-on-surface-variant mb-2">Ventes Moyennes / Heure</span>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-extrabold text-on-surface">$342</span>
+<span class="text-sm font-semibold text-primary">High Volume</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-on-surface-variant mb-2">Tables Occupées</span>
+<div class="w-full bg-surface-container-highest h-2 rounded-full mt-3 overflow-hidden">
+<div class="bg-primary h-full w-[75%] rounded-full"></div>
+</div>
+<p class="text-sm font-medium mt-2 text-on-surface-variant">18 sur 24 tables</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full rounded-t-[24px] z-50 bg-white/90 backdrop-blur-2xl dark:bg-gray-900/90 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] md:hidden">
+<div class="flex justify-around items-center w-full px-4 pb-8 pt-4">
+<a class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 px-5 py-2 hover:text-[#FF5E00] transition-colors duration-200 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[11px] font-medium uppercase tracking-[0.05em] mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 px-5 py-2 hover:text-[#FF5E00] transition-colors duration-200 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="liquor">liquor</span>
+<span class="text-[11px] font-medium uppercase tracking-[0.05em] mt-1">Inventory</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#FF5E00] to-[#A63B00] text-white rounded-[16px] px-5 py-2 shadow-lg shadow-orange-500/20 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="groups" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="text-[11px] font-medium uppercase tracking-[0.05em] mt-1">Staff</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 px-5 py-2 hover:text-[#FF5E00] transition-colors duration-200 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-[11px] font-medium uppercase tracking-[0.05em] mt-1">Reports</span>
+</a>
+</div>
+</nav>
+<!-- Floating Action Button (FAB) for Desktop/Tablet -->
+<button class="hidden md:flex fixed bottom-8 right-8 w-16 h-16 bg-primary rounded-full items-center justify-center text-white shadow-2xl shadow-primary/40 hover:scale-110 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined" data-icon="person_add" style="font-size: 32px;">person_add</span>
+</button>
+</body></html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-tint": "#a63b00",
+              "inverse-on-surface": "#f0f0f2",
+              "surface-bright": "#f9f9fb",
+              "primary-fixed-dim": "#ffb599",
+              "surface-dim": "#d9dadc",
+              "on-surface-variant": "#5b4137",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "primary": "#a63b00",
+              "on-error": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#e8e8ea",
+              "surface-container": "#eeeef0",
+              "tertiary-fixed": "#d1e4ff",
+              "on-secondary-fixed": "#370e00",
+              "tertiary": "#0061a4",
+              "error": "#ba1a1a",
+              "surface-variant": "#e2e2e4",
+              "outline-variant": "#e4bfb1",
+              "on-tertiary-fixed": "#001d36",
+              "on-primary-container": "#531900",
+              "inverse-primary": "#ffb599",
+              "secondary-fixed": "#ffdbce",
+              "tertiary-fixed-dim": "#9fcaff",
+              "on-primary-fixed": "#370e00",
+              "error-container": "#ffdad6",
+              "tertiary-container": "#0097fb",
+              "outline": "#8f7065",
+              "on-surface": "#1a1c1d",
+              "background": "#f9f9fb",
+              "on-secondary": "#ffffff",
+              "secondary-container": "#fd8d5f",
+              "on-tertiary-container": "#002d51",
+              "surface": "#f9f9fb",
+              "on-secondary-container": "#732600",
+              "primary-container": "#ff5e00",
+              "on-primary-fixed-variant": "#7f2b00",
+              "on-background": "#1a1c1d",
+              "on-tertiary-fixed-variant": "#00497d",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f3f3f5",
+              "surface-container-highest": "#e2e2e4",
+              "inverse-surface": "#2f3132",
+              "secondary-fixed-dim": "#ffb599",
+              "on-primary": "#ffffff",
+              "primary-fixed": "#ffdbce",
+              "secondary": "#9c431c",
+              "on-error-container": "#93000a"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .bottom-border-input {
+        border: none;
+        border-bottom: 2px solid #e2e2e4;
+        background: transparent;
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .bottom-border-input:focus {
+        border-bottom-color: #ff5e00;
+        box-shadow: none;
+        outline: none;
+      }
+      .glass-header {
+        background: rgba(249, 249, 251, 0.8);
+        backdrop-filter: blur(20px);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none font-sans antialiased text-slate-900 dark:text-slate-100 flex items-center justify-between px-6 h-16 w-full">
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface" data-icon="close">close</span>
+</button>
+<h1 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Profil de l'Exécutif</h1>
+<button class="text-orange-600 dark:text-orange-500 font-bold hover:opacity-80 transition-opacity active:scale-95 duration-200">Enregistrer</button>
+</header>
+<main class="flex-1 pt-16 pb-24">
+<!-- Profile Header Area -->
+<section class="relative px-8 pt-12 pb-8 flex flex-col items-center">
+<div class="relative group">
+<div class="w-32 h-32 rounded-full bg-surface-container-highest overflow-hidden shadow-[0_10px_30px_rgba(26,28,29,0.08)] flex items-center justify-center">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Close up of professional bar owner portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmk11NPKj1mp074liATMXe1vXwQkAcs-yrkDOdr_j-qVitF-vc8aYDqs1uZDPlJcrgiJc_3s4XeAnVCcoLPtvEO_kS1fq-PmqwpaVD5zq7ClPg5vZEdD5HF-m3ee7Sk9XhHx5nXQGrIUnmnee4kPitbt3Z1NtNm3ptSQd0vgOB2e3pRwuj2HTkYewcnWln1UDnxFcJDp6RgoWQhCaOF0bTto0sLr4v3qrAlqdGzQCXrAgrTBbTIUZRiglEKboCGBn3jmd5IQYqlVVK"/>
+</div>
+<button class="absolute bottom-0 right-0 w-10 h-10 bg-primary-container text-on-primary rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="photo_camera">photo_camera</span>
+</button>
+</div>
+<div class="mt-8 text-center space-y-2">
+<span class="text-[10px] font-bold tracking-[0.1em] text-primary uppercase">CONFIGURATION DE L'EXÉCUTIF</span>
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface">Complétez votre Licence de Pilote</h2>
+<p class="text-sm text-on-surface-variant font-medium max-w-[280px] mx-auto opacity-70">Définissez votre identité de gestionnaire pour piloter votre établissement avec précision.</p>
+</div>
+</section>
+<!-- Form Section -->
+<section class="px-8 mt-4 space-y-10">
+<!-- Nom -->
+<div class="relative group">
+<label class="block text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest mb-1 group-focus-within:text-primary transition-colors">Nom</label>
+<input class="bottom-border-input w-full text-base font-semibold text-on-surface placeholder:text-on-surface-variant/30 py-2" placeholder="Entrez votre nom" type="text"/>
+</div>
+<!-- Postnom -->
+<div class="relative group">
+<label class="block text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest mb-1 group-focus-within:text-primary transition-colors">Postnom</label>
+<input class="bottom-border-input w-full text-base font-semibold text-on-surface placeholder:text-on-surface-variant/30 py-2" placeholder="Entrez votre postnom" type="text"/>
+</div>
+<!-- Prénom -->
+<div class="relative group">
+<label class="block text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest mb-1 group-focus-within:text-primary transition-colors">Prénom</label>
+<input class="bottom-border-input w-full text-base font-semibold text-on-surface placeholder:text-on-surface-variant/30 py-2 !border-primary" type="text" value="Marc-Antoine"/>
+</div>
+<!-- Numéro de téléphone -->
+<div class="relative group">
+<label class="block text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest mb-1 group-focus-within:text-primary transition-colors">Numéro de téléphone</label>
+<div class="flex items-center">
+<span class="text-on-surface font-semibold mr-2">+33</span>
+<input class="bottom-border-input w-full text-base font-semibold text-on-surface placeholder:text-on-surface-variant/30 py-2" placeholder="06 12 34 56 78" type="tel"/>
+</div>
+</div>
+</section>
+<!-- Signature Branding Moment (Asymmetric Layout Item) -->
+<div class="mt-16 px-8 flex justify-end">
+<div class="bg-surface-container p-6 rounded-2xl max-w-[200px] shadow-sm">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="verified_user">verified_user</span>
+<p class="text-[11px] font-medium leading-relaxed text-on-surface-variant">Vos données de profil sont cryptées selon des protocoles de sécurité de niveau exécutif.</p>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-[0_-10px_30px_rgba(26,28,29,0.04)] border-t border-slate-200/15 dark:border-slate-800/15 flex justify-around items-center h-20 pb-safe px-4">
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-orange-400 transition-colors active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-medium tracking-wide uppercase mt-1">TABLEAU</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-orange-400 transition-colors active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="liquor">liquor</span>
+<span class="text-[10px] font-medium tracking-wide uppercase mt-1">STOCKS</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:text-orange-400 transition-colors active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="text-[10px] font-medium tracking-wide uppercase mt-1">ÉQUIPE</span>
+</div>
+<!-- Active Tab: Profile -->
+<div class="flex flex-col items-center justify-center text-orange-600 dark:text-orange-500 scale-110 transition-transform active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-[10px] font-medium tracking-wide uppercase mt-1">PROFIL</span>
+</div>
+</nav>
+</body></html>

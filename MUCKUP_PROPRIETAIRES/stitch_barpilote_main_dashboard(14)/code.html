@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BarPilote - Affectation des Tables</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-fixed-dim": "#ffb599",
+              "on-secondary": "#ffffff",
+              "tertiary": "#0061a4",
+              "surface-variant": "#e2e2e4",
+              "on-tertiary-container": "#002d51",
+              "on-surface-variant": "#5b4137",
+              "primary": "#a63b00",
+              "surface-dim": "#d9dadc",
+              "secondary-fixed": "#ffdbce",
+              "on-error": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "secondary": "#9c431c",
+              "on-tertiary-fixed-variant": "#00497d",
+              "tertiary-container": "#0097fb",
+              "on-secondary-fixed": "#370e00",
+              "on-error-container": "#93000a",
+              "inverse-on-surface": "#f0f0f2",
+              "secondary-container": "#fd8d5f",
+              "primary-container": "#ff5e00",
+              "surface-tint": "#a63b00",
+              "error-container": "#ffdad6",
+              "on-primary-fixed-variant": "#7f2b00",
+              "tertiary-fixed-dim": "#9fcaff",
+              "outline": "#8f7065",
+              "on-primary-container": "#531900",
+              "inverse-primary": "#ffb599",
+              "surface-container-lowest": "#ffffff",
+              "surface-bright": "#f9f9fb",
+              "on-secondary-container": "#732600",
+              "on-background": "#1a1c1d",
+              "background": "#f9f9fb",
+              "on-primary": "#ffffff",
+              "error": "#ba1a1a",
+              "secondary-fixed-dim": "#ffb599",
+              "on-tertiary-fixed": "#001d36",
+              "surface-container-low": "#f3f3f5",
+              "surface-container": "#eeeef0",
+              "inverse-surface": "#2f3132",
+              "on-primary-fixed": "#370e00",
+              "tertiary-fixed": "#d1e4ff",
+              "surface-container-high": "#e8e8ea",
+              "surface": "#f9f9fb",
+              "primary-fixed": "#ffdbce",
+              "surface-container-highest": "#e2e2e4",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "on-surface": "#1a1c1d",
+              "outline-variant": "#e4bfb1"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .drag-shadow {
+            box-shadow: 0 20px 40px rgba(255, 94, 0, 0.15);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#F5F5F7]/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(26,28,29,0.04)] h-20 px-6 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#FF5E00]" data-icon="grid_view">grid_view</span>
+<h1 class="text-xl font-semibold text-[#1A1C1D] dark:text-slate-100 tracking-tight font-['SF_Pro','Inter']">Affectation des Tables</h1>
+</div>
+<div class="hidden md:flex items-center bg-surface-container-high rounded-full px-1 py-1">
+<button class="px-6 py-2 rounded-full text-[#FF5E00] font-bold text-sm">Plan</button>
+<button class="px-6 py-2 rounded-full text-[#1A1C1D]/60 dark:text-slate-400 text-sm hover:bg-[#EEEEF0] transition-colors">Équipe</button>
+<button class="px-6 py-2 rounded-full text-[#1A1C1D]/60 dark:text-slate-400 text-sm hover:bg-[#EEEEF0] transition-colors">Analyses</button>
+</div>
+<button class="bg-primary-container text-on-primary px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg active:scale-95 transition-transform">
+            Statut en Direct
+        </button>
+</header>
+<!-- Staff Selection Dock (Floating) -->
+<div class="pt-28 px-6 max-w-7xl mx-auto">
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0_10px_30px_rgba(26,28,29,0.04)] mb-8 overflow-hidden relative">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div>
+<span class="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 block mb-1">Personnel Actif</span>
+<h2 class="text-2xl font-extrabold text-on-surface tracking-tight">Glisser pour Affecter</h2>
+</div>
+<!-- Feedback Indicator -->
+<div class="flex items-center gap-3 bg-primary-container/10 border border-primary-container/20 px-4 py-2 rounded-2xl">
+<div class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></div>
+<span class="text-sm font-medium text-primary">Affectation à Marcus...</span>
+</div>
+<div class="flex -space-x-3 overflow-visible py-2">
+<!-- Staff Avatars with labels -->
+<div class="group relative cursor-grab active:cursor-grabbing">
+<img class="w-14 h-14 rounded-full border-4 border-surface-container-lowest shadow-lg group-hover:scale-110 transition-transform ring-2 ring-primary" data-alt="Portrait de Marcus, serveur" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeu6kvVsU_k-fpgDzjNimOAC0HH3iZdUmXk0Ig4wfh6JprXRlkLAjAPGRM25qo9x0qFYlKYsxoBnN0bc_jhetssTFG95YfEpXIeX9dMPg7p8oZ4xQOgranPo5RBESMTD-xJPX3uYb1Sum0FycbA1EyzZiAm-S2Z7TqVPNfowmp9grsvcy3yGQ2SOAtiYXDvMtHxwK8rlVrtkxuTU3Z16DzYkeSm9NtCfMAgABkAuh2zc-9J6o6nytgwZtPUzpJSzy3O5kOP0KKiJGk"/>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">MARCUS</span>
+</div>
+<div class="group relative cursor-grab active:cursor-grabbing">
+<img class="w-14 h-14 rounded-full border-4 border-surface-container-lowest shadow-lg group-hover:scale-110 transition-transform" data-alt="Portrait de Sarah, serveuse" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ8sv52ZELPh3fYz36h0j61huIOjBo25KODHScxAIPd2apDv2Ne4DQK0_VT99XKT4EpRa483RGyw1fuUkfifIM4UN6dyoSAxQn_inYVYOUNHLmztLl78hR4VPR8-kq69WoM0oiJZaAMXUs1YJ_ejSvsWmTVbrW2PtBLjv7zFB4x93HyGmoPFJdwv8_4ITxYXW-SPZ2_XTOYr_0JuophRuqfQ_jW4j4z4GBdoaXJ5eVkJGiQsLIBA1825ky5IXBWwD09RdHM0PbWQga"/>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">SARAH</span>
+</div>
+<div class="group relative cursor-grab active:cursor-grabbing">
+<img class="w-14 h-14 rounded-full border-4 border-surface-container-lowest shadow-lg group-hover:scale-110 transition-transform" data-alt="Portrait de David, chef de rang" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqMx_J2maPBiLTC5goVWIW-K66ubXQFxP2NSG0lmOTVlT3K0_3gV3FUb1A-_61ayK7A-40pFzGwvGsvBEnypoke417YODF0PF9kmWREZS4p68icBXeCCmUoSxF561-6D0MRjeWUEns-aVNvogJSe9Wh19t08x4WNZ3Eaodq1dSAgN8KjkwXT6jXHv9Le-67SAf_buhpNwNPLrj5dMFwDrR4vxO580CCl3G6Vf9mSbhuQ7ktMR2Y21gaLRd0841I1lHnVJkH68vA5x8"/>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">DAVID</span>
+</div>
+<div class="group relative cursor-grab active:cursor-grabbing">
+<img class="w-14 h-14 rounded-full border-4 border-surface-container-lowest shadow-lg group-hover:scale-110 transition-transform" data-alt="Portrait d'Elena, mixologue" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAW4U6R0OZ8REHG0w7KK_TJ5NJdvDZ--VekORsk7TS7aIhKmOaC7PCLBeXn7ia87OsDxiGsIvgzN9FD23gwH1AXqs0YXuwiLGKQ99vjc-Xv8iQNChD_R0FOnyTdOwAg2muFV89TiE9ewfJRwj763yd1m5gq5eRRzc3Hxz6WVQIc_o5NhA-mMgJ1kxX-hgVA5Q1EqC1_bvS2OLG5lPQUPGGuN8valXqwqZvaLFHWWcFUYPnL4JB7oittrwpzG2ZamSpDBlB0Y3IbjAN"/>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">ELENA</span>
+</div>
+<button class="w-14 h-14 rounded-full border-4 border-surface-container-lowest shadow-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary-container hover:text-white transition-all group">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Main Floor Plan Canvas -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-12">
+<!-- Table 1 (Assigned) -->
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group cursor-pointer hover:shadow-xl transition-all relative border-2 border-transparent hover:border-primary/20">
+<div class="w-full flex justify-between items-start">
+<span class="text-3xl font-black text-on-surface/10 group-hover:text-primary/20 transition-colors">01</span>
+<span class="text-[10px] font-bold px-2 py-1 bg-green-100 text-green-700 rounded-lg uppercase">Occupée</span>
+</div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container flex items-center justify-center relative">
+<span class="material-symbols-outlined text-4xl text-on-surface/20" data-icon="deck">deck</span>
+<!-- Assigned Avatar -->
+<div class="absolute -bottom-2 -right-2">
+<img class="w-10 h-10 rounded-full border-4 border-white shadow-md" data-alt="Avatar Marcus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCby3TBWGEWI1ybV1dWrJGxdwtrSMtNaZstslN_AIfk79NVOqQ1EvQFTT3FbB-IOXSwyC1Deo_q0RiVq25UiZt-H_zW6Cp384tBeAighym0mrK3Zu1BJm0f8xCID5_XTpHGAMHOCAhkm0fIRNtNYCqRDYJdrrLz3NFOwFXf6MKf4JxccLjKMe_rCCTRAA9Yyhe1V3foqbHDlj5HE5lcHjg6drr5H42SRlA3iHXqpLIteDR66U2dN_1aZvhn_xklXNNS7IyIGxQeEBpo"/>
+</div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant">4 Personnes</span>
+</div>
+<!-- Table 2 (Available) -->
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group cursor-pointer hover:shadow-xl transition-all relative border-2 border-dashed border-outline-variant/30 hover:border-primary/40">
+<div class="w-full flex justify-between items-start">
+<span class="text-3xl font-black text-on-surface/10 group-hover:text-primary/20 transition-colors">02</span>
+<span class="text-[10px] font-bold px-2 py-1 bg-surface-container text-on-surface-variant rounded-lg uppercase">Libre</span>
+</div>
+<div class="w-20 h-20 rounded-full border-4 border-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl text-on-surface/10 group-hover:text-primary transition-colors" data-icon="add">add</span>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant">2 Personnes</span>
+</div>
+<!-- Table 3 (Assigned to Elena) -->
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group cursor-pointer hover:shadow-xl transition-all relative border-2 border-transparent">
+<div class="w-full flex justify-between items-start">
+<span class="text-3xl font-black text-on-surface/10 group-hover:text-primary/20 transition-colors">03</span>
+<span class="text-[10px] font-bold px-2 py-1 bg-orange-100 text-orange-700 rounded-lg uppercase">Réservée</span>
+</div>
+<div class="w-24 h-16 rounded-2xl bg-surface-container flex items-center justify-center relative">
+<span class="material-symbols-outlined text-4xl text-on-surface/20" data-icon="deck">deck</span>
+<div class="absolute -top-3 -right-3">
+<img class="w-10 h-10 rounded-full border-4 border-white shadow-md" data-alt="Avatar Elena" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmZDpnK3CdmHgzSP0gnGPepxf887HIVMsqCxPjbXH3MRYVCjoqEt7wPBZegrkLDLgtPX8aUtmUO59wHwwTaXGuEiryjOXx90MIFa4lXsQV0svKsovAyGuYMku-4g3bd_71UpyaYXms6xFJyYFSOslADcPcnEsL6D3mgmxtsW8IuoPcjqc5TqT9Bug12_xwFbpCjubVgGN5xIAmC4m8-J7Y7cHHw3MW4YV3Lm87BN5CIvMVIB4SVGTgFqul_tMsOKE2U1iFUbGOBRfx"/>
+</div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant">6 Personnes</span>
+</div>
+<!-- Repeating simplified tables -->
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group cursor-pointer hover:shadow-xl transition-all relative border-2 border-transparent">
+<div class="w-full flex justify-between items-start">
+<span class="text-3xl font-black text-on-surface/10">04</span>
+<span class="text-[10px] font-bold px-2 py-1 bg-green-100 text-green-700 rounded-lg uppercase">Occupée</span>
+</div>
+<div class="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center"></div>
+<span class="text-xs font-semibold text-on-surface-variant">2 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group cursor-pointer hover:shadow-xl transition-all relative border-2 border-transparent">
+<div class="w-full flex justify-between items-start">
+<span class="text-3xl font-black text-on-surface/10">05</span>
+<span class="text-[10px] font-bold px-2 py-1 bg-surface-container text-on-surface-variant rounded-lg uppercase">Nettoyage</span>
+</div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container flex items-center justify-center"></div>
+<span class="text-xs font-semibold text-on-surface-variant">8 Personnes</span>
+</div>
+<!-- Row 2 -->
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group border-2 border-primary/40 shadow-xl scale-105">
+<div class="w-full flex justify-between items-start">
+<span class="text-3xl font-black text-primary/20">06</span>
+<span class="text-[10px] font-bold px-2 py-1 bg-primary-container text-white rounded-lg uppercase">Affectation</span>
+</div>
+<div class="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center border-2 border-dashed border-primary">
+<img class="w-12 h-12 rounded-full shadow-lg animate-bounce" data-alt="Marcus en cours d'affectation" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiXxCJddH2Vny6SYH1vdS3QoCDIxZwSbbSsI8Jwew-Ln8YDOJ4UdJZkUfRnrZAM2mjJUcKPcubHlAW8NWnc4VOtqR6QC_U-oEHJYkKXEhsyyarkNZP7sDcfYzrwjBtETyw5TZE2TS4lb8i8uMdhF8rI903dkfujEOAQHn64eJOW4hCbHdu8oP9ERwJNDjnzwHkyY4hdZWDRuI48ESzk3UIHqv-myLw22fS4UKbrmN-3d8_WC3bTGGocghc5HU1N6gsGxvCjFv8CyRW"/>
+</div>
+<span class="text-xs font-bold text-primary uppercase tracking-tight">Cible : Marcus</span>
+</div>
+<!-- More tables (Filling the 20 table requirement visually) -->
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">07</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">4 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">08</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">2 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">09</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">4 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">10</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">2 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">11</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">6 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">12</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">2 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">13</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">4 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">14</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">4 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">15</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">2 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">16</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">2 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">17</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">4 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">18</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">8 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">19</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">2 Personnes</span>
+</div>
+<div class="aspect-square bg-surface-container-lowest rounded-[32px] p-6 flex flex-col items-center justify-between group opacity-60">
+<div class="w-full flex justify-between items-start"><span class="text-3xl font-black text-on-surface/10">20</span></div>
+<div class="w-24 h-24 rounded-3xl bg-surface-container"></div>
+<span class="text-xs font-semibold">4 Personnes</span>
+</div>
+</div>
+</div>
+<!-- Stats Panel (Bento Style) -->
+<section class="px-6 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-32">
+<div class="bg-surface-container-lowest p-8 rounded-[32px] shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+<span class="text-[10px] font-bold tracking-[0.05em] uppercase text-on-surface-variant/60 block mb-2">Charge Totale</span>
+<div class="flex items-end gap-2 mb-4">
+<h3 class="text-5xl font-extrabold text-on-surface leading-none">84%</h3>
+<span class="text-green-600 font-bold text-sm flex items-center mb-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> 12%
+                </span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[84%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-[32px] shadow-[0_10px_30px_rgba(26,28,29,0.04)] col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between">
+<div class="mb-4 md:mb-0">
+<span class="text-[10px] font-bold tracking-[0.05em] uppercase text-on-surface-variant/60 block mb-2">Temps d'Attente</span>
+<h3 class="text-3xl font-bold text-on-surface mb-1">Moyenne 12m</h3>
+<p class="text-sm text-on-surface-variant">Flux optimal dans la salle principale</p>
+</div>
+<div class="flex gap-2 items-end h-20">
+<div class="w-8 bg-primary/20 rounded-t-lg h-[40%]"></div>
+<div class="w-8 bg-primary/40 rounded-t-lg h-[60%]"></div>
+<div class="w-8 bg-primary-container rounded-t-lg h-[90%]"></div>
+<div class="w-8 bg-primary/60 rounded-t-lg h-[50%]"></div>
+<div class="w-8 bg-primary/30 rounded-t-lg h-[30%]"></div>
+</div>
+</div>
+</section>
+<!-- Navigation Components (BottomNavBar for Mobile) -->
+<nav class="fixed bottom-0 left-0 w-full h-20 bg-[#FFFFFF]/80 dark:bg-slate-900/80 backdrop-blur-xl flex justify-around items-center px-4 pb-safe z-50 rounded-t-[24px] shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+<div class="flex flex-col items-center justify-center text-[#FF5E00] dark:text-[#FF5E00] active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="deck" style="font-variation-settings: 'FILL' 1;">deck</span>
+<span class="text-[11px] font-medium tracking-[0.05em] uppercase mt-1">Plan</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#1A1C1D]/40 dark:text-slate-500 active:scale-90 transition-transform cursor-pointer hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="text-[11px] font-medium tracking-[0.05em] uppercase mt-1">Équipe</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#1A1C1D]/40 dark:text-slate-500 active:scale-90 transition-transform cursor-pointer hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="liquor">liquor</span>
+<span class="text-[11px] font-medium tracking-[0.05em] uppercase mt-1">Stock</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#1A1C1D]/40 dark:text-slate-500 active:scale-90 transition-transform cursor-pointer hover:opacity-80">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-[11px] font-medium tracking-[0.05em] uppercase mt-1">Rapports</span>
+</div>
+</nav>
+</body></html>

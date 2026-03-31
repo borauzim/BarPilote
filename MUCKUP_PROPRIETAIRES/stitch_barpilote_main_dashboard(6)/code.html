@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Papa Mapendo - Tableau de Bord Exécutif</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-header {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .stock-gradient {
+            background: conic-gradient(from 0deg, #ff5e00 75%, #eeeef0 75%);
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#e2e2e4",
+              "secondary-container": "#fd8d5f",
+              "tertiary-fixed-dim": "#9fcaff",
+              "on-secondary": "#ffffff",
+              "surface-container": "#eeeef0",
+              "on-error-container": "#93000a",
+              "tertiary-container": "#0097fb",
+              "primary-container": "#ff5e00",
+              "on-primary-fixed": "#370e00",
+              "on-secondary-container": "#732600",
+              "tertiary": "#0061a4",
+              "on-secondary-fixed": "#370e00",
+              "tertiary-fixed": "#d1e4ff",
+              "on-tertiary-fixed-variant": "#00497d",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#002d51",
+              "error-container": "#ffdad6",
+              "on-primary-fixed-variant": "#7f2b00",
+              "on-surface-variant": "#5b4137",
+              "surface-container-lowest": "#ffffff",
+              "primary": "#a63b00",
+              "inverse-primary": "#ffb599",
+              "on-background": "#1a1c1d",
+              "surface": "#f9f9fb",
+              "secondary-fixed": "#ffdbce",
+              "surface-container-high": "#e8e8ea",
+              "inverse-on-surface": "#f0f0f2",
+              "inverse-surface": "#2f3132",
+              "on-primary": "#ffffff",
+              "surface-container-low": "#f3f3f5",
+              "primary-fixed": "#ffdbce",
+              "primary-fixed-dim": "#ffb599",
+              "on-primary-container": "#531900",
+              "on-surface": "#1a1c1d",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#f9f9fb",
+              "surface-dim": "#d9dadc",
+              "outline-variant": "#e4bfb1",
+              "surface-tint": "#a63b00",
+              "surface-container-highest": "#e2e2e4",
+              "on-error": "#ffffff",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "outline": "#8f7065",
+              "secondary-fixed-dim": "#ffb599",
+              "secondary": "#9c431c",
+              "on-tertiary-fixed": "#001d36",
+              "background": "#f9f9fb"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-[#F5F5F7]/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-outline-variant/10">
+<img class="w-full h-full object-cover" data-alt="Photo de profil professionnel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxAeJZLha0K8zWWt0wEy1RPATiHCsyCZLb7-XJT1VMkV-44kzt2dtBuX8bmkJizsE-wWENVQ1Rq_E4GpWI9h1_teZs5QIm6wMBlQfpgMONSCXO_-8bYHmph9Vz90x7bw30GY-7V-WPNfMg7HPt8QhIm79qxxvvxrJ47hxBvAFnTJU6Geu27Al9BQ6ydyuva8IfSI6Tj-A2rJCwntR_aY-VpAEleAgfitXOqnxOhR9QdOHo9XEpVL-d6PZtioZwIEydazPU3j7qxTDL"/>
+</div>
+<div>
+<h1 class="text-xl font-black tracking-tighter text-[#FF5E00]">Papa Mapendo</h1>
+<p class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Aperçu du Matin</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-200/50 transition-all active:scale-95 duration-200 ease-out">
+<span class="material-symbols-outlined text-slate-600">search</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-200/50 transition-all active:scale-95 duration-200 ease-out relative">
+<span class="material-symbols-outlined text-slate-600">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary-container rounded-full"></span>
+</button>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-6 pt-28 space-y-8">
+<!-- Urgent Alert Section -->
+<section class="animate-in fade-in slide-in-from-top-4 duration-700">
+<div class="bg-primary-container rounded-3xl p-6 flex items-center justify-between text-white shadow-xl shadow-primary-container/20">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div>
+<h2 class="font-bold text-lg leading-tight">Besoin de 3 casiers de Turbo King</h2>
+<p class="text-white/80 text-sm">Stock critique au Bar Principal. Réapprovisionnement immédiat suggéré.</p>
+</div>
+</div>
+<button class="bg-white text-primary-container px-6 py-2.5 rounded-full font-bold text-sm hover:bg-surface-container-lowest transition-colors active:scale-95">
+                    Commander
+                </button>
+</div>
+</section>
+<!-- Executive Summary Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Hero Metric: Yesterday's Revenue -->
+<div class="md:col-span-8 bg-surface-container-lowest rounded-[32px] p-8 executive-shadow flex flex-col justify-between min-h-[320px]">
+<div>
+<span class="text-[11px] font-bold tracking-[0.1em] uppercase text-slate-400">RÉSUMÉ EXÉCUTIF</span>
+<h3 class="text-slate-900 font-semibold text-xl mt-1">Performance d'Hier</h3>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<div class="flex items-baseline gap-2">
+<span class="text-7xl font-bold tracking-tighter text-slate-900">$1,200</span>
+<span class="text-xl font-bold text-[#FF5E00] flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                                +5%
+                            </span>
+</div>
+<p class="text-slate-500 font-medium mt-2">Vs. même jour la semaine dernière</p>
+</div>
+<div class="hidden lg:block w-48 h-24">
+<div class="flex items-end gap-1 h-full">
+<div class="flex-1 bg-surface-container rounded-t-lg h-[40%]"></div>
+<div class="flex-1 bg-surface-container rounded-t-lg h-[60%]"></div>
+<div class="flex-1 bg-surface-container rounded-t-lg h-[35%]"></div>
+<div class="flex-1 bg-surface-container rounded-t-lg h-[80%]"></div>
+<div class="flex-1 bg-surface-container rounded-t-lg h-[55%]"></div>
+<div class="flex-1 bg-primary-container rounded-t-lg h-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Stock Health Circular Graph -->
+<div class="md:col-span-4 bg-surface-container-lowest rounded-[32px] p-8 executive-shadow flex flex-col items-center text-center justify-center space-y-6">
+<span class="text-[11px] font-bold tracking-[0.1em] uppercase text-slate-400">État des Stocks</span>
+<div class="relative w-44 h-44 flex items-center justify-center">
+<!-- Progress Ring (Simulated with Gradient Mask) -->
+<div class="absolute inset-0 rounded-full stock-gradient opacity-20"></div>
+<div class="absolute inset-2 rounded-full bg-white flex items-center justify-center flex-col">
+<span class="text-4xl font-black text-slate-900">75%</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Santé</span>
+</div>
+<!-- The actual SVG for precise arc -->
+<svg class="w-full h-full -rotate-90">
+<circle cx="88" cy="88" fill="transparent" r="80" stroke="#eeeef0" stroke-width="12"></circle>
+<circle cx="88" cy="88" fill="transparent" r="80" stroke="#FF5E00" stroke-dasharray="502" stroke-dashoffset="125" stroke-linecap="round" stroke-width="12"></circle>
+</svg>
+</div>
+<div>
+<h4 class="font-bold text-slate-900">Santé du Stock</h4>
+<p class="text-slate-500 text-sm mt-1">12 articles sous le seuil</p>
+</div>
+</div>
+</div>
+<!-- Secondary Metrics Grid -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Avg Ticket -->
+<div class="bg-surface-container-lowest p-6 rounded-[24px] executive-shadow border-b-4 border-transparent hover:border-primary-container transition-all">
+<span class="material-symbols-outlined text-slate-400 mb-4">receipt_long</span>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Panier Moyen</p>
+<p class="text-2xl font-bold text-slate-900 mt-1">$42.50</p>
+<p class="text-xs text-green-600 font-bold mt-1">+$2.10</p>
+</div>
+<!-- Staff On Shift -->
+<div class="bg-surface-container-lowest p-6 rounded-[24px] executive-shadow border-b-4 border-transparent hover:border-primary-container transition-all">
+<span class="material-symbols-outlined text-slate-400 mb-4">groups</span>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Équipe en Direct</p>
+<p class="text-2xl font-bold text-slate-900 mt-1">08</p>
+<p class="text-xs text-slate-500 font-bold mt-1">2 en Service</p>
+</div>
+<!-- Waste Margin -->
+<div class="bg-surface-container-lowest p-6 rounded-[24px] executive-shadow border-b-4 border-transparent hover:border-primary-container transition-all">
+<span class="material-symbols-outlined text-slate-400 mb-4">delete_sweep</span>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pertes</p>
+<p class="text-2xl font-bold text-slate-900 mt-1">2.4%</p>
+<p class="text-xs text-red-500 font-bold mt-1">+0.2%</p>
+</div>
+<!-- Peak Hour -->
+<div class="bg-surface-container-lowest p-6 rounded-[24px] executive-shadow border-b-4 border-transparent hover:border-primary-container transition-all">
+<span class="material-symbols-outlined text-slate-400 mb-4">schedule</span>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pic d'Affluence</p>
+<p class="text-2xl font-bold text-slate-900 mt-1">21:00</p>
+<p class="text-xs text-slate-500 font-bold mt-1">Prévu</p>
+</div>
+</div>
+<!-- Operational Focus Section -->
+<section class="space-y-4 pb-12">
+<div class="flex justify-between items-center">
+<h3 class="text-xl font-bold text-slate-900">Actions Immédiates</h3>
+<button class="text-primary-container font-bold text-sm">Voir toutes les tâches</button>
+</div>
+<div class="bg-surface-container-lowest rounded-[24px] executive-shadow divide-y divide-slate-100">
+<!-- Action Item 1 -->
+<div class="flex items-center justify-between p-5 group hover:bg-slate-50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-[#FF5E00]">liquor</span>
+</div>
+<div>
+<p class="font-bold text-slate-900">Ravitaillement Turbo King</p>
+<p class="text-xs text-slate-500">Alerte Stock • 3 casiers requis</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-primary-container transition-colors">chevron_right</span>
+</div>
+<!-- Action Item 2 -->
+<div class="flex items-center justify-between p-5 group hover:bg-slate-50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-blue-600">event_busy</span>
+</div>
+<div>
+<p class="font-bold text-slate-900">Alerte Chevauchement de Service</p>
+<p class="text-xs text-slate-500">Personnel • 14:00 - 15:00 Aujourd'hui</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-primary-container transition-colors">chevron_right</span>
+</div>
+<!-- Action Item 3 -->
+<div class="flex items-center justify-between p-5 group hover:bg-slate-50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600">pending_actions</span>
+</div>
+<div>
+<p class="font-bold text-slate-900">Approuver les Rapports Mensuels</p>
+<p class="text-xs text-slate-500">Admin • Échéance dans 2 jours</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-primary-container transition-colors">chevron_right</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#F5F5F7]/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-[0_-10px_30px_rgba(26,28,29,0.04)] rounded-t-[24px]">
+<!-- Dashboard (Active) -->
+<a class="flex flex-col items-center justify-center bg-orange-50 dark:bg-orange-900/20 text-[#FF5E00] dark:text-orange-400 rounded-2xl px-5 py-2 active:scale-90 duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-[10px] font-bold tracking-widest uppercase mt-1">Tableau</span>
+</a>
+<!-- Inventory -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2 hover:text-[#FF5E00] transition-colors active:scale-90 duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined">liquor</span>
+<span class="text-[10px] font-bold tracking-widest uppercase mt-1">Stocks</span>
+</a>
+<!-- Staff -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2 hover:text-[#FF5E00] transition-colors active:scale-90 duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="text-[10px] font-bold tracking-widest uppercase mt-1">Équipe</span>
+</a>
+<!-- Reports -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-5 py-2 hover:text-[#FF5E00] transition-colors active:scale-90 duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-[10px] font-bold tracking-widest uppercase mt-1">Rapports</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BarPilote - Welcome to the Cockpit</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f3f3f5",
+              "on-secondary": "#ffffff",
+              "primary": "#a63b00",
+              "on-secondary-container": "#732600",
+              "surface-tint": "#a63b00",
+              "secondary-fixed-dim": "#ffb599",
+              "inverse-on-surface": "#f0f0f2",
+              "tertiary-fixed-dim": "#9fcaff",
+              "surface-bright": "#f9f9fb",
+              "secondary-fixed": "#ffdbce",
+              "primary-container": "#ff5e00",
+              "on-tertiary-fixed-variant": "#00497d",
+              "background": "#f9f9fb",
+              "tertiary-container": "#0097fb",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "on-surface-variant": "#5b4137",
+              "on-primary-fixed": "#370e00",
+              "on-tertiary-fixed": "#001d36",
+              "surface-dim": "#d9dadc",
+              "primary-fixed": "#ffdbce",
+              "on-error": "#ffffff",
+              "tertiary-fixed": "#d1e4ff",
+              "surface-container-highest": "#e2e2e4",
+              "outline-variant": "#e4bfb1",
+              "on-tertiary-container": "#002d51",
+              "secondary": "#9c431c",
+              "surface": "#f9f9fb",
+              "error": "#ba1a1a",
+              "surface-container": "#eeeef0",
+              "on-error-container": "#93000a",
+              "on-primary-fixed-variant": "#7f2b00",
+              "inverse-primary": "#ffb599",
+              "on-secondary-fixed": "#370e00",
+              "outline": "#8f7065",
+              "inverse-surface": "#2f3132",
+              "on-background": "#1a1c1d",
+              "on-primary-container": "#531900",
+              "on-tertiary": "#ffffff",
+              "secondary-container": "#fd8d5f",
+              "surface-variant": "#e2e2e4",
+              "error-container": "#ffdad6",
+              "tertiary": "#0061a4",
+              "surface-container-high": "#e8e8ea",
+              "on-primary": "#ffffff",
+              "primary-fixed-dim": "#ffb599",
+              "on-surface": "#1a1c1d"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body { font-family: 'Inter', sans-serif; }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .executive-shadow {
+        box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+      }
+      .glass-effect {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      .primary-gradient {
+        background: linear-gradient(145deg, #ff5e00 0%, #a63b00 100%);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col overflow-hidden">
+<!-- Hero Illustration Section -->
+<section class="relative h-[486px] w-full overflow-hidden">
+<!-- Background Decorative Element -->
+<div class="absolute inset-0 bg-surface-container-low">
+<div class="absolute top-[-10%] right-[-10%] w-80 h-80 rounded-full bg-primary/5 blur-3xl"></div>
+<div class="absolute bottom-[-5%] left-[-5%] w-64 h-64 rounded-full bg-tertiary/5 blur-3xl"></div>
+</div>
+<!-- Main Illustration Image -->
+<div class="relative h-full w-full flex items-end justify-center px-8 pb-12">
+<div class="w-full max-w-lg aspect-square rounded-2xl executive-shadow overflow-hidden bg-white border border-outline-variant/10">
+<img alt="Premium bar atmosphere with atmospheric lighting" class="w-full h-full object-cover" data-alt="Close up of a premium cocktail being prepared in a dimly lit high-end bar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAbxtZ5cL_dGRNgDuLbHIx38S76CcPDomqBcHUlPOJUpSWdgf-7WkTJwf53Pf1qM107Ql2swzNdv4uxCqzGlJVbKwWEeVt5kjXGkWCX_uDo6_NjiSz8Lt3y9idFVVELT7iY4dyKnIjIFMWsLNL0tbd9iqnUTb2bg9eNhZ04EpcQrtr9y0iduI59R1gdGpL7p4DtjEx0sYUw73EoFJWrC52ib4d0cN-5IXcV8F1jJWEJWFN0ckp_ktMLh0J0cEZXv_7zDEozaxK8SGB"/>
+</div>
+<!-- Abstract Floating Cards for 'Cockpit' feel -->
+<div class="absolute top-1/2 left-4 md:left-24 glass-effect bg-white/40 p-4 rounded-xl executive-shadow border border-white/20 hidden sm:block">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<div class="text-[10px] font-bold tracking-widest text-on-surface/40 uppercase">LIVE REVENUE</div>
+<div class="text-lg font-bold text-on-surface">$2,481</div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-24 right-4 md:right-24 glass-effect bg-white/40 p-4 rounded-xl executive-shadow border border-white/20 hidden sm:block">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div>
+<div class="text-[10px] font-bold tracking-widest text-on-surface/40 uppercase">STOCK ALERT</div>
+<div class="text-sm font-semibold text-on-surface">Gin Low</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Content Section -->
+<main class="flex-1 flex flex-col items-center justify-start text-center px-8 pt-8 pb-32 max-w-2xl mx-auto w-full">
+<!-- Brand Identifier -->
+<div class="mb-4">
+<span class="text-primary-container font-extrabold tracking-tighter text-2xl">BarPilote</span>
+</div>
+<!-- Hero Text -->
+<h1 class="text-on-surface mb-6 flex flex-col"><span class="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">Bienvenue dans</span>
+<span class="text-4xl md:text-5xl font-light tracking-tight leading-tight italic">le cockpit.</span></h1>
+<p class="text-on-surface-variant text-base md:text-lg leading-relaxed max-w-md mx-auto font-normal">Des outils de précision pour les établissements modernes. Élevez votre gestion des stocks, du personnel et des ventes au niveau exécutif.</p>
+<!-- Feature Pills (Subtle) -->
+<div class="mt-10 flex flex-wrap justify-center gap-3 opacity-80">
+<div class="bg-surface-container px-4 py-2 rounded-full flex items-center gap-2 border border-outline-variant/5">
+<span class="material-symbols-outlined text-sm">bolt</span>
+<span class="text-xs font-semibold tracking-wide uppercase text-on-surface-variant">TEMPS RÉEL</span>
+</div>
+<div class="bg-surface-container px-4 py-2 rounded-full flex items-center gap-2 border border-outline-variant/5">
+<span class="material-symbols-outlined text-sm">monitoring</span>
+<span class="text-xs font-semibold tracking-wide uppercase text-on-surface-variant">ANALYSES</span>
+</div>
+<div class="bg-surface-container px-4 py-2 rounded-full flex items-center gap-2 border border-outline-variant/5">
+<span class="material-symbols-outlined text-sm">group</span>
+<span class="text-xs font-semibold tracking-wide uppercase text-on-surface-variant">Staffing</span>
+</div>
+</div>
+</main>
+<!-- Fixed Bottom Action Area -->
+<footer class="fixed bottom-0 left-0 w-full p-8 pb-10 bg-gradient-to-t from-surface via-surface/95 to-transparent">
+<div class="max-w-md mx-auto">
+<button class="primary-gradient w-full py-5 rounded-full text-white font-bold text-lg executive-shadow active:scale-95 transition-all duration-200 flex items-center justify-center gap-3">Décoller
+<span class="material-symbols-outlined text-xl">flight_takeoff</span></button>
+<div class="mt-6 text-center">
+<button class="text-on-surface-variant text-sm font-medium hover:text-primary-container transition-colors">Vous avez déjà un compte ? <span class="text-primary font-bold">Se connecter</span></button>
+</div>
+</div>
+</footer>
+<!-- Progress Dots -->
+<div class="fixed right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-10">
+<div class="w-1.5 h-6 rounded-full bg-primary-container shadow-sm"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
+</div>
+</body></html>

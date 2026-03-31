@@ -3,6 +3,7 @@
 import React from "react";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
+import { setToken } from "@/lib/auth";
 
 // Le composant d'interface pur qui gère le bouton et les requêtes
 function LoginContent() {
@@ -14,9 +15,22 @@ function LoginContent() {
                 const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/`, {
                     access_token: tokenResponse.access_token,
                 });
-                console.log("Connecté avec succès côté Django:", response.data);
-                // Redirection vers le profil
-                window.location.href = "/onboarding/profile";
+                console.log("Réponse complète du Pilot Engine:", JSON.stringify(response.data));
+                
+                // dj-rest-auth avec USE_JWT=True renvoie { access, refresh, user }
+                const token = response.data.access || response.data.access_token || response.data.key;
+                console.log("Token extrait:", token ? token.substring(0, 30) + "..." : "AUCUN TOKEN !");
+                
+                if (token) {
+                    setToken(token);
+                    console.log("Token sauvegardé dans les cookies ✅");
+                } else {
+                    console.error("❌ Aucun token trouvé dans la réponse Django !", response.data);
+                    alert("Erreur d'authentification : aucun token reçu du serveur.");
+                    return;
+                }
+                // Redirection vers la sélection de rôle
+                window.location.href = "/auth/select-role";
             } catch (error) {
                 console.error("Erreur de connexion Django:", error);
             }

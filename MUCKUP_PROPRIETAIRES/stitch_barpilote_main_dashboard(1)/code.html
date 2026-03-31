@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Analytique des Ventes - BarPilote</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-bright": "#f9f9fb",
+              "tertiary-fixed-dim": "#9fcaff",
+              "surface-tint": "#a63b00",
+              "secondary-fixed-dim": "#ffb599",
+              "inverse-on-surface": "#f0f0f2",
+              "on-secondary-container": "#732600",
+              "primary": "#a63b00",
+              "on-secondary": "#ffffff",
+              "surface-container-low": "#f3f3f5",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-fixed": "#001d36",
+              "on-primary-fixed": "#370e00",
+              "on-surface-variant": "#5b4137",
+              "tertiary-container": "#0097fb",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "background": "#f9f9fb",
+              "primary-container": "#ff5e00",
+              "on-tertiary-fixed-variant": "#00497d",
+              "secondary-fixed": "#ffdbce",
+              "on-error-container": "#93000a",
+              "surface-container": "#eeeef0",
+              "surface": "#f9f9fb",
+              "error": "#ba1a1a",
+              "secondary": "#9c431c",
+              "outline-variant": "#e4bfb1",
+              "on-tertiary-container": "#002d51",
+              "tertiary-fixed": "#d1e4ff",
+              "surface-container-highest": "#e2e2e4",
+              "primary-fixed": "#ffdbce",
+              "on-error": "#ffffff",
+              "surface-dim": "#d9dadc",
+              "primary-fixed-dim": "#ffb599",
+              "on-surface": "#1a1c1d",
+              "on-primary": "#ffffff",
+              "tertiary": "#0061a4",
+              "surface-container-high": "#e8e8ea",
+              "surface-variant": "#e2e2e4",
+              "error-container": "#ffdad6",
+              "secondary-container": "#fd8d5f",
+              "on-tertiary": "#ffffff",
+              "on-primary-container": "#531900",
+              "on-background": "#1a1c1d",
+              "inverse-surface": "#2f3132",
+              "outline": "#8f7065",
+              "on-secondary-fixed": "#370e00",
+              "inverse-primary": "#ffb599",
+              "on-primary-fixed-variant": "#7f2b00"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-header { backdrop-filter: blur(20px); }
+        .executive-shadow { box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#F5F5F7]/80 backdrop-blur-xl">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="Executive Profile" class="w-full h-full object-cover" data-alt="Corporate headshot of a business executive" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbskka7eIb2N26NTuDvS1jkmUe5wwPzshEy2XQPvrEKSnC2YqiM84c2nEYD1mq3geBAlhSaJkTpRSb2K0TitiBMfJYmjMW4ZPB3rnq-htf5H56fYCrl8H2jc1iLvMVCf8MjCFy166wvlldvk0NUEBy6opi809EfIyvGPFU76tIvf5063gmRcyvjprpGs0nYvwI713ZpTSncKjv-MUl-NoN1JWCwo3HJBFMh87gaxk41p2YylvEIMG9MeLQxEhRpXv2uGNAa9YSBl8F"/>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-primary-container">BarPilote</h1>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-orange-600 font-semibold transition-colors" href="#">Tableau de bord</a>
+<a class="text-[#1A1C1D]/60 hover:text-orange-500 transition-colors" href="#">Stocks</a>
+<a class="text-[#1A1C1D]/60 hover:text-orange-500 transition-colors" href="#">Équipe</a>
+<a class="text-[#1A1C1D]/60 hover:text-orange-500 transition-colors" href="#">Rapports</a>
+</nav>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#EEEEF0] transition-all active:scale-95">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-7xl mx-auto">
+<!-- Dashboard Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div>
+<p class="text-[0.6875rem] font-medium tracking-[0.05em] uppercase text-on-surface-variant mb-1">APERÇU EN TEMPS RÉEL</p>
+<h2 class="text-4xl font-extrabold tracking-tight text-on-surface">Analytique des Ventes</h2>
+</div>
+<div class="flex items-center gap-3">
+<div class="px-4 py-2 bg-surface-container-lowest executive-shadow rounded-full flex items-center gap-2 border border-outline-variant/10">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="text-sm font-semibold">Session en Direct</span>
+</div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Main Chart Card -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-8 executive-shadow flex flex-col gap-8 relative overflow-hidden">
+<div class="flex justify-between items-start">
+<div>
+<span class="text-[0.6875rem] font-bold tracking-widest text-on-surface-variant uppercase">REVENU NET</span>
+<div class="text-[2.75rem] font-bold tracking-tight leading-none mt-1">$4,820.50</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-primary-container font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                            +12.4%
+                        </span>
+<span class="text-[10px] text-on-surface-variant">vs hier soir</span>
+</div>
+</div>
+<!-- Spline Graph Section -->
+<div class="relative h-64 w-full mt-4">
+<!-- SVG Graph -->
+<svg class="w-full h-full overflow-visible" viewbox="0 0 800 200">
+<!-- Subtle Grid Lines -->
+<line class="text-surface-container" stroke="currentColor" stroke-width="1" x1="0" x2="800" y1="0" y2="0"></line>
+<line class="text-surface-container" stroke="currentColor" stroke-width="1" x1="0" x2="800" y1="100" y2="100"></line>
+<line class="text-surface-container" stroke="currentColor" stroke-width="1" x1="0" x2="800" y1="200" y2="200"></line>
+<!-- Smooth Orange Path (6PM - 2AM) -->
+<path d="M0,180 Q100,160 200,140 T400,100 T500,20 T600,60 T800,120" fill="none" stroke="#ff5e00" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"></path>
+<!-- Area Gradient -->
+<defs>
+<lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="5%" stop-color="#ff5e00" stop-opacity="0.1"></stop>
+<stop offset="95%" stop-color="#ff5e00" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,180 Q100,160 200,140 T400,100 T500,20 T600,60 T800,120 L800,200 L0,200 Z" fill="url(#chartGradient)"></path>
+<!-- Peak Data Point (11 PM) -->
+<circle cx="500" cy="20" fill="#ff5e00" r="6" stroke="#ffffff" stroke-width="3"></circle>
+</svg>
+<!-- Peak Tooltip Label -->
+<div class="absolute top-0 left-[62.5%] -translate-x-1/2 -translate-y-full mb-4">
+<div class="bg-primary-container text-white px-3 py-1 rounded-lg text-xs font-bold executive-shadow whitespace-nowrap">Pic: $1,240 (23h)</div>
+<div class="w-px h-4 bg-primary-container mx-auto"></div>
+</div>
+<!-- X-Axis Labels -->
+<div class="flex justify-between mt-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+<span>6 PM</span>
+<span>8 PM</span>
+<span>10 PM</span>
+<span class="text-primary-container">Pic</span>
+<span>12 AM</span>
+<span>2 AM</span>
+</div>
+</div>
+</div>
+<!-- Right Side Stats Column -->
+<div class="flex flex-col gap-6">
+<!-- Best Seller Metric Card -->
+<div class="bg-primary-container rounded-xl p-6 text-white executive-shadow relative overflow-hidden">
+<div class="relative z-10">
+<span class="text-[0.6875rem] font-bold tracking-widest uppercase opacity-80">MEILLEURE VENTE</span>
+<h3 class="text-2xl font-bold mt-2">Heineken</h3>
+<div class="flex items-end justify-between mt-4">
+<span class="text-4xl font-black">45</span>
+<span class="text-sm font-medium opacity-90 pb-1">Unités Vendues Aujourd'hui</span>
+</div>
+</div>
+<!-- Decorative Icon -->
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-white/10 text-9xl rotate-12" data-icon="liquor">liquor</span>
+</div>
+<!-- Secondary Summary List -->
+<div class="bg-surface-container-lowest rounded-xl p-6 executive-shadow border border-outline-variant/5">
+<h4 class="text-sm font-bold text-on-surface mb-4">Performance de la Session</h4>
+<div class="space-y-4">
+<div class="flex items-center justify-between group cursor-default">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="group">group</span>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">Fréquentation</span>
+</div>
+<span class="text-sm font-bold">342 Clients</span>
+</div>
+<div class="flex items-center justify-between group cursor-default">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="payments">payments</span>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">Panier Moyen</span>
+</div>
+<span class="text-sm font-bold">$14.10</span>
+</div>
+<div class="flex items-center justify-between group cursor-default">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="timer">timer</span>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">Attente Max</span>
+</div>
+<span class="text-sm font-bold">4.2 min</span>
+</div>
+</div>
+<button class="w-full mt-6 py-3 rounded-full bg-surface-container-high text-on-surface font-bold text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all">
+                        View Detailed Log
+                    </button>
+</div>
+</div>
+</div>
+<!-- Inventory Heatmap / Progress Area -->
+<div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl executive-shadow">
+<span class="text-[0.6875rem] font-bold text-on-surface-variant uppercase tracking-wider">INVENTAIRE BIÈRES</span>
+<div class="mt-4 flex flex-col gap-2">
+<div class="flex justify-between text-xs font-bold">
+<span>Blondes</span>
+<span class="text-primary-container">12%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[12%] rounded-full"></div>
+</div>
+<span class="text-[10px] text-error font-bold flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-[12px]" data-icon="warning">warning</span> Alerte Stock Faible</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl executive-shadow">
+<span class="text-[0.6875rem] font-bold text-on-surface-variant uppercase tracking-wider">STOCK SPIRITUEUX</span>
+<div class="mt-4 flex flex-col gap-2">
+<div class="flex justify-between text-xs font-bold">
+<span>Bourbon</span>
+<span class="text-on-surface">68%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[68%] rounded-full"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant font-medium mt-1">Niveaux sains</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl executive-shadow">
+<span class="text-[0.6875rem] font-bold text-on-surface-variant uppercase tracking-wider">RENDEMENT COCKTAILS</span>
+<div class="mt-4 flex flex-col gap-2">
+<div class="flex justify-between text-xs font-bold">
+<span>Efficacité</span>
+<span class="text-on-surface">94%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[94%] rounded-full"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant font-medium mt-1">+2% par rapport à la base</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl executive-shadow">
+<span class="text-[0.6875rem] font-bold text-on-surface-variant uppercase tracking-wider">SUIVI DES PERTES</span>
+<div class="mt-4 flex flex-col gap-2">
+<div class="flex justify-between text-xs font-bold">
+<span>% Perte</span>
+<span class="text-on-surface">0.8%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[8%] rounded-full"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant font-medium mt-1">Coulage minimal</span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 dark:bg-[#1A1C1D]/80 backdrop-blur-xl rounded-t-[24px] z-50 shadow-[0_-10px_30px_rgba(26,28,29,0.04)] md:hidden">
+<a class="flex flex-col items-center justify-center text-[#1A1C1D]/40 group" href="#">
+<span class="material-symbols-outlined transition-all group-active:scale-90" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-medium tracking-wide uppercase mt-1">Tableau</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1A1C1D]/40 group" href="#">
+<span class="material-symbols-outlined transition-all group-active:scale-90" data-icon="liquor">liquor</span>
+<span class="text-[10px] font-medium tracking-wide uppercase mt-1">Stocks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1A1C1D]/40 group" href="#">
+<span class="material-symbols-outlined transition-all group-active:scale-90" data-icon="groups">groups</span>
+<span class="text-[10px] font-medium tracking-wide uppercase mt-1">Équipe</span>
+</a>
+<a class="flex flex-col items-center justify-center text-orange-600 bg-orange-50 rounded-2xl px-3 py-1 group" href="#">
+<span class="material-symbols-outlined transition-all group-active:scale-90" data-icon="analytics">analytics</span>
+<span class="text-[10px] font-medium tracking-wide uppercase mt-1">Rapports</span>
+</a>
+</nav>
+</body></html>
