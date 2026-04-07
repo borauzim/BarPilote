@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-surface": "#2f3132",
+              "on-secondary-container": "#732600",
+              "surface": "#0a0a0b",
+              "on-surface": "#f0f0f2",
+              "tertiary-container": "#0097fb",
+              "tertiary-fixed-dim": "#9fcaff",
+              "on-tertiary-fixed": "#001d36",
+              "secondary-container": "#fd8d5f",
+              "error-container": "#ffdad6",
+              "error": "#ba1a1a",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "on-tertiary-container": "#002d51",
+              "primary-fixed-dim": "#ffb599",
+              "tertiary-fixed": "#d1e4ff",
+              "secondary": "#9c431c",
+              "surface-tint": "#ff5e00",
+              "surface-container-highest": "#1c1c1e",
+              "on-secondary": "#ffffff",
+              "surface-container": "#121214",
+              "surface-container-high": "#1a1a1c",
+              "on-tertiary": "#ffffff",
+              "inverse-on-surface": "#0a0a0b",
+              "on-background": "#f0f0f2",
+              "primary-fixed": "#ffdbce",
+              "outline": "#8f7065",
+              "surface-container-low": "#0f0f10",
+              "surface-container-lowest": "#050505",
+              "background": "#0a0a0b",
+              "on-primary-fixed-variant": "#7f2b00",
+              "on-tertiary-fixed-variant": "#00497d",
+              "on-error-container": "#93000a",
+              "primary-container": "#ff5e00",
+              "on-secondary-fixed": "#370e00",
+              "primary": "#ff5e00",
+              "secondary-fixed-dim": "#ffb599",
+              "inverse-primary": "#ffb599",
+              "on-surface-variant": "#e4bfb1",
+              "surface-variant": "#2c2c2e",
+              "on-primary-fixed": "#370e00",
+              "on-primary": "#ffffff",
+              "secondary-fixed": "#ffdbce",
+              "on-primary-container": "#ffffff",
+              "outline-variant": "#3d3d40",
+              "on-error": "#ffffff",
+              "tertiary": "#0097fb",
+              "surface-dim": "#0a0a0b",
+              "surface-bright": "#1c1c1e"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .neon-glow-orange {
+            box-shadow: 0 0 15px rgba(255, 94, 0, 0.3);
+        }
+        .neon-glow-blue {
+            box-shadow: 0 0 15px rgba(0, 151, 251, 0.4);
+        }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 11, 0.85);
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body overflow-hidden">
+<!-- Background Content Simulator (Blurred background for the slide-out feel) -->
+<div class="fixed inset-0 z-0 flex flex-col p-6 opacity-20 grayscale">
+<div class="h-8 w-48 bg-surface-container-highest rounded-full mb-8"></div>
+<div class="grid grid-cols-2 gap-4">
+<div class="h-32 bg-surface-container rounded-xl"></div>
+<div class="h-32 bg-surface-container rounded-xl"></div>
+<div class="h-32 bg-surface-container rounded-xl"></div>
+<div class="h-32 bg-surface-container rounded-xl"></div>
+</div>
+</div>
+<!-- Overlay Backdrop -->
+<div class="fixed inset-0 bg-black/60 z-10"></div>
+<!-- Slide-out Panel (Right to Left) -->
+<div class="fixed top-0 right-0 h-full w-full max-w-md glass-panel z-20 shadow-2xl flex flex-col border-l border-outline-variant/30">
+<!-- Header -->
+<div class="flex items-center justify-between p-6 border-b border-outline-variant/20">
+<div class="flex items-center gap-4">
+<button class="size-10 flex items-center justify-center rounded-full bg-surface-container-high text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h1 class="text-xl font-bold tracking-tight font-headline">Table 7 - 3 Boissons</h1>
+</div>
+<div class="px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
+<span class="text-xs font-bold text-primary tracking-widest uppercase">NOUVELLE COMMANDE</span>
+</div>
+</div>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-6 space-y-4">
+<!-- Item 1 Card -->
+<div class="group relative bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 hover:border-primary/50 transition-all duration-300">
+<div class="flex items-start gap-4">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-surface-container text-primary neon-glow-orange border border-primary/20" data-icon="BeerBottle">
+<svg fill="currentColor" height="28px" viewbox="0 0 256 256" width="28px" xmlns="http://www.w3.org/2000/svg">
+<path d="M245.66,42.34l-32-32a8,8,0,0,0-11.32,11.32l1.48,1.47L148.65,64.51l-38.22,7.65a8.05,8.05,0,0,0-4.09,2.18L23,157.66a24,24,0,0,0,0,33.94L64.4,233a24,24,0,0,0,33.94,0l83.32-83.31a8,8,0,0,0,2.18-4.09l7.65-38.22,41.38-55.17,1.47,1.48a8,8,0,0,0,11.32-11.32ZM96,107.31,148.69,160,104,204.69,51.31,152ZM81.37,224a7.94,7.94,0,0,1-5.65-2.34L34.34,180.28a8,8,0,0,1,0-11.31L40,163.31,92.69,216,87,221.66A8,8,0,0,1,81.37,224ZM177.6,99.2a7.92,7.92,0,0,0-1.44,3.23l-7.53,37.63L160,148.69,107.31,96l8.63-8.63,37.63-7.53a7.92,7.92,0,0,0,3.23-1.44l58.45-43.84,6.19,6.19Z"></path>
+</svg>
+</div>
+<div class="flex flex-col gap-1">
+<p class="text-lg font-bold text-on-surface leading-tight">2x Heineken 33cl</p>
+<p class="text-on-surface-variant text-sm font-medium flex items-center gap-2">
+<span class="size-2 rounded-full bg-primary animate-pulse"></span>
+                        En attente de préparation
+                    </p>
+</div>
+</div>
+</div>
+<!-- Item 2 Card -->
+<div class="group relative bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 hover:border-primary/50 transition-all duration-300">
+<div class="flex items-start gap-4">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-surface-container text-primary neon-glow-orange border border-primary/20" data-icon="Champagne">
+<svg fill="currentColor" height="28px" viewbox="0 0 256 256" width="28px" xmlns="http://www.w3.org/2000/svg">
+<path d="M184,20a12,12,0,1,1,12,12A12,12,0,0,1,184,20ZM164.12,73.23c7.26,44.25,4.35,75.76-8.66,93.66A39.94,39.94,0,0,1,128,183.42V232h16a8,8,0,0,1,0,16H96a8,8,0,0,1,0-16h16V183.42a40,40,0,0,1-27.46-16.53c-13-17.9-15.91-49.41-8.65-93.66A451,451,0,0,1,90.1,13.53,8,8,0,0,1,97.71,8H142.3a8,8,0,0,1,7.61,5.53A451,451,0,0,1,164.12,73.23ZM93.8,64h52.4c-3-15.58-6.72-29.81-9.78-40H103.59C100.53,34.19,96.83,48.42,93.8,64ZM149,80H91c-4.49,30-5.14,61.54,6.45,77.49C102.63,164.56,110,168,120,168s17.38-3.44,22.52-10.51C154.1,141.54,153.46,110,149,80Zm71-40a12,12,0,1,0,12,12A12,12,0,0,0,220,40ZM196,88a12,12,0,1,0,12,12A12,12,0,0,0,196,88Z"></path>
+</svg>
+</div>
+<div class="flex flex-col gap-1">
+<p class="text-lg font-bold text-on-surface leading-tight">1x JW Black Label (Verre)</p>
+<p class="text-on-surface-variant text-sm font-medium flex items-center gap-2">
+<span class="size-2 rounded-full bg-primary animate-pulse"></span>
+                        En attente de préparation
+                    </p>
+</div>
+</div>
+</div>
+<!-- Detailed Notes (System Aesthetic) -->
+<div class="mt-8 px-2">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-4">MÉTADONNÉES DE LA COMMANDE</p>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Serveur</span>
+<span class="text-on-surface font-semibold">Julian V.</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Heure de commande</span>
+<span class="text-on-surface font-semibold">22:45:12</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Priorité</span>
+<span class="text-primary font-bold">HAUTE</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-6 bg-surface-container-high border-t border-outline-variant/30 space-y-3">
+<button class="w-full flex items-center justify-center gap-2 bg-tertiary-container text-on-tertiary h-14 rounded-xl font-bold text-base neon-glow-blue active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">print</span>
+            Accepter et Imprimer
+        </button>
+<button class="w-full flex items-center justify-center gap-2 bg-surface-container-lowest text-on-surface h-14 rounded-xl font-bold text-base border border-outline-variant/50 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">check_circle</span>
+            Marquer comme Servi
+        </button>
+<div class="pt-2 text-center">
+<p class="text-[10px] text-on-surface-variant/60 font-medium">ÉDITION VIGIE APPLE • CONTRÔLE BAR v2.4</p>
+</div>
+</div>
+</div>
+</body></html>

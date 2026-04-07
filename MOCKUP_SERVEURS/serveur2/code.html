@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-container": "#002d51",
+              "primary-container": "#ff5e00",
+              "inverse-on-surface": "#f0f0f2",
+              "surface-tint": "#a63b00",
+              "on-primary-fixed": "#370e00",
+              "surface": "#f9f9fb",
+              "surface-dim": "#d9dadc",
+              "inverse-surface": "#2f3132",
+              "surface-container-highest": "#e2e2e4",
+              "surface-container-high": "#e8e8ea",
+              "outline-variant": "#e4bfb1",
+              "on-primary-container": "#531900",
+              "surface-bright": "#f9f9fb",
+              "on-background": "#1a1c1d",
+              "error-container": "#ffdad6",
+              "on-primary": "#ffffff",
+              "primary": "#a63b00",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "on-primary-fixed-variant": "#7f2b00",
+              "tertiary-container": "#0097fb",
+              "secondary-container": "#fd8d5f",
+              "on-tertiary-fixed-variant": "#00497d",
+              "on-secondary": "#ffffff",
+              "primary-fixed": "#ffdbce",
+              "surface-container-lowest": "#ffffff",
+              "tertiary": "#0061a4",
+              "background": "#f9f9fb",
+              "surface-variant": "#e2e2e4",
+              "on-error": "#ffffff",
+              "on-tertiary-fixed": "#001d36",
+              "secondary": "#9c431c",
+              "error": "#ba1a1a",
+              "inverse-primary": "#ffb599",
+              "secondary-fixed-dim": "#ffb599",
+              "outline": "#8f7065",
+              "on-secondary-fixed": "#370e00",
+              "primary-fixed-dim": "#ffb599",
+              "tertiary-fixed": "#d1e4ff",
+              "on-tertiary": "#ffffff",
+              "on-secondary-container": "#732600",
+              "secondary-fixed": "#ffdbce",
+              "surface-container-low": "#f3f3f5",
+              "surface-container": "#eeeef0",
+              "on-surface": "#1a1c1d",
+              "on-error-container": "#93000a",
+              "tertiary-fixed-dim": "#9fcaff",
+              "on-surface-variant": "#5b4137"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scanner-frame {
+            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.7);
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-black font-body text-on-surface antialiased overflow-hidden">
+<!-- Top Navigation Anchor (Shared Component) -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-6 py-4 max-w-full bg-zinc-50/10 backdrop-blur-xl shadow-[0_10px_30px_rgba(26,28,29,0.04)] no-border">
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors active:scale-95 duration-200 text-white">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+<h1 class="text-xl font-bold tracking-tighter text-white">BarPilote Vigie</h1>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary/20">
+<img alt="Profil exécutif" class="w-full h-full object-cover" data-alt="Photo professionnelle d'un gérant de bar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCsyrz6dUctkd8VdPnHgEpXuLutzZpv6lWpAJRAW0kBq0D0vNS8NHqCl18tO2QoYMlAQS4UNfOGYFYJg_Oivr1D54Aw38zLCETbdI0OyMo_lWQ4TQBQe8BS2IAWpOlicBJ256dPCZzfjOtpcV-Yf3niSO9naqH8zUxnKdsXf987BtcRyWR38bwahtRjDjLkH3475uJSIhlx9TL7hmXYMsypPNhvds8OhRXBXcAuYvpcKdtBa6DM0zlVPJbmTwJ8LSD-SdQn3QmzVRY"/>
+</div>
+</header>
+<!-- Main Immersive Camera Canvas -->
+<main class="relative h-screen w-full flex flex-col items-center justify-center">
+<!-- Background Live Camera Feed Simulation -->
+<div class="absolute inset-0 z-0 overflow-hidden">
+<img alt="Fond flux caméra en direct" class="w-full h-screen object-cover scale-110 brightness-[0.4] blur-sm" data-alt="Vue floue de l'intérieur d'un bar sophistiqué depuis la caméra d'un téléphone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuFVDi6AUmrsNp-cPlPItuTKy60Nm_UKUo0ON4AhgMIzqd-CkoqxZDcaV54sSbdcOtY1aXTYB4eZmRYWgOnnaOeZdkq-MOBiSyugMEFSblHT69L1ojdUSEPyBb3BFLly4DG3NvJFVA4-z0ZvlFqnHlea8brFXjUqS5Z9vyKbRXVW3QtSv9tQg1b6h6Teix1R2AJFiHrMBrpd1tTx8pPJ6iauX7ezKRxojRkQt6qD9kAk62VJwbCngzdRhu8lU9nkGkGyoWwTF32ira"/>
+</div>
+<!-- Scanning Interface Overlay -->
+<div class="relative z-10 w-full max-w-md px-8 flex flex-col items-center">
+<!-- Connection Status -->
+<div class="mb-12 text-center">
+<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 mb-4">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-xs font-bold tracking-widest text-primary uppercase">CONNEXION À VOTRE AIRBASE</span>
+</div>
+<h2 class="text-3xl font-extrabold text-white tracking-tight">Affiliation du Bar</h2>
+</div>
+<!-- Scanner Frame -->
+<div class="relative w-64 h-64 md:w-80 md:h-80">
+<!-- Camera Viewfinder Cutout Simulation -->
+<div class="absolute inset-0 scanner-frame rounded-[32px] pointer-events-none"></div>
+<!-- Refined Orange Brackets -->
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none p-0">
+<div class="flex justify-between">
+<div class="w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-3xl"></div>
+<div class="w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-3xl"></div>
+</div>
+<!-- Scanning Line -->
+<div class="absolute top-0 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-60 shadow-[0_0_15px_rgba(255,94,0,0.8)] translate-y-32"></div>
+<div class="flex justify-between">
+<div class="w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-3xl"></div>
+<div class="w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-3xl"></div>
+</div>
+</div>
+<!-- Central Content (Implicitly looking for QR) -->
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-white/10 text-6xl" data-icon="qr_code_2">qr_code_2</span>
+</div>
+</div>
+<!-- Instruction Text -->
+<div class="mt-12 text-center max-w-xs">
+<p class="text-zinc-300 text-base font-medium leading-relaxed">
+                Scannez le code QR du Bar pour lier votre compte à l'établissement
+            </p>
+<div class="mt-8 flex gap-4 justify-center">
+<button class="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="flashlight_on">flashlight_on</span>
+<span class="text-xs font-bold uppercase tracking-wider">LAMPE TORCHE</span>
+</button>
+<div class="w-px h-4 bg-zinc-800 self-center"></div>
+<button class="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="image">image</span>
+<span class="text-xs font-bold uppercase tracking-wider">TÉLÉCHARGER</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<!-- Secondary Contextual Floating Action -->
+<div class="fixed bottom-12 left-0 w-full flex justify-center z-50 pointer-events-none">
+<button class="pointer-events-auto flex items-center gap-3 bg-zinc-50 dark:bg-zinc-900 px-8 py-4 rounded-full shadow-2xl text-on-surface active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="help_center">help_center</span>
+<span class="text-sm font-bold tracking-tight">Besoin d'aide ?</span>
+</button>
+</div>
+</body></html>

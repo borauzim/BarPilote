@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vigie Bar - Active Orders</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-bright": "#f9f9fb",
+              "secondary-fixed-dim": "#ffb599",
+              "surface-tint": "#a63b00",
+              "on-surface-variant": "#5b4137",
+              "inverse-primary": "#ffb599",
+              "surface-variant": "#e2e2e4",
+              "inverse-on-surface": "#f0f0f2",
+              "on-tertiary-container": "#002d51",
+              "primary-fixed": "#ffdbce",
+              "surface-dim": "#d9dadc",
+              "on-surface": "#1a1c1d",
+              "error": "#ba1a1a",
+              "on-error-container": "#93000a",
+              "outline": "#8f7065",
+              "background": "#f9f9fb",
+              "secondary": "#9c431c",
+              "primary": "#a63b00",
+              "inverse-surface": "#2f3132",
+              "tertiary-fixed-dim": "#9fcaff",
+              "secondary-fixed": "#ffdbce",
+              "surface-container-low": "#f3f3f5",
+              "error-container": "#ffdad6",
+              "on-tertiary": "#ffffff",
+              "surface-container-highest": "#e2e2e4",
+              "on-tertiary-fixed-variant": "#00497d",
+              "surface-container": "#eeeef0",
+              "on-primary-fixed-variant": "#7f2b00",
+              "primary-container": "#ff5e00",
+              "on-tertiary-fixed": "#001d36",
+              "on-primary-fixed": "#370e00",
+              "surface-container-high": "#e8e8ea",
+              "primary-fixed-dim": "#ffb599",
+              "on-error": "#ffffff",
+              "outline-variant": "#e4bfb1",
+              "tertiary": "#0061a4",
+              "tertiary-fixed": "#d1e4ff",
+              "surface": "#f9f9fb",
+              "tertiary-container": "#0097fb",
+              "secondary-container": "#fd8d5f",
+              "on-primary-container": "#531900",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "on-primary": "#ffffff",
+              "on-secondary": "#ffffff",
+              "on-background": "#1a1c1d",
+              "on-secondary-fixed": "#370e00",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-container": "#732600"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0c0d0d; /* Deep black background as requested */
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="antialiased text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-900/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(26,28,29,0.04)] flex items-center justify-between px-6 h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="p-2 text-orange-500 hover:bg-slate-800 transition-colors active:scale-95 transition-transform rounded-full">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="text-xl font-bold text-orange-500 tracking-tight">Vigie Bar</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8">
+<a class="text-orange-500 font-semibold text-sm" href="#">Commandes</a>
+<a class="text-slate-500 hover:text-orange-500 transition-all text-sm" href="#">Inventaire</a>
+<a class="text-slate-500 hover:text-orange-500 transition-all text-sm" href="#">Tables</a>
+</nav>
+<div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 overflow-hidden">
+<img alt="Server Profile" class="w-full h-full object-cover" data-alt="Professional male server profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsV5MFN3pJvoxLPrrkThfcIFVhLHi7EbuGaSg2b0aeToYG3YYdIeqyAflmQ1yWRov5YKUivaxcrexEuSuOMN6dI54zE3Ukgg6-DSuo19XPQAeGqQAaJorx5HceqyJpTdQw9hApCFnrbzOMCsy-JId3VOdxRgcmVaH0ZBKUwvyKGCck_tqdB58-62AepwT-_QNGPjKUlam2OqnGakpPAamGz5IDMxXDJiRrgeUX-sAzcSfTPhLsqfkOIt9os9yF8eY9v8Rxrkb1jPxJ"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Dashboard Header -->
+<div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<span class="text-[0.6875rem] font-bold tracking-[0.1em] text-orange-500 uppercase">Opérations en Direct</span>
+<h2 class="text-4xl font-extrabold text-white tracking-tight mt-1">Commandes Actives</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-800">
+<span class="text-[0.6875rem] text-slate-500 block">REVENU TOTAL</span>
+<span class="text-xl font-bold text-white">$2,840.50</span>
+</div>
+<div class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-800">
+<span class="text-[0.6875rem] text-slate-500 block">TABLES ACTIVES</span>
+<span class="text-xl font-bold text-white">12</span>
+</div>
+</div>
+</div>
+<!-- Bento Grid for Orders -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- V1: Vibrant Border Card -->
+<div class="bg-surface-container-lowest rounded-2xl border-[3px] border-primary-container p-6 shadow-[0_20px_50px_rgba(255,94,0,0.1)] relative flex flex-col min-h-[220px]">
+<div class="absolute top-6 right-6 flex items-center gap-2 bg-orange-50 text-primary-container px-3 py-1 rounded-full border border-orange-100">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-bold text-sm tracking-tight">05:00</span>
+</div>
+<div class="mt-2">
+<span class="text-[0.6875rem] font-bold text-slate-400 uppercase tracking-widest">Priorité Immédiate</span>
+<h3 class="text-2xl font-extrabold text-on-surface leading-tight mt-2">Table 4 - 3 Bières</h3>
+</div>
+<div class="mt-auto pt-6 flex justify-between items-center">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border-2 border-white">
+<span class="material-symbols-outlined text-[16px] text-slate-600">beer_meal</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border-2 border-white">
+<span class="material-symbols-outlined text-[16px] text-slate-600">beer_meal</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border-2 border-white">
+<span class="material-symbols-outlined text-[16px] text-slate-600">beer_meal</span>
+</div>
+</div>
+<button class="bg-primary-container text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg shadow-orange-500/20 hover:scale-105 transition-transform active:scale-95">Servir Maintenant</button>
+</div>
+</div>
+<!-- V2: Modern Card with Subtle Shadows and Crisp Icons -->
+<div class="bg-surface-container-lowest rounded-2xl p-6 shadow-[0_10px_30px_rgba(26,28,29,0.04)] relative flex flex-col min-h-[220px] overflow-hidden group">
+<!-- Internal Glow Effect -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex justify-between items-start relative z-10">
+<div class="bg-surface-container-high w-12 h-12 rounded-xl flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">local_bar</span>
+</div>
+<div class="text-right">
+<span class="text-[10px] font-bold text-slate-400 block uppercase tracking-tighter">Préparation: 35%</span>
+<span class="text-lg font-mono font-bold text-on-surface">02:45</span>
+</div>
+</div>
+<div class="mt-6 relative z-10">
+<h3 class="text-xl font-bold text-on-surface tracking-tight">Table 12 - 2 Gin Tonics</h3>
+<p class="text-sm text-slate-500 mt-1">Hendrick's avec concombre supplémentaire</p>
+</div>
+<div class="mt-auto pt-6 flex items-center gap-3 relative z-10">
+<div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="w-1/3 h-full bg-primary rounded-full"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400 uppercase">Préparation: 35%</span>
+</div>
+</div>
+<!-- V3: Minimalist Ghost Card -->
+<div class="bg-slate-900/40 border border-slate-800 backdrop-blur-md rounded-2xl p-6 flex flex-col min-h-[220px] hover:border-orange-500/30 transition-all">
+<div class="flex justify-between items-center">
+<span class="px-3 py-1 rounded-lg bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-widest">Table 08</span>
+<span class="text-white/40 material-symbols-outlined">more_horiz</span>
+</div>
+<div class="mt-4">
+<h3 class="text-xl font-semibold text-white">4 Cocktails</h3>
+<div class="mt-3 space-y-2">
+<div class="flex items-center gap-3 text-slate-400 text-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+<span>Negroni x 2</span>
+</div>
+<div class="flex items-center gap-3 text-slate-400 text-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+<span>Old Fashioned x 2</span>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
+<span class="text-white font-mono text-sm">08:12</span>
+<button class="text-orange-500 font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all">Détails <span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
+</div>
+</div>
+<!-- Bento Large Card: Summary Stats -->
+<div class="lg:col-span-2 bg-gradient-to-br from-slate-900 to-black rounded-3xl p-8 border border-slate-800 flex flex-col md:flex-row gap-8">
+<div class="flex-1">
+<span class="text-orange-500 text-[10px] font-bold uppercase tracking-widest">Indicateurs d'Efficacité</span>
+<h3 class="text-3xl font-bold text-white mt-2">Performance Pic de Service</h3>
+<p class="text-slate-400 mt-4 leading-relaxed max-w-md">Votre temps de service moyen est actuellement de <span class="text-white font-bold">4,2 minutes</span>. C'est 12% plus rapide que la moyenne de samedi dernier.</p>
+<div class="mt-8 flex gap-4">
+<div class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10">
+<span class="text-[10px] text-slate-500 block uppercase">Attente</span>
+<span class="text-2xl font-bold text-white">4:12</span>
+</div>
+<div class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10">
+<span class="text-[10px] text-slate-500 block uppercase">Débit</span>
+<span class="text-2xl font-bold text-white">48/hr</span>
+</div>
+</div>
+</div>
+<div class="w-full md:w-1/3 flex items-center justify-center">
+<div class="relative w-40 h-40">
+<!-- Progress Ring -->
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-slate-800" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-orange-500" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="110" stroke-linecap="round" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-black text-white">75%</span>
+<span class="text-[8px] text-slate-500 font-bold uppercase">Capacité</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Action Card -->
+<div class="bg-orange-500 rounded-3xl p-8 flex flex-col justify-between items-start text-white relative overflow-hidden group cursor-pointer">
+<div class="absolute -right-4 -top-4 opacity-10 group-hover:rotate-12 transition-transform">
+<span class="material-symbols-outlined text-[160px]">add_circle</span>
+</div>
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<div class="mt-12">
+<h3 class="text-2xl font-bold leading-tight">Nouvelle Commande Rapide</h3>
+<p class="text-orange-100 text-sm mt-2">Ouvrez instantanément un nouveau compte ou assignez à une table.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-slate-900/80 backdrop-blur-xl flex justify-around items-center px-4 pb-6 pt-3 z-50 rounded-t-3xl shadow-lg border-t border-white/5">
+<a class="flex flex-col items-center justify-center text-orange-500 bg-orange-900/20 rounded-2xl px-4 py-2 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="text-[11px] font-medium tracking-wide uppercase mt-1">Commandes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 px-4 py-2 hover:text-orange-500 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[11px] font-medium tracking-wide uppercase mt-1">Inventaire</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 px-4 py-2 hover:text-orange-500 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">table_bar</span>
+<span class="text-[11px] font-medium tracking-wide uppercase mt-1">Tables</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 px-4 py-2 hover:text-orange-500 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="text-[11px] font-medium tracking-wide uppercase mt-1">Rapports</span>
+</a>
+</nav>
+<!-- FAB (Suppressed on details, shown here as it's a dashboard) -->
+<button class="fixed right-6 bottom-24 md:bottom-8 w-16 h-16 bg-primary-container text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 border-4 border-slate-900">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</body></html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#7d2d04",
+              "surface-tint": "#a63b00",
+              "secondary-fixed": "#ffdbce",
+              "on-primary-fixed": "#370e00",
+              "surface-container-highest": "#e2e2e4",
+              "on-error-container": "#93000a",
+              "inverse-on-surface": "#f0f0f2",
+              "on-tertiary-fixed": "#001d36",
+              "error-container": "#ffdad6",
+              "tertiary-container": "#0097fb",
+              "surface-container": "#eeeef0",
+              "primary-container": "#ff5e00",
+              "on-tertiary-fixed-variant": "#00497d",
+              "on-surface-variant": "#5b4137",
+              "tertiary": "#0061a4",
+              "surface-container-low": "#f3f3f5",
+              "secondary-fixed-dim": "#ffb599",
+              "secondary": "#9c431c",
+              "on-secondary-container": "#732600",
+              "surface-dim": "#d9dadc",
+              "on-error": "#ffffff",
+              "on-tertiary-container": "#002d51",
+              "on-primary-fixed-variant": "#7f2b00",
+              "secondary-container": "#fd8d5f",
+              "primary-fixed-dim": "#ffb599",
+              "on-surface": "#1a1c1d",
+              "error": "#ba1a1a",
+              "surface-container-high": "#e8e8ea",
+              "tertiary-fixed": "#d1e4ff",
+              "tertiary-fixed-dim": "#9fcaff",
+              "on-secondary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "primary-fixed": "#ffdbce",
+              "on-secondary-fixed": "#370e00",
+              "background": "#000000",
+              "surface": "#000000",
+              "on-primary-container": "#531900",
+              "primary": "#a63b00",
+              "outline-variant": "#e4bfb1",
+              "outline": "#8f7065",
+              "surface-bright": "#1a1c1d",
+              "inverse-surface": "#f0f0f2",
+              "on-primary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "on-background": "#ffffff",
+              "surface-variant": "#1c1c1e",
+              "inverse-primary": "#ffb599"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        input:focus {
+            outline: none;
+            box-shadow: 0 4px 12px -2px rgba(255, 94, 0, 0.15);
+        }
+        .segmented-control input:checked + label {
+            background-color: #ff5e00;
+            color: white;
+            box-shadow: 0 2px 8px rgba(255, 94, 0, 0.4);
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-black text-white font-body min-h-screen flex flex-col items-center">
+<!-- Top Navigation Header -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-black/80 backdrop-blur-xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container" data-icon="security">security</span>
+<span class="text-lg font-black tracking-tighter text-white">Portail Vigie</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-sm" data-icon="person">person</span>
+</div>
+</header>
+<main class="w-full max-w-md px-8 pt-24 pb-32 flex flex-col items-center">
+<!-- Profile Photo Placeholder -->
+<div class="relative mb-12 group">
+<div class="w-32 h-32 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center bg-surface-variant hover:border-primary-container transition-colors duration-300">
+<span class="material-symbols-outlined text-4xl text-white/40 group-hover:text-primary-container" data-icon="add_a_photo">add_a_photo</span>
+</div>
+<div class="absolute bottom-0 right-0 bg-primary-container p-2 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-sm text-white" data-icon="edit">edit</span>
+</div>
+</div>
+<!-- Form Section -->
+<section class="w-full space-y-10">
+<div class="space-y-1">
+<label class="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-white/40">NOM</label>
+<input class="w-full bg-transparent border-t-0 border-x-0 border-b border-white/10 py-3 text-lg focus:border-primary-container focus:ring-0 transition-all placeholder:text-white/20" placeholder="Entrez votre nom" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-white/40">POSTNOM</label>
+<input class="w-full bg-transparent border-t-0 border-x-0 border-b border-white/10 py-3 text-lg focus:border-primary-container focus:ring-0 transition-all placeholder:text-white/20" placeholder="Entrez votre postnom" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-white/40">PRÉNOM</label>
+<input class="w-full bg-transparent border-t-0 border-x-0 border-b border-white/10 py-3 text-lg focus:border-primary-container focus:ring-0 transition-all placeholder:text-white/20" placeholder="Entrez votre prénom" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-white/40">NUMÉRO DE TÉLÉPHONE</label>
+<div class="flex items-center gap-3 border-b border-white/10 focus-within:border-primary-container transition-all">
+<span class="text-white/40 text-lg">+243</span>
+<input class="w-full bg-transparent border-none py-3 text-lg focus:ring-0 placeholder:text-white/20" placeholder="000 000 000" type="tel"/>
+</div>
+</div>
+<!-- Segmented Control for Sexe -->
+<div class="space-y-3">
+<label class="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-white/40">SEXE</label>
+<div class="segmented-control grid grid-cols-2 p-1 bg-surface-variant rounded-xl">
+<div>
+<input checked="" class="hidden" id="sexe-m" name="sexe" type="radio"/>
+<label class="flex items-center justify-center py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all" for="sexe-m">MASCULIN</label>
+</div>
+<div>
+<input class="hidden" id="sexe-f" name="sexe" type="radio"/>
+<label class="flex items-center justify-center py-2.5 rounded-lg cursor-pointer text-sm font-semibold transition-all" for="sexe-f">FÉMININ</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Informational Footer Text -->
+<p class="mt-12 text-center text-white/30 text-[0.75rem] leading-relaxed">
+            En vous inscrivant, vous acceptez nos <span class="text-white/60 underline">Conditions d'Utilisation</span> et notre <span class="text-white/60 underline">Politique de Confidentialité</span>.
+        </p>
+</main>
+<!-- Fixed Bottom Action Bar -->
+<footer class="fixed bottom-0 w-full p-6 bg-gradient-to-t from-black via-black/90 to-transparent">
+<div class="max-w-md mx-auto">
+<button class="w-full bg-primary-container text-white py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-2xl active:scale-95 transition-transform duration-200 bg-gradient-to-br from-[#FF5E00] to-[#A63B00]">
+                S'INSCRIRE COMME VIGIE
+            </button>
+</div>
+</footer>
+</body></html>

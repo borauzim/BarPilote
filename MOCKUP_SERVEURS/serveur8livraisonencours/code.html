@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mission en cours - Minimalist Vigie</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-bright": "#1a1c1d", // Adjusted for dark mode feel in this specific variant
+              "surface-dim": "#0e0f10",
+              "tertiary": "#0061a4",
+              "on-error": "#ffffff",
+              "outline-variant": "#4d4440",
+              "on-primary-container": "#531900",
+              "secondary-fixed": "#ffdbce",
+              "on-primary-fixed": "#370e00",
+              "on-primary": "#ffffff",
+              "on-surface-variant": "#d9c3ba",
+              "surface-variant": "#2f3132",
+              "inverse-primary": "#a63b00",
+              "secondary-fixed-dim": "#ffb599",
+              "primary": "#ff5e00",
+              "on-secondary-fixed": "#370e00",
+              "primary-container": "#ff5e00",
+              "on-error-container": "#ffdad6",
+              "on-tertiary-fixed-variant": "#00497d",
+              "on-primary-fixed-variant": "#7f2b00",
+              "background": "#0e0f10",
+              "surface-container-lowest": "#1a1c1d",
+              "surface-container-low": "#232526",
+              "outline": "#8f7065",
+              "primary-fixed": "#ffdbce",
+              "inverse-on-surface": "#1a1c1d",
+              "on-background": "#f0f0f2",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#2b2d2f",
+              "surface-container": "#36393b",
+              "on-secondary": "#ffffff",
+              "surface-container-highest": "#414446",
+              "surface-tint": "#ff5e00",
+              "secondary": "#fd8d5f",
+              "tertiary-fixed": "#d1e4ff",
+              "primary-fixed-dim": "#ffb599",
+              "on-tertiary-container": "#d1e4ff",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "error": "#ffb4ab",
+              "secondary-container": "#9c431c",
+              "error-container": "#93000a",
+              "on-tertiary-fixed": "#001d36",
+              "tertiary-container": "#0097fb",
+              "tertiary-fixed-dim": "#9fcaff",
+              "on-surface": "#f0f0f2",
+              "on-secondary-container": "#ffdbce",
+              "surface": "#0e0f10",
+              "inverse-surface": "#f0f0f2"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.875rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+    }
+.blur-bg-overlay {
+    background-image: linear-gradient(rgba(14, 15, 16, 0.85), rgba(14, 15, 16, 0.95)), url(https://lh3.googleusercontent.com/aida-public/AB6AXuDczC_-UDmZudm4DXbv7vEcZfY3KvP5PlBlVOqjK-5q1_Aq1D1WnDX0kNsc3XXcLaK9aJGUTzN9PT8NhBOd6ZkkYrDK9FdlfgM3EXs45MTk-p6J6049sKJ74r3HWlFE1lr0Ifm0ycGVeVxG6kANTzLG5sEOkWMR5WL9oA84_uUk0TAkzhblU8xKw_T5dDSfcCK_hQPU3RvMddH9FkqWunFgHiBK63r1Eole_o4iGTSXDX3HGENnWo0pVblKx7JpA8us8hmaKmkIJj1Z);
+    background-size: cover;
+    background-position: center
+    }
+.badge-glow {
+    box-shadow: 0 0 60px 10px rgba(255, 94, 0, 0.3)
+    }</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background font-body text-on-background selection:bg-primary-container/30">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden blur-bg-overlay" data-alt="Atmospheric dark bar interior with soft amber lighting, blurred bottles, and polished wood textures in a moody setting">
+<!-- Minimal Top Bar (Process View - Shared Navigation Excluded) -->
+<header class="flex items-center justify-between px-6 py-4 backdrop-blur-md bg-surface/10 sticky top-0 z-50">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<h2 class="text-on-surface text-lg font-semibold tracking-tight">Mission en cours</h2>
+<div class="size-10"></div> <!-- Spacer for balance -->
+</header>
+<main class="flex-1 flex flex-col items-center justify-center px-6 text-center">
+<!-- 3D Badge Icon Section -->
+<div class="relative mb-12">
+<div class="badge-glow absolute inset-0 rounded-full bg-primary/20 blur-3xl"></div>
+<div class="relative z-10 size-48 lg:size-64 bg-gradient-to-br from-primary-container to-primary rounded-[48px] flex items-center justify-center transform rotate-12 border border-white/10">
+<div class="transform -rotate-12 flex flex-col items-center">
+<span class="material-symbols-outlined text-white text-7xl lg:text-8xl" style="font-variation-settings: 'FILL' 1;">
+                            flight_takeoff
+                        </span>
+</div>
+</div>
+<!-- Subtle reflection element -->
+<div class="absolute -top-4 -right-4 size-24 bg-white/10 rounded-full blur-2xl"></div>
+</div>
+<!-- Content Area -->
+<div class="max-w-md mx-auto space-y-4">
+<div class="space-y-1">
+<p class="text-primary font-label tracking-[0.2em] text-[0.75rem] font-bold uppercase">Statut de la mission</p>
+<h1 class="text-on-surface text-5xl lg:text-6xl font-extrabold tracking-tighter leading-tight">
+                        Mission en cours
+                    </h1>
+</div>
+<p class="text-on-surface-variant text-xl lg:text-2xl font-medium opacity-80">
+                    Livrer à la <span class="text-on-surface font-bold">Table 4</span>
+</p>
+<!-- Progress/Status Indicator -->
+<div class="pt-8 w-full max-w-[280px] mx-auto">
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-2/3 rounded-full relative">
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+</div>
+</div>
+<div class="flex justify-between mt-3 text-xs font-medium text-on-surface-variant uppercase tracking-wider">
+<span>Départ</span>
+<span class="text-primary">En Transit</span>
+<span class="opacity-40">Arrivée</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Quick Action Floating Footer -->
+<footer class="p-8 flex flex-col items-center gap-6">
+<button class="group relative w-full max-w-sm overflow-hidden rounded-full bg-gradient-to-br from-primary-container to-primary px-8 py-5 text-lg font-bold text-white shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98]">
+<div class="relative z-10 flex items-center justify-center gap-3">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Confirmer la Livraison</span>
+</div>
+<div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface text-sm font-semibold transition-colors flex items-center gap-2"><span class="material-symbols-outlined text-[1.2rem]">report</span>
+                Signaler un Problème
+            </button>
+</footer>
+</div>
+</body></html>

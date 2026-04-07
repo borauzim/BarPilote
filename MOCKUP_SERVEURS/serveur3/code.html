@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#000000",
+                        "surface-container-lowest": "#0a0a0a",
+                        "tertiary-fixed": "#d1e4ff",
+                        "tertiary": "#0061a4",
+                        "surface-dim": "#1a1c1d",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#f0f0f2",
+                        "on-secondary-container": "#732600",
+                        "primary-fixed": "#ffdbce",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-secondary-fixed-variant": "#7d2d04",
+                        "secondary-container": "#fd8d5f",
+                        "primary": "#FF5E00",
+                        "inverse-on-surface": "#1a1c1d",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#ffdbce",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-tertiary-fixed-variant": "#00497d",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#ffb599",
+                        "surface-container-low": "#121212",
+                        "surface-container-high": "#1c1c1c",
+                        "on-secondary-fixed": "#370e00",
+                        "surface-container-highest": "#282828",
+                        "error": "#ff3b30",
+                        "tertiary-fixed-dim": "#9fcaff",
+                        "inverse-primary": "#ffb599",
+                        "primary-container": "#FF5E00",
+                        "surface-variant": "#2c2c2e",
+                        "on-primary-fixed": "#370e00",
+                        "on-tertiary-container": "#002d51",
+                        "on-primary-container": "#1a0800",
+                        "tertiary-container": "#0097fb",
+                        "surface-container": "#0f0f0f",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#4d3d37",
+                        "surface": "#000000",
+                        "outline": "#8f7065",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#ffffff",
+                        "surface-tint": "#ff5e00",
+                        "secondary": "#9c431c",
+                        "on-surface-variant": "#d1c4bf",
+                        "on-tertiary-fixed": "#001d36",
+                        "on-surface": "#ffffff",
+                        "surface-bright": "#1a1a1a"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-card {
+            background: rgba(26, 26, 26, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 94, 0, 0.1);
+        }
+        .pending-border {
+            border: 1px solid rgba(255, 94, 0, 0.5);
+            box-shadow: 0 0 20px rgba(255, 94, 0, 0.1);
+        }
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="antialiased select-none">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 bg-zinc-950/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(26,28,29,0.04)] flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-orange-600 cursor-pointer active:scale-95 duration-200">menu</span>
+<h1 class="text-2xl font-black tracking-tighter text-orange-600 font-sans antialiased tracking-tight">BarPilote Vigie</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-6">
+<span class="text-orange-500 font-bold cursor-pointer transition-colors">Commandes</span>
+<span class="text-zinc-400 font-medium hover:bg-zinc-800/50 px-2 rounded transition-colors cursor-pointer">Tables</span>
+<span class="text-zinc-400 font-medium hover:bg-zinc-800/50 px-2 rounded transition-colors cursor-pointer">Inventaire</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700">
+<img alt="Executive Profile" class="w-full h-full object-cover" data-alt="Close up of a professional male headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXcNYPLCy3mSeFj6iWA3twA43ehO0kvCtA0AuRgxwxoadWFRiXc7a_KuYrbFEH0eM6SIEd7EsUzrGzHNYxjrkUq4RoArBYMNvmyram4OVkGppoKQUd8Val8Iuip-DfvwIxNwFSXHcyiL0ZC3c9gGh4dbpblSlo2S-DvvCOqNyTUHL0M5cfC66k11Pg_cJK4PjPsIR_bj0t-vFomUzxP5gXwhO3-tfeWh4C3Q7qvEMg9QMHFkRiAawwvU3hkByPdiigx3Cz8otleaNb"/>
+</div>
+</div>
+</nav>
+<main class="pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto">
+<!-- Executive Dashboard Header -->
+<header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<p class="text-[0.6875rem] font-bold uppercase tracking-widest text-orange-500 mb-1">Opérations en Direct</p>
+<h2 class="text-[2.75rem] font-extrabold leading-none tracking-tight">Le Tableau des Commandes</h2>
+</div>
+<div class="flex gap-4 items-center">
+<div class="glass-card px-6 py-3 rounded-xl flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-orange-600 animate-pulse"></span>
+<span class="text-sm font-semibold">14 Commandes Actives</span>
+</div>
+<button class="bg-gradient-to-br from-primary-container to-primary text-white font-bold px-6 py-3 rounded-full active:scale-95 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                    Nouvelle Commande
+                </button>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Main Content: Pending Queue (8 Columns) -->
+<div class="md:col-span-8 space-y-6">
+<h3 class="text-xl font-bold flex items-center gap-2 px-2">
+<span class="material-symbols-outlined text-orange-500">priority_high</span>
+                    File d'Attente
+                </h3>
+<!-- Pending Order 1 -->
+<div class="glass-card pending-border p-6 rounded-xl flex flex-col md:flex-row gap-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-orange-600/5 blur-3xl -z-10 group-hover:bg-orange-600/10 transition-colors"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="text-2xl font-bold tracking-tight">Table 12</h4>
+<p class="text-sm text-zinc-400 font-medium">Serveur : Sarah • <span class="text-orange-500">il y a 8 min</span></p>
+</div>
+<span class="bg-orange-600/20 text-orange-500 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-orange-600/30">Urgent</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-sm">
+<span class="text-zinc-300">2x Old Fashioned (Premium Bourbon)</span>
+<span class="font-mono text-zinc-500">$36.00</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-zinc-300">1x Espresso Martini (Extra Dry)</span>
+<span class="font-mono text-zinc-500">$18.00</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-zinc-300">1x House Red (Bordeaux)</span>
+<span class="font-mono text-zinc-500">$14.00</span>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col gap-3 justify-end">
+<button class="bg-white text-black font-bold h-full md:h-auto px-8 py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">check_circle</span>
+                            Servir
+                        </button>
+<button class="bg-zinc-800 text-zinc-300 h-full md:h-auto px-4 py-4 rounded-xl hover:bg-zinc-700 transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</div>
+<!-- Pending Order 2 -->
+<div class="glass-card p-6 rounded-xl flex flex-col md:flex-row gap-6">
+<div class="flex-1">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="text-2xl font-bold tracking-tight">Table 04</h4>
+<p class="text-sm text-zinc-400 font-medium">Serveur : Marc • <span class="text-zinc-500">il y a 12 min</span></p>
+</div>
+<span class="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">En cours</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-sm">
+<span class="text-zinc-300">4x Signature Lager</span>
+<span class="font-mono text-zinc-500">$32.00</span>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col gap-3 justify-end">
+<button class="bg-white text-black font-bold h-full md:h-auto px-8 py-4 rounded-xl active:scale-95 transition-transform">
+                            Servir
+                        </button>
+<button class="bg-zinc-800 text-zinc-300 h-full md:h-auto px-4 py-4 rounded-xl hover:bg-zinc-700 transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Sidebar Content: Metrics & Alerts (4 Columns) -->
+<div class="md:col-span-4 space-y-6">
+<!-- Stock Gauge Card -->
+<div class="glass-card p-6 rounded-xl">
+<h3 class="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-6">Priorité de Stock</h3>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="font-semibold">Grey Goose Vodka</span>
+<span class="text-error font-bold italic">Critique (12%)</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-error w-[12%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="font-semibold">Hendrick's Gin</span>
+<span class="text-orange-500 font-bold">Bas (34%)</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-orange-500 w-[34%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="font-semibold">Grains d'Espresso</span>
+<span class="text-zinc-400 font-bold">Sain (88%)</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-zinc-500 w-[88%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Shift Metrics -->
+<div class="glass-card p-6 rounded-xl bg-gradient-to-br from-orange-600/10 to-transparent border-none">
+<p class="text-[0.6875rem] font-bold uppercase tracking-widest text-orange-500 mb-2">Revenu Quotidien</p>
+<h3 class="text-[2.75rem] font-extrabold tracking-tighter leading-none mb-1">$4,821</h3>
+<div class="flex items-center gap-2 text-green-500 text-sm font-bold">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>+12% vs vendredi dernier</span>
+</div>
+</div>
+<!-- Recent Activity -->
+<div class="glass-card p-6 rounded-xl">
+<h3 class="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-4">Performance du Personnel</h3>
+<div class="space-y-4">
+<div class="flex items-center gap-4">
+<img alt="Sarah" class="w-10 h-10 rounded-full bg-zinc-800" data-alt="Portrait of a female bartender smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgjeL-_FM9Il7yV9eirraRg8T9u0yoTLb_-2TzDZYIFPoUHKbwGwm6ymsXrywpbzpIz7G9ja-gD6Jjvmva_2DZVDDuq8cwzgIy_v1VxfeSf0uZlkhoxj9VrGIxwWe_4T4ppbvggjaMSQ-qfB2E6tYSOeoHRIhbz_cTKmx3wQV5uHbtBPSge7afrWdvjDKvLuQ2kGQiNyVcWVXTF3pZZLIF1btC5QbbN3wBqH4Ax_1GRsvWwYbgn_ZBuPtRteblqhiRYAKL9rZNpaDY"/>
+<div class="flex-1">
+<p class="text-sm font-bold">Sarah</p>
+<p class="text-[10px] text-zinc-500">42 Commandes servies aujourd'hui</p>
+</div>
+<span class="text-orange-500 text-xs font-black">Top</span>
+</div>
+<div class="flex items-center gap-4 opacity-70">
+<img alt="Marc" class="w-10 h-10 rounded-full bg-zinc-800" data-alt="Portrait of a male bartender working" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9zoOuWC9oOutG5IzQ4FrfHE3kou9vchPm9w6xbtjtYuDl06o9G_CHVUP1S8vEMg4YJYCyQm00SWjxevVd__7ZhfuNIvSxb5bK3sxojcEQNUR5HnM1CQBazk1H8lk9GtVk9Lz0Syts78t3QyBq8p9hp1THCoWFGcIsKZiSa6RZPn08J_WMC9nkTJ2GcTyWp8Gkkigbr9NC8HwS5izneA_y-CXjBh11t52wjJyl9I4MSPgk6mUjdL1_tZiuj94nhnMVdqKd-wSSaD2K"/>
+<div class="flex-1">
+<p class="text-sm font-bold">Marc</p>
+<p class="text-[10px] text-zinc-500">31 Commandes servies aujourd'hui</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center pb-safe pt-2 px-4 bg-zinc-950/80 backdrop-blur-xl rounded-t-[24px] z-50 shadow-2xl md:hidden">
+<a class="flex flex-col items-center justify-center bg-orange-600/10 text-orange-500 rounded-2xl px-4 py-2 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Commandes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-500 px-4 py-2 hover:text-orange-400 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Tables</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-500 px-4 py-2 hover:text-orange-400 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="liquor">liquor</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Inventaire</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-500 px-4 py-2 hover:text-orange-400 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Rapports</span>
+</a>
+</nav>
+<!-- Floating Action Button (Only for relevant contexts - Home/Dashboard) -->
+<div class="fixed bottom-24 right-6 md:bottom-8 md:right-8 z-40 hidden md:block">
+<button class="w-14 h-14 bg-orange-600 rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</div>
+</body></html>

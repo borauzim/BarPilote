@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vigie - Service Commencé</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "outline": "#8f7065",
+              "on-surface": "#1a1c1d",
+              "on-error-container": "#93000a",
+              "surface-container-low": "#f3f3f5",
+              "on-tertiary-container": "#002d51",
+              "inverse-primary": "#ffb599",
+              "on-secondary-container": "#732600",
+              "surface-bright": "#f9f9fb",
+              "on-secondary-fixed": "#370e00",
+              "on-primary-fixed": "#370e00",
+              "tertiary-fixed": "#d1e4ff",
+              "surface": "#f9f9fb",
+              "primary-container": "#ff5e00",
+              "surface-container": "#eeeef0",
+              "on-tertiary-fixed": "#001d36",
+              "primary": "#a63b00",
+              "on-tertiary-fixed-variant": "#00497d",
+              "on-background": "#1a1c1d",
+              "on-primary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "background": "#f9f9fb",
+              "on-error": "#ffffff",
+              "surface-container-high": "#e8e8ea",
+              "on-primary-fixed-variant": "#7f2b00",
+              "primary-fixed-dim": "#ffb599",
+              "error-container": "#ffdad6",
+              "secondary": "#9c431c",
+              "on-surface-variant": "#5b4137",
+              "error": "#ba1a1a",
+              "tertiary": "#0061a4",
+              "primary-fixed": "#ffdbce",
+              "outline-variant": "#e4bfb1",
+              "on-primary-container": "#531900",
+              "surface-variant": "#e2e2e4",
+              "surface-container-highest": "#e2e2e4",
+              "on-secondary-fixed-variant": "#7d2d04",
+              "on-secondary": "#ffffff",
+              "inverse-surface": "#2f3132",
+              "inverse-on-surface": "#f0f0f2",
+              "tertiary-container": "#0097fb",
+              "surface-dim": "#d9dadc",
+              "surface-tint": "#a63b00",
+              "secondary-fixed-dim": "#ffb599",
+              "tertiary-fixed-dim": "#9fcaff",
+              "secondary-fixed": "#ffdbce",
+              "secondary-container": "#fd8d5f"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .haptic-glow {
+            box-shadow: 0 0 50px 10px rgba(34, 197, 94, 0.2), inset 0 0 20px rgba(34, 197, 94, 0.1);
+        }
+        .vibrant-orange-gradient {
+            background: linear-gradient(145deg, #FF5E00 0%, #A63B00 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+    </style>
+</head>
+<body class="bg-[#0a0a0b] text-white font-body selection:bg-primary/30 min-h-screen overflow-hidden flex flex-col items-center justify-center">
+<!-- Top Navigation Placeholder (Suppressed) -->
+<header class="hidden"></header>
+<!-- Main Content Canvas -->
+<main class="relative flex flex-col items-center justify-center w-full max-w-lg px-8 text-center">
+<!-- Haptic Glow Icon Section -->
+<div class="relative mb-12">
+<!-- Outer Neon Ring -->
+<div class="absolute inset-0 rounded-full haptic-glow animate-pulse"></div>
+<!-- Icon Container -->
+<div class="relative flex items-center justify-center w-32 h-32 rounded-full bg-neutral-900 border border-neutral-800">
+<span class="material-symbols-outlined text-green-500 !text-6xl" style="font-variation-settings: 'FILL' 1, 'wght' 400;">
+                    check_circle
+                </span>
+</div>
+<!-- Secondary Ambient Glow -->
+<div class="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-green-500/5 blur-[80px] rounded-full"></div>
+</div>
+<!-- Feedback Typography -->
+<div class="space-y-4">
+<h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white font-headline">
+                Bienvenue, Tshala
+            </h1>
+<p class="text-xl md:text-2xl font-medium text-neutral-400">
+                Service commencé à 19:42
+            </p>
+</div>
+<!-- Status Details -->
+<div class="mt-12 grid grid-cols-2 gap-4 w-full opacity-60">
+<div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+<span class="block text-[10px] uppercase tracking-widest text-neutral-500 mb-1">POSTE</span>
+<span class="text-sm font-semibold">Bar Principal</span>
+</div>
+<div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+<span class="block text-[10px] uppercase tracking-widest text-neutral-500 mb-1">STATUT</span>
+<span class="text-sm font-semibold flex items-center justify-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    En Service
+                </span>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<div class="fixed bottom-12 left-0 w-full px-8 flex justify-center z-50">
+<button class="vibrant-orange-gradient w-full max-w-sm py-5 rounded-full shadow-2xl shadow-orange-950/40 flex items-center justify-center gap-3 active:scale-95 transition-all duration-200 border border-white/10 group">
+<span class="font-bold text-lg tracking-tight">Aller à la Vigie</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" style="font-variation-settings: 'wght' 600;">
+                arrow_forward
+            </span>
+</button>
+</div>
+<!-- Decorative Textures -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-20 overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-b from-neutral-900 via-[#0a0a0b] to-black"></div>
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-orange-600/10 blur-[120px] rounded-full"></div>
+<div class="absolute -bottom-24 -left-24 w-96 h-96 bg-neutral-800/20 blur-[120px] rounded-full"></div>
+</div>
+<!-- Background Content Imagery -->
+<div class="fixed inset-0 opacity-[0.03] -z-10 mix-blend-overlay">
+<img alt="Atmosphère sombre et floue d'un bar de luxe" class="w-full h-full object-cover grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwXyF6aa6NFXe5XR9xAAFuCGW2xpnGAaeI84s06wUCo4MOJ1SluEBVXfIoKJgvRW2r1YAKCBtkJLkhWUhms8T7Us1t1q17KXgxNxGmAoDUCUoiCjFigtwCWP-Qz-aNIVrQR6LntgKhgWudOcR-3v1FkU1NiP-zW7PBxpnOd6WPMK5uqzO7qS4Z1aTlNUypHQck7d7G97Su0cCowV8nuTUtQc6rvfIfIPHaXCwv-MYSEiIMQohVAZg-2IVKX-SoGq9AmNEQ9Y27jAEx"/>
+</div>
+</body></html>
