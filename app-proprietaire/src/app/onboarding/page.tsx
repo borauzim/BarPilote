@@ -159,14 +159,14 @@ export default function OnboardingIdentityPage() {
 
             console.log("✅ Bar créé avec succès:", response.data);
             
-            // Sauvegarder les infos du bar pour la page QR
-            localStorage.setItem("created_bar", JSON.stringify({
-                id: response.data.id,
-                nom: response.data.nom,
-                code_invitation: response.data.code_invitation,
-                type_etablissement: response.data.type_etablissement,
-            }));
-            
+            // Stocker les infos du bar, et surtout le code_invitation, pour l'affichage de la page QR
+            if (response.data.code_invitation) {
+                localStorage.setItem("bar_code_invitation", response.data.code_invitation);
+            }
+            if (response.data.nom) {
+                localStorage.setItem("bar_name", response.data.nom);
+            }
+
             router.push("/onboarding/establishment-qr");
         } catch (error: any) {
             console.error("Failed to sync bar identity:", error);

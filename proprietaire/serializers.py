@@ -16,7 +16,7 @@ class MasterProductSerializer(serializers.ModelSerializer):
 class BarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bar
-        fields = ['id', 'nom', 'adresse', 'google_place_id', 'latitude', 'longitude', 'type_etablissement', 'code_invitation', 'date_creation']
+        fields = ['id', 'nom', 'adresse', 'google_place_id', 'latitude', 'longitude', 'type_etablissement', 'date_creation', 'code_invitation']
         read_only_fields = ['code_invitation']
 
 class TableSerializer(serializers.ModelSerializer):

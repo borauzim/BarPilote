@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
-import secrets
-import string
 
 class Bar(models.Model):
     """
@@ -29,27 +27,14 @@ class Bar(models.Model):
         default='BAR', 
         verbose_name="Type d'établissement"
     )
-    # Code d'invitation unique pour le QR code du personnel
-    code_invitation = models.CharField(
-        max_length=12, unique=True, blank=True, 
-        verbose_name="Code d'invitation QR",
-        help_text="Code unique scanné par les serveurs pour rejoindre cet établissement"
+    # Code unique pour le QR — les serveurs scannent ce code pour rejoindre le bar
+    code_invitation = models.UUIDField(
+        default=uuid.uuid4, 
+        unique=True, 
+        editable=False, 
+        verbose_name="Code d'invitation QR"
     )
     date_creation = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        if not self.code_invitation:
-            self.code_invitation = self._generate_unique_code()
-        super().save(*args, **kwargs)
-
-    @staticmethod
-    def _generate_unique_code():
-        """Génère un code alphanumérique unique de 8 caractères (ex: BP-A3K9M2)"""
-        chars = string.ascii_uppercase + string.digits
-        while True:
-            code = 'BP-' + ''.join(secrets.choice(chars) for _ in range(6))
-            if not Bar.objects.filter(code_invitation=code).exists():
-                return code
 
     def __str__(self):
         return self.nom

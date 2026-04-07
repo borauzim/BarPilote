@@ -7,8 +7,13 @@ import { setToken } from "@/lib/auth";
 
 // Le composant d'interface pur qui gère le bouton et les requêtes
 function LoginContent() {
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
     const login = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
+            setIsLoading(true);
+            setErrorMsg(null);
             console.log("Google Access Token:", tokenResponse.access_token);
             try {
                 // Envoi du token à Django (dj-rest-auth)
@@ -19,23 +24,36 @@ function LoginContent() {
                 
                 // dj-rest-auth avec USE_JWT=True renvoie { access, refresh, user }
                 const token = response.data.access || response.data.access_token || response.data.key;
-                console.log("Token extrait:", token ? token.substring(0, 30) + "..." : "AUCUN TOKEN !");
                 
                 if (token) {
                     setToken(token);
                     console.log("Token sauvegardé dans les cookies ✅");
                 } else {
                     console.error("❌ Aucun token trouvé dans la réponse Django !", response.data);
-                    alert("Erreur d'authentification : aucun token reçu du serveur.");
+                    setErrorMsg("Erreur d'authentification : aucun token reçu du serveur.");
+                    setIsLoading(false);
                     return;
                 }
-                // Redirection vers la sélection de rôle
-                window.location.href = "/auth/select-role";
-            } catch (error) {
+                
+                // Redirection
+                const returnUrl = localStorage.getItem("return_after_login");
+                if (returnUrl) {
+                    localStorage.removeItem("return_after_login");
+                    window.location.href = returnUrl;
+                } else {
+                    window.location.href = "/auth/select-role";
+                }
+            } catch (error: any) {
                 console.error("Erreur de connexion Django:", error);
+                setErrorMsg(error?.response?.data?.detail || "Le serveur rencontre des difficultés. Vérifiez que l'API est lancée.");
+                setIsLoading(false);
             }
         },
-        onError: (errorResponse) => console.log("Google Login Failed", errorResponse),
+        onError: (errorResponse) => {
+            console.log("Google Login Failed", errorResponse);
+            setErrorMsg("La connexion avec Google a échoué.");
+            setIsLoading(false);
+        },
     });
 
     return (
@@ -70,18 +88,39 @@ function LoginContent() {
                     </p>
                 </div>
 
+                {/* Messages d'erreur */}
+                {errorMsg && (
+                    <div className="bg-red-50 text-red-600 border border-red-100 p-3 rounded-xl text-sm font-semibold mb-6 flex items-center gap-2 text-left shadow-sm">
+                        <span className="material-symbols-outlined text-base">error</span>
+                        <p>{errorMsg}</p>
+                    </div>
+                )}
+
                 {/* Google Auth Button */}
                 <button
-                    onClick={() => login()}
-                    className="w-full flex items-center justify-center gap-3 bg-white border border-surface-container-high text-on-surface hover:bg-surface-container hover:shadow-sm transition-all duration-200 font-semibold py-3.5 px-4 rounded-xl active:scale-95"
+                    onClick={() => {
+                        console.log("🟢 Bouton 'Continuer avec Google' cliqué !");
+                        login();
+                    }}
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-3 bg-white border border-surface-container-high text-on-surface hover:bg-surface-container hover:shadow-sm transition-all duration-200 font-semibold py-3.5 px-4 rounded-xl active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
                 >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M23.766 12.2764C23.766 11.4607 23.6999 10.6406 23.5588 9.83807H12.24V14.4591H18.7217C18.4528 15.9494 17.5885 17.2678 16.323 18.1056V21.1039H20.19C22.4608 19.0139 23.766 15.9274 23.766 12.2764Z" fill="#4285F4" />
-                        <path d="M12.2401 24.0008C15.4766 24.0008 18.2059 22.9382 20.1945 21.1039L16.3276 18.1055C15.2517 18.8375 13.8627 19.252 12.2445 19.252C9.11388 19.252 6.45946 17.1399 5.50705 14.3003H1.5166V17.3912C3.55371 21.4434 7.7029 24.0008 12.2401 24.0008Z" fill="#34A853" />
-                        <path d="M5.50253 14.3003C5.00318 12.8099 5.00318 11.1961 5.50253 9.70575V6.61481H1.51649C-0.18551 10.0056 -0.18551 14.0004 1.51649 17.3912L5.50253 14.3003Z" fill="#FBBC05" />
-                        <path d="M12.2401 4.74966C13.9509 4.7232 15.6044 5.36697 16.8434 6.54867L20.2695 3.12262C18.1001 1.0855 15.2208 -0.034466 12.2401 0.000808666C7.7029 0.000808666 3.55371 2.55822 1.5166 6.61481L5.50264 9.70575C6.45064 6.86173 9.10947 4.74966 12.2401 4.74966Z" fill="#EA4335" />
-                    </svg>
-                    Continuer avec Google
+                    {isLoading ? (
+                        <>
+                            <span className="material-symbols-outlined animate-spin text-orange-600">sync</span>
+                            Connexion en cours...
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M23.766 12.2764C23.766 11.4607 23.6999 10.6406 23.5588 9.83807H12.24V14.4591H18.7217C18.4528 15.9494 17.5885 17.2678 16.323 18.1056V21.1039H20.19C22.4608 19.0139 23.766 15.9274 23.766 12.2764Z" fill="#4285F4" />
+                                <path d="M12.2401 24.0008C15.4766 24.0008 18.2059 22.9382 20.1945 21.1039L16.3276 18.1055C15.2517 18.8375 13.8627 19.252 12.2445 19.252C9.11388 19.252 6.45946 17.1399 5.50705 14.3003H1.5166V17.3912C3.55371 21.4434 7.7029 24.0008 12.2401 24.0008Z" fill="#34A853" />
+                                <path d="M5.50253 14.3003C5.00318 12.8099 5.00318 11.1961 5.50253 9.70575V6.61481H1.51649C-0.18551 10.0056 -0.18551 14.0004 1.51649 17.3912L5.50253 14.3003Z" fill="#FBBC05" />
+                                <path d="M12.2401 4.74966C13.9509 4.7232 15.6044 5.36697 16.8434 6.54867L20.2695 3.12262C18.1001 1.0855 15.2208 -0.034466 12.2401 0.000808666C7.7029 0.000808666 3.55371 2.55822 1.5166 6.61481L5.50264 9.70575C6.45064 6.86173 9.10947 4.74966 12.2401 4.74966Z" fill="#EA4335" />
+                            </svg>
+                            Continuer avec Google
+                        </>
+                    )}
                 </button>
 
                 {/* Divider */}
@@ -107,8 +146,19 @@ function LoginContent() {
 
 // Wrapper avec le Provider Google
 export default function LoginPage() {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    
+    if (!clientId) {
+        return (
+            <div className="min-h-screen flex items-center justify-center p-6 bg-red-50 text-red-600 font-bold text-center">
+                Erreur de configuration : Le NEXT_PUBLIC_GOOGLE_CLIENT_ID est manquant dans votre fichier .env.local. <br/>
+                Veuillez l'ajouter et redémarrer le serveur (npm run dev).
+            </div>
+        );
+    }
+
     return (
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+        <GoogleOAuthProvider clientId={clientId}>
             <LoginContent />
         </GoogleOAuthProvider>
     );

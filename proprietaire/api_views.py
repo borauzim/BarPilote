@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Bar, PilotProfile, Table, Category, MasterProduct, StockItem, Sale
@@ -37,52 +37,33 @@ class BarViewSet(viewsets.ModelViewSet):
         return Bar.objects.filter(proprietaires__user=self.request.user)
 
     def perform_create(self, serializer):
-        # Sauvegarde le bar (code_invitation auto-généré par le modèle)
+        # Sauvegarde le bar
         bar = serializer.save()
         
         # Lie le bar au profil du pilote de l'utilisateur connecté
-        profile = PilotProfile.objects.get(user=self.request.user)
+        from .models import PilotProfile
+        profile, _ = PilotProfile.objects.get_or_create(user=self.request.user)
         profile.bar = bar
+        profile.role = 'PROPRIETAIRE'
         profile.save()
 
-    @action(detail=False, methods=['post'], url_path='join/(?P<code>[^/.]+)',
-            permission_classes=[permissions.IsAuthenticated])
-    def join_bar(self, request, code=None):
-        """
-        Endpoint scanné par les serveurs via QR code.
-        Lie le profil du serveur à l'établissement correspondant au code.
-        """
+    @action(detail=False, methods=['post'], url_path='join/(?P<code>[^/.]+)')
+    def join(self, request, code=None):
         try:
             bar = Bar.objects.get(code_invitation=code)
         except Bar.DoesNotExist:
-            return Response(
-                {'detail': 'Code d\'invitation invalide. Vérifiez le QR code.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        profile, created = PilotProfile.objects.get_or_create(user=request.user)
-        
-        # Si le serveur est déjà lié à ce bar
-        if profile.bar == bar:
-            return Response({
-                'detail': f'Vous êtes déjà membre de {bar.nom}.',
-                'bar_nom': bar.nom,
-                'bar_id': str(bar.id),
-            })
-
-        # Lier le serveur à l'établissement
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Ce code d'invitation est invalide ou n'existe plus.")
+            
+        # Lie le profil du serveur connecté à ce bar
+        from .models import PilotProfile
+        profile, _ = PilotProfile.objects.get_or_create(user=request.user)
         profile.bar = bar
-        if profile.role not in ['PROPRIETAIRE']:
-            profile.role = 'SERVEUR'
+        profile.role = 'SERVEUR'
         profile.save()
-
-        return Response({
-            'detail': f'Bienvenue chez {bar.nom} ! Vous êtes maintenant connecté.',
-            'bar_nom': bar.nom,
-            'bar_id': str(bar.id),
-            'bar_type': bar.get_type_etablissement_display(),
-            'role': profile.get_role_display(),
-        }, status=status.HTTP_200_OK)
+        
+        serializer = self.get_serializer(bar)
+        return Response(serializer.data)
 
 class TableViewSet(viewsets.ModelViewSet):
     queryset = Table.objects.all()

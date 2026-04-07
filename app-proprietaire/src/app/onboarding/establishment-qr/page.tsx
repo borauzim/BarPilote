@@ -1,14 +1,22 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 
 export default function EstablishmentQRPage() {
     const router = useRouter();
+    const [barInfo, setBarInfo] = useState({ code: "", name: "" });
+    const [joinUrl, setJoinUrl] = useState("");
 
-    // ID de l'établissement (à dynamiser plus tard avec le backend)
-    const establishmentId = "BAR-PILOTE-KIN-001";
+    useEffect(() => {
+        const code = localStorage.getItem("bar_code_invitation") || "INVALID_CODE";
+        const name = localStorage.getItem("bar_name") || "Votre Établissement";
+        
+        setBarInfo({ code, name });
+        // L'URL que les serveurs vont scanner
+        setJoinUrl(`${window.location.origin}/join/${code}`);
+    }, []);
 
     const handleDownload = () => {
         const canvas = document.querySelector("canvas");
@@ -16,65 +24,69 @@ export default function EstablishmentQRPage() {
             const url = canvas.toDataURL("image/png");
             const link = document.createElement("a");
             link.href = url;
-            link.download = `QR_CODE_${establishmentId}.png`;
+            link.download = `QR_CODE_${barInfo.name.replace(/\s+/g, '_')}.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            // Redirection vers la configuration des tables
+            // Redirection vers le dashboard ou configuration
             setTimeout(() => {
-                router.push("/tables");
-            }, 1500); // Petit délai pour laisser le téléchargement s'initier
+                router.push("/dashboard");
+            }, 1500);
         }
     };
 
     const handleFinish = () => {
-        router.push("/tables");
+        router.push("/dashboard");
     };
 
     return (
         <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center p-6">
-            <main className="max-w-md w-full space-y-8 text-center">
+            <main className="max-w-md w-full space-y-8 text-center pt-8">
                 {/* Header */}
                 <div className="space-y-2">
                     <h1 className="text-3xl font-black tracking-tight">QR Code du Personnel</h1>
-                    <p className="text-slate-500 text-sm font-medium">
-                        Ce code permet à vos serveurs de s'identifier auprès de votre établissement.
+                    <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                        Ce code unique permet à vos serveurs de s'identifier et de rejoindre automatiquement l'équipe de <span className="text-orange-600 font-bold">{barInfo.name}</span>.
                     </p>
                 </div>
 
                 {/* Classic QR Code Container */}
                 <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col items-center">
                     <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                        <QRCodeCanvas
-                            value={establishmentId}
-                            size={256}
-                            level={"H"}
-                            includeMargin={false}
-                            imageSettings={{
-                                src: "/logobarpilote_orange.png",
-                                x: undefined,
-                                y: undefined,
-                                height: 40,
-                                width: 40,
-                                excavate: true,
-                            }}
-                        />
+                        {joinUrl && (
+                            <QRCodeCanvas
+                                value={joinUrl}
+                                size={256}
+                                level={"H"}
+                                includeMargin={false}
+                                imageSettings={{
+                                    src: "/logobarpilote_orange.png",
+                                    x: undefined,
+                                    y: undefined,
+                                    height: 40,
+                                    width: 40,
+                                    excavate: true,
+                                }}
+                            />
+                        )}
                     </div>
                     <div className="mt-6 text-center">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">ID ÉTABLISSEMENT</p>
-                        <p className="text-sm font-bold text-orange-600 mt-1">{establishmentId}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">LIEN D'INVITATION</p>
+                        <p className="text-xs font-bold text-orange-600 mt-1 max-w-[200px] break-all mx-auto opacity-70">
+                            {joinUrl}
+                        </p>
                     </div>
                 </div>
 
                 {/* Info Box */}
                 <div className="bg-orange-50 rounded-2xl p-6 text-left border border-orange-100">
                     <div className="flex gap-4">
-                        <span className="material-symbols-outlined text-orange-600">info</span>
-                        <div className="space-y-1">
-                            <p className="text-xs font-bold text-orange-900">Pourquoi télécharger ce code ?</p>
-                            <p className="text-[11px] leading-relaxed text-orange-800/70 font-medium">
-                                En téléchargeant et en affichant ce code, vous permettez à votre personnel de se connecter instantanément à votre cockpit de gestion après avoir scanné leur badge.
+                        <span className="material-symbols-outlined text-orange-600">group_add</span>
+                        <div className="space-y-1 mt-1">
+                            <p className="text-xs font-bold text-orange-900">Comment ça marche ?</p>
+                            <p className="text-[11px] leading-relaxed text-orange-800/80 font-medium">
+                                Les membres de votre personnel (serveurs, protocole) scannent ce code avec l'appareil photo de leur téléphone pour être automatiquement enregistrés dans votre système BarPilote.
                             </p>
                         </div>
                     </div>
@@ -92,9 +104,10 @@ export default function EstablishmentQRPage() {
 
                     <button
                         onClick={handleFinish}
-                        className="w-full text-slate-400 font-bold text-xs uppercase tracking-widest hover:text-slate-900 transition-all"
+                        className="w-full text-slate-400 font-bold text-xs uppercase tracking-widest hover:text-slate-900 transition-all flex justify-center items-center gap-2"
                     >
-                        Terminer la configuration
+                        Naviguer vers le Dashboard
+                        <span className="material-symbols-outlined text-sm">east</span>
                     </button>
                 </div>
             </main>
