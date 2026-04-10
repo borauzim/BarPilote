@@ -1,26 +1,103 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getToken } from "@/lib/auth";
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, ReferenceLine 
+} from 'recharts';
+import BottomNav from "@/components/BottomNav";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    const token = getToken();
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    
+    if (!token) {
+      router.push("/auth/login");
+      return;
+    }
+
+    try {
+      const resp = await fetch(`${apiUrl}/api/proprietaire/dashboard/`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setStats(data);
+        // Persister les infos pour les pages QR et configuration
+        if (data.bar_info) {
+          localStorage.setItem("bar_name", data.bar_info.nom || "");
+          if (data.bar_info.code_invitation) {
+            localStorage.setItem("bar_code_invitation", data.bar_info.code_invitation);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Dashboard Stats Error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isMounted) return null;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-500 font-medium animate-pulse text-sm uppercase tracking-widest">Initialisation du Cockpit...</p>
+      </div>
+    );
+  }
+
+  // Chiffre d'affaires principal (On affiche USD s'il y en a, sinon CDF)
+  const mainRevenue = stats?.revenue?.usd > 0 || stats?.revenue?.cdf === 0 
+    ? { val: stats?.revenue?.usd || 0, sym: "$" }
+    : { val: stats?.revenue?.cdf || 0, sym: "FC" };
+
 
   return (
     <div className="bg-[#f8f9fa] min-h-screen text-[#1a1c1d] font-sans pb-32">
-      {/* NEW HEADER - MATCHING MOCKUP */}
+      {/* DYNAMIC HEADER */}
       <header className="px-6 pt-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full border-2 border-orange-500 overflow-hidden shadow-sm">
-            <img
-              src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100"
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
+          <div className="w-10 h-10 rounded-full border-2 border-orange-500 overflow-hidden shadow-sm flex items-center justify-center bg-white">
+            {stats?.bar_info?.logo ? (
+              <img
+                src={stats.bar_info.logo}
+                alt={stats.bar_info.nom}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div 
+                className="w-6 h-6 bg-[#FF5E00]"
+                style={{
+                  WebkitMaskImage: 'url(/logobarpilote.png)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center',
+                  maskImage: 'url(/logobarpilote.png)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center'
+                }}
+              />
+            )}
           </div>
-          <span className="text-xl font-black tracking-tight text-[#FF5E00]">BarPilote</span>
+          <span className="text-xl font-black tracking-tight text-[#FF5E00]">
+            {stats?.bar_info?.nom || "BarPilote"}
+          </span>
         </div>
-        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+        <button 
+          onClick={() => router.push("/onboarding")}
+          className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+        >
           <span className="material-symbols-outlined text-2xl">settings</span>
         </button>
       </header>
@@ -50,28 +127,75 @@ export default function DashboardPage() {
               <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-300">vs hier soir</p>
             </div>
           </div>
-          <h2 className="text-5xl font-black tracking-tighter mb-4">$4,820.50</h2>
+          <h2 className="text-5xl font-black tracking-tighter mb-4">
+            {mainRevenue.sym}{mainRevenue.val.toLocaleString()}
+          </h2>
+          
+          {stats?.revenue?.usd > 0 && stats?.revenue?.cdf > 0 && (
+            <p className="text-xs font-bold text-slate-400 mb-4">+ {stats.revenue.cdf.toLocaleString()} FC (Ventes locales)</p>
+          )}
 
-          {/* PIC CALLOUT */}
+          {/* PANIER MOYEN INFO */}
           <div className="flex justify-center mb-8">
             <div className="bg-[#FF5E00] text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg relative group">
-              Pic: $1,240 (23h)
-              <div className="absolute top-full left-1/2 -translate-x-1/2 w-0.5 h-6 bg-[#FF5E00]/30"></div>
+              PANIER MOYEN: {mainRevenue.sym}{stats?.metrics?.avg_basket.toLocaleString()}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 w-0.5 h-6 bg-[#FF5E00]/30 border-dashed border-l"></div>
             </div>
           </div>
 
-          {/* CHART VISUAL (SVG) */}
-          <div className="h-32 w-full mt-4">
-            <svg className="w-full h-full overflow-visible" viewBox="0 0 100 40">
-              <path
-                d="M0 35 Q 20 32, 40 30 T 55 15 T 70 20 T 100 25"
-                fill="none"
-                stroke="#FF5E00"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <circle cx="55" cy="15" r="3" fill="#FF5E00" className="animate-pulse" />
-            </svg>
+          {/* CHART VISUAL (INTERACTIVE RECHARTS) */}
+          <div className="h-40 w-full mt-4 -ml-4">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <AreaChart
+                  data={stats?.hourly_data || []}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
+                <defs>
+                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FF5E00" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#FF5E00" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis 
+                  dataKey="time" 
+                  hide 
+                />
+                <YAxis hide domain={['auto', 'auto']} />
+                <Tooltip 
+                  contentStyle={{ 
+                    borderRadius: '12px', 
+                    border: 'none', 
+                    boxShadow: '0 10px 20px rgba(0,0,0,0.1)',
+                    fontWeight: 'bold',
+                    fontSize: '12px'
+                  }}
+                  formatter={(value: any) => [`${value.toLocaleString()} ${mainRevenue.sym}`, 'Revenu']}
+                  labelStyle={{ display: 'none' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#FF5E00" 
+                  strokeWidth={3}
+                  fillOpacity={1} 
+                  fill="url(#colorRev)" 
+                  animationDuration={1500}
+                />
+                
+                {/* Reference point for the Peak */}
+                {stats?.hourly_data?.map((d: any, i: number) => d.isPic && (
+                  <ReferenceLine 
+                    key={i}
+                    x={d.time} 
+                    stroke="#FF5E00" 
+                    strokeDasharray="3 3"
+                    label={{ position: 'top', value: 'PIC', fill: '#FF5E00', fontSize: 10, fontWeight: 'bold' }}
+                  />
+                ))}
+              </AreaChart>
+            </ResponsiveContainer>
+            )}
           </div>
 
           {/* TIME LABELS */}
@@ -91,138 +215,72 @@ export default function DashboardPage() {
             <span className="material-symbols-outlined text-[120px] absolute -right-4 -bottom-4 rotate-12">liquor</span>
           </div>
           <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-2">Meilleure Vente</p>
-          <h3 className="text-3xl font-black tracking-tight mb-4">Heineken</h3>
+          <h3 className="text-3xl font-black tracking-tight mb-4">{stats?.best_seller?.name}</h3>
           <div className="flex items-end gap-2">
-            <span className="text-5xl font-black tracking-tighter leading-none">45</span>
+            <span className="text-5xl font-black tracking-tighter leading-none">{stats?.best_seller?.qty}</span>
             <p className="text-[11px] font-bold uppercase tracking-tight leading-4 opacity-80 mb-1">Unités Vendues<br />Aujourd&apos;hui</p>
           </div>
         </section>
 
-        {/* PERFORMANCE SESSION CARD */}
-        <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-50">
-          <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 mb-6">Performance de la Session</h3>
+        {/* SESSION STATS ROW */}
+        <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-50">
+          <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-6 px-1">Performance de la Session</h4>
+          
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-slate-100 rounded-xl text-slate-600">
-                  <span className="material-symbols-outlined">groups</span>
+                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                  <span className="material-symbols-outlined">receipt_long</span>
                 </div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Fréquentation</span>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Tickets Actifs</span>
               </div>
-              <span className="text-sm font-black">342 Clients</span>
+              <span className="text-lg font-black">{stats?.metrics?.active_orders || 0} Tables</span>
             </div>
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-slate-100 rounded-xl text-slate-600">
-                  <span className="material-symbols-outlined">payments</span>
+                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                  <span className="material-symbols-outlined">hourglass_empty</span>
                 </div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Panier Moyen</span>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Temps de Service</span>
               </div>
-              <span className="text-sm font-black">$14.10</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-slate-100 rounded-xl text-slate-600">
-                  <span className="material-symbols-outlined">hourglass_top</span>
-                </div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Attente Max</span>
-              </div>
-              <span className="text-sm font-black">4.2 min</span>
+              <span className="text-lg font-black">{stats?.metrics?.wait_time || 0} min</span>
             </div>
           </div>
-          <button className="w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest mt-8 hover:bg-slate-200 transition-colors">
-            View Detailed Log
-          </button>
         </section>
 
-        {/* INVENTORY / PROGRESS SECTIONS */}
-        <div className="space-y-4">
-          {/* BIERES */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-4">Inventaire Bières</p>
-            <div className="flex justify-between items-end mb-2">
-              <span className="text-xs font-bold">Blondes</span>
-              <span className="text-xs font-black text-[#FF5E00]">12%</span>
+        {/* INVENTORY ALERTS */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10">
+          {stats?.inventory_summary.map((item: any) => (
+            <div key={item.category} className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50">
+              <div className="flex justify-between items-center mb-4">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Inventaire {item.category}</p>
+                <span className={`text-xs font-black ${item.alert ? 'text-red-500' : 'text-slate-800'}`}>{item.level}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-3">
+                <div 
+                  className={`h-full rounded-full transition-all duration-1000 ${item.alert ? 'bg-red-500' : 'bg-[#FF5E00]'}`}
+                  style={{ width: `${item.level}%` }}
+                ></div>
+              </div>
+              {item.alert && (
+                <div className="flex items-center gap-1.5 text-red-500">
+                   <span className="material-symbols-outlined text-sm">warning</span>
+                   <span className="text-[10px] font-bold uppercase tracking-wider">Alerte Stock Faible</span>
+                </div>
+              )}
+              {!item.alert && (
+                 <p className="text-[10px] font-bold text-teal-600 uppercase tracking-wider">Niveaux sains</p>
+              )}
             </div>
-            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3">
-              <div className="h-full bg-[#FF5E00] rounded-full w-[12%]"></div>
-            </div>
-            <p className="text-[10px] font-bold text-red-600 flex items-center gap-1">
-              <span className="material-symbols-outlined text-xs">warning</span>
-              Alerte Stock Faible
-            </p>
-          </div>
+          ))}
+        </section>
 
-          {/* SPIRITUEUX */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-4">Stock Spiritueux</p>
-            <div className="flex justify-between items-end mb-2">
-              <span className="text-xs font-bold">Bourbon</span>
-              <span className="text-xs font-black">88%</span>
-            </div>
-            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3">
-              <div className="h-full bg-[#FF5E00] rounded-full w-[88%]"></div>
-            </div>
-            <p className="text-[10px] font-bold text-emerald-600">Niveaux sains</p>
-          </div>
 
-          {/* RENDEMENT COCKTAILS */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-4">Rendement Cocktails</p>
-            <div className="flex justify-between items-end mb-2">
-              <span className="text-xs font-bold">Efficacité</span>
-              <span className="text-xs font-black">94%</span>
-            </div>
-            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3">
-              <div className="h-full bg-[#FF5E00] rounded-full w-[94%] shadow-[0_0_10px_rgba(255,94,0,0.3)]"></div>
-            </div>
-            <p className="text-[10px] font-bold text-slate-400">+2% par rapport à la base</p>
-          </div>
-
-          {/* PERTES */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-4">Suivi des Pertes</p>
-            <div className="flex justify-between items-end mb-2">
-              <span className="text-xs font-bold">% Perte</span>
-              <span className="text-xs font-black">0.8%</span>
-            </div>
-            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3">
-              <div className="h-full bg-[#FF5E00] rounded-full w-[10%] opacity-40"></div>
-            </div>
-            <p className="text-[10px] font-bold text-slate-400">Coulage minimal</p>
-          </div>
-        </div>
       </main>
 
-      {/* BOTTOM NAV - MATCHING MOCKUP */}
-      <nav className="fixed bottom-0 left-0 w-full bg-white flex justify-around items-center px-4 pb-10 pt-4 rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.04)] z-50">
-        <button
-          onClick={() => router.push("/")}
-          className="flex flex-col items-center justify-center p-2 opacity-30 active:scale-90 transition-all"
-        >
-          <span className="material-symbols-outlined text-2xl">grid_view</span>
-          <span className="text-[8px] font-black uppercase tracking-widest mt-1">Tableau</span>
-        </button>
-        <button
-          onClick={() => router.push("/inventory")}
-          className="flex flex-col items-center justify-center p-2 opacity-30 active:scale-90 transition-all"
-        >
-          <span className="material-symbols-outlined text-2xl">liquor</span>
-          <span className="text-[8px] font-black uppercase tracking-widest mt-1">Stocks</span>
-        </button>
-        <button
-          className="flex flex-col items-center justify-center p-2 opacity-30 active:scale-90 transition-all"
-        >
-          <span className="material-symbols-outlined text-2xl">groups</span>
-          <span className="text-[8px] font-black uppercase tracking-widest mt-1">Équipe</span>
-        </button>
-        <button
-          className="flex flex-col items-center justify-center p-2 active:scale-90 transition-all bg-orange-50 text-[#FF5E00] rounded-2xl px-6"
-        >
-          <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>bar_chart_4_bars</span>
-          <span className="text-[8px] font-black uppercase tracking-widest mt-1">Rapports</span>
-        </button>
-      </nav>
+      {/* BOTTOM NAV */}
+      <BottomNav activePage="dashboard" />
     </div>
   );
 }

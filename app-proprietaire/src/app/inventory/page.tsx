@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { getToken } from "@/lib/auth";
+import BottomNav from "@/components/BottomNav";
 
 // --- Types ---
 interface MasterDrink {
@@ -15,15 +17,22 @@ interface MasterDrink {
 }
 
 interface BarStock {
-    id: string; // usually linked to MasterDrink.id + variation
+    id: string; 
     drink: MasterDrink;
-    boughtQuantity: number; // total bottles
+    boughtQuantity: number; 
     purchaseStrategy: "Bouteille" | "Casier";
-    bottlesPerCrate?: number; // if casier (e.g. 24)
-    purchasePrice: number; // price for the unit (1 bottle or 1 crate)
-    sellingPrice: number; // selling price for 1 bottle
-    currency: "$" | "FC";
+    bottlesPerCrate?: number; 
+    purchasePrice: number; 
+    sellingPrice: number; 
+    currency: "USD" | "CDF";
     alertThreshold: number;
+    db_id?: string; // ID réel en base de données
+}
+
+interface CategoryData {
+    id: number;
+    nom: string;
+    icon: string;
 }
 
 // --- Mock Data ---
@@ -88,17 +97,120 @@ export default function InventoryAdvancedPage() {
     const [isExporting, setIsExporting] = useState(false);
 
     // --- States ---
+    const [isMounted, setIsMounted] = useState(false);
     const [viewState, setViewState] = useState<"MY_STOCK" | "CATALOG">("MY_STOCK");
     const [myStock, setMyStock] = useState<BarStock[]>([]);
+    const [masterCatalog, setMasterCatalog] = useState<MasterDrink[]>([]);
+    const [categories, setCategories] = useState<CategoryData[]>([]);
     const [customMasterDrinks, setCustomMasterDrinks] = useState<MasterDrink[]>([]);
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [authError, setAuthError] = useState(false);
+    const [barId, setBarId] = useState("");
 
     // Catalog View States
     const [searchQuery, setSearchQuery] = useState("");
     const [activeCategory, setActiveCategory] = useState<string>("Toutes");
 
+    useEffect(() => {
+        setIsMounted(true);
+        const token = getToken();
+        if (!token) {
+            setAuthError(true);
+            setIsLoading(false);
+            return;
+        }
+
+        const storedBarId = localStorage.getItem("bar_id");
+        if (storedBarId) {
+            setBarId(storedBarId);
+            fetchInitialData(token, storedBarId);
+        } else {
+            // Tentative de synchro via le profil si bar_id absent
+            syncFromProfile(token);
+        }
+    }, []);
+
+    const syncFromProfile = async (token: string) => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        try {
+            const resp = await fetch(`${apiUrl}/api/proprietaire/profile/me/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (resp.ok) {
+                const profile = await resp.json();
+                const id = typeof profile.bar === 'object' ? profile.bar.id : profile.bar;
+                if (id) {
+                    localStorage.setItem("bar_id", id);
+                    setBarId(id);
+                    fetchInitialData(token, id);
+                }
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const fetchInitialData = async (token: string, bid: string) => {
+        setIsLoading(true);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        try {
+            // 1. Charger les catégories
+            const catResp = await fetch(`${apiUrl}/api/proprietaire/categories/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (catResp.ok) setCategories(await catResp.json());
+
+            // 2. Charger le catalogue global
+            const prodResp = await fetch(`${apiUrl}/api/proprietaire/master-products/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (prodResp.ok) {
+                const products = await prodResp.json();
+                setMasterCatalog(products.map((p: any) => ({
+                    id: p.id,
+                    name: p.nom,
+                    category: p.categorie_nom || "Autre",
+                    volume: p.volume,
+                    imageUrl: p.photo || "/drinks-3d/img-19.png"
+                })));
+            }
+
+            // 3. Charger le stock du bar
+            const stockResp = await fetch(`${apiUrl}/api/proprietaire/stock/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (stockResp.ok) {
+                const stock = await stockResp.json();
+                setMyStock(stock.map((s: any) => ({
+                    db_id: s.id,
+                    id: `S_${s.produit}_${Date.now()}`,
+                    drink: {
+                        id: s.produit,
+                        name: s.produit_details?.nom || "Inconnu",
+                        category: s.produit_details?.categorie_nom || "Autre",
+                        volume: s.produit_details?.volume || "",
+                        imageUrl: s.produit_details?.photo || "/drinks-3d/img-19.png"
+                    },
+                    boughtQuantity: s.quantite_actuelle,
+                    purchaseStrategy: s.strategie_gestion === "CASIER" ? "Casier" : "Bouteille",
+                    bottlesPerCrate: s.bouteilles_par_casier,
+                    purchasePrice: s.strategie_gestion === "CASIER" ? s.prix_achat_casier : s.prix_achat_unitaire,
+                    sellingPrice: s.prix_vente_unitaire,
+                    currency: s.devise === "CDF" ? "FC" : "$",
+                    alertThreshold: s.seuil_alerte
+                })));
+            }
+        } catch (error) {
+            console.error("Fetch Error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     // Add Custom Drink State
     const [showAddCustomMaster, setShowAddCustomMaster] = useState(false);
-    const [newDrinkData, setNewDrinkData] = useState({ name: "", category: "Bières", volume: "33cl", photoFile: null as File | null });
+    const [showAddCategory, setShowAddCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [newDrinkData, setNewDrinkData] = useState({ name: "", categoryId: "", volume: "33cl", photoFile: null as File | null });
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
     // Form/Editing State
@@ -111,12 +223,12 @@ export default function InventoryAdvancedPage() {
     const [bottlesBought, setBottlesBought] = useState<number>(10);
     const [purchasePrice, setPurchasePrice] = useState<number>(0);
     const [sellingPrice, setSellingPrice] = useState<number>(0);
-    const [currency, setCurrency] = useState<"$" | "FC">("$");
+    const [currency, setCurrency] = useState<"USD" | "CDF">("USD");
     const [alertThreshold, setAlertThreshold] = useState<number>(12);
 
     // Combined Catalog
-    const ALL_MASTER_DRINKS = [...MASTER_CATALOG_MOCK, ...customMasterDrinks];
-    const ALL_CATEGORIES_DISPLAY = ["Toutes", ...Array.from(new Set(ALL_MASTER_DRINKS.map((m) => m.category)))];
+    const ALL_MASTER_DRINKS = [...masterCatalog, ...customMasterDrinks];
+    const ALL_CATEGORIES_DISPLAY = ["Toutes", ...categories.map(c => c.nom)];
 
     // --- Handlers ---
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,19 +239,76 @@ export default function InventoryAdvancedPage() {
         }
     };
 
-    const handleCreateCustomMaster = (e: React.FormEvent) => {
+    const handleCreateCategory = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newMaster: MasterDrink = {
-            id: `CUSTOM_${Date.now()}`,
-            name: newDrinkData.name,
-            category: newDrinkData.category,
-            volume: newDrinkData.volume,
-            imageUrl: photoPreview || "/drinks-3d/img-19.png", // Use preview or placeholder
-        };
-        setCustomMasterDrinks([...customMasterDrinks, newMaster]);
-        setShowAddCustomMaster(false);
-        setNewDrinkData({ name: "", category: "Bières", volume: "33cl", photoFile: null });
-        setPhotoPreview(null);
+        const token = getToken();
+        if (!token || !newCategoryName) return;
+
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        try {
+            const resp = await fetch(`${apiUrl}/api/proprietaire/categories/`, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ nom: newCategoryName, icon: "local_bar" })
+            });
+
+            if (resp.ok) {
+                const newCat = await resp.json();
+                setCategories([...categories, newCat]);
+                setNewDrinkData({ ...newDrinkData, categoryId: newCat.id.toString() });
+                setShowAddCategory(false);
+                setNewCategoryName("");
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const handleCreateCustomMaster = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const token = getToken();
+        if (!token) return;
+
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        
+        try {
+            const formData = new FormData();
+            formData.append("nom", newDrinkData.name);
+            formData.append("categorie", newDrinkData.categoryId || (categories[0]?.id.toString() || "1"));
+            formData.append("volume", newDrinkData.volume);
+            if (newDrinkData.photoFile) {
+                formData.append("photo", newDrinkData.photoFile);
+            }
+
+            const resp = await fetch(`${apiUrl}/api/proprietaire/master-products/`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: formData
+            });
+
+            if (resp.ok) {
+                const created = await resp.json();
+                const newMaster: MasterDrink = {
+                    id: created.id,
+                    name: created.nom,
+                    category: created.categorie_nom,
+                    volume: created.volume,
+                    imageUrl: created.photo || photoPreview || "/drinks-3d/img-19.png",
+                };
+                setMasterCatalog([...masterCatalog, newMaster]);
+                setShowAddCustomMaster(false);
+                setNewDrinkData({ name: "", categoryId: "", volume: "33cl", photoFile: null });
+                setPhotoPreview(null);
+            } else {
+                const errorData = await resp.json();
+                console.error("Server Error:", errorData);
+                alert("Erreur lors de l'ajout : " + (errorData.nom || errorData.categorie || "Vérifiez que tous les champs sont remplis."));
+            }
+        } catch (error) {
+            console.error("Create Master Error:", error);
+            alert("Erreur de connexion au serveur. Vérifiez que votre backend est lancé.");
+        }
     };
 
     const filteredCatalog = ALL_MASTER_DRINKS.filter((item) => {
@@ -153,23 +322,25 @@ export default function InventoryAdvancedPage() {
         // Prevent duplicates
         if (myStock.find(s => s.drink.id === drink.id)) {
             setViewState("MY_STOCK");
+            // Highlight it?
             return;
         }
 
         const newStockItem: BarStock = {
-            id: `S_${drink.id}_${Date.now()}`,
+            id: `TEMP_${drink.id}_${Date.now()}`,
             drink,
             boughtQuantity: 0,
             purchaseStrategy: drink.category.includes("Bières") ? "Casier" : "Bouteille",
             bottlesPerCrate: 24,
             purchasePrice: 0,
             sellingPrice: 0,
-            currency: "$",
+            currency: currency, // Utilise la devise actuellement sélectionnée
             alertThreshold: drink.category.includes("Bières") ? 24 : 3,
         };
 
         setMyStock([...myStock, newStockItem]);
         setViewState("MY_STOCK");
+        handleOpenEdit(newStockItem); // Ouvrir direct la config
     };
 
     // 2. Select an item in My Stock to configure
@@ -179,7 +350,7 @@ export default function InventoryAdvancedPage() {
         setBottlesPerCrate(stock.bottlesPerCrate || 24);
         setPurchasePrice(stock.purchasePrice);
         setSellingPrice(stock.sellingPrice);
-        setCurrency(stock.currency || "$");
+        setCurrency(stock.currency === "CDF" ? "CDF" : "USD");
         setAlertThreshold(stock.alertThreshold);
         // Reset counters for the form
         if (stock.purchaseStrategy === "Casier") {
@@ -201,26 +372,76 @@ export default function InventoryAdvancedPage() {
     };
 
     // 3. Save Configuration
-    const handleSaveConfig = (e: React.FormEvent) => {
+    const handleSaveConfig = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingStockId) return;
+        const token = getToken();
+        if (!token) return;
 
-        setMyStock(myStock.map(s => {
-            if (s.id === editingStockId) {
-                return {
-                    ...s,
-                    boughtQuantity: calculateTotalBottles(),
-                    purchaseStrategy: buyStrategy,
-                    bottlesPerCrate: buyStrategy === "Casier" ? bottlesPerCrate : undefined,
-                    purchasePrice,
-                    sellingPrice,
-                    currency,
-                    alertThreshold,
-                };
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const item = myStock.find(s => s.id === editingStockId);
+        if (!item) return;
+
+        const costPerBottle = buyStrategy === "Bouteille" ? purchasePrice : (purchasePrice / bottlesPerCrate);
+        
+        const payload = {
+            bar: barId,
+            produit: item.drink.id,
+            strategie_gestion: buyStrategy === "Casier" ? "CASIER" : "UNITE",
+            quantite_actuelle: calculateTotalBottles(),
+            seuil_alerte: alertThreshold,
+            devise: currency,
+            prix_achat_casier: purchasePrice,
+            bouteilles_par_casier: bottlesPerCrate,
+            prix_achat_unitaire: Math.round(costPerBottle * 100) / 100, // Arrondi à 2 décimales
+            prix_vente_unitaire: sellingPrice
+        };
+
+        try {
+            const isNew = item.id.startsWith("TEMP_");
+            const url = isNew ? `${apiUrl}/api/proprietaire/stock/` : `${apiUrl}/api/proprietaire/stock/${item.db_id}/`;
+            const method = isNew ? "POST" : "PATCH";
+
+            const resp = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (resp.ok) {
+                const saved = await resp.json();
+                setMyStock(myStock.map(s => {
+                    if (s.id === editingStockId) {
+                        return {
+                            ...s,
+                            db_id: saved.id,
+                            id: `S_${saved.produit}_${Date.now()}`, // stabilize ID
+                            boughtQuantity: saved.quantite_actuelle,
+                            purchaseStrategy: saved.strategie_gestion === "CASIER" ? "Casier" : "Bouteille",
+                            bottlesPerCrate: saved.bouteilles_par_casier,
+                            purchasePrice: saved.strategie_gestion === "CASIER" ? saved.prix_achat_casier : saved.prix_achat_unitaire,
+                            sellingPrice: saved.prix_vente_unitaire,
+                            currency: saved.devise === "CDF" ? "CDF" : "USD",
+                            alertThreshold: saved.seuil_alerte,
+                        };
+                    }
+                    return s;
+                }));
+                setEditingStockId(null);
+            } else {
+                const errorData = await resp.json();
+                console.error("Save Config Error Details:", errorData);
+                // Afficher le premier message d'erreur trouvé
+                const firstError = Object.values(errorData)[0];
+                alert("Erreur d'enregistrement : " + (Array.isArray(firstError) ? firstError[0] : firstError));
             }
-            return s;
-        }));
-        setEditingStockId(null);
+        } catch (error) {
+            console.error("Save Config Network Error:", error);
+            alert("Erreur de connexion. Vérifiez votre réseau.");
+        }
     };
 
     const handleDeleteFromStock = (id: string, e: React.MouseEvent) => {
@@ -230,31 +451,127 @@ export default function InventoryAdvancedPage() {
     };
 
     const handleExportPDF = async () => {
-        if (!tableRef.current) return;
+        if (!myStock || myStock.length === 0) {
+            alert("Veuillez d'abord ajouter des boissons à votre stock.");
+            return;
+        }
         setIsExporting(true);
         try {
-            const canvas = await html2canvas(tableRef.current, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: "#ffffff",
-            });
-            const imgData = canvas.toDataURL("image/png");
             const pdf = new jsPDF("p", "mm", "a4");
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            
+            // --- HEADER ---
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(22);
+            pdf.setTextColor(249, 115, 22); // Orange-500
+            pdf.text("BARPILOTE", 14, 20);
+            
+            pdf.setFontSize(14);
+            pdf.setTextColor(30, 41, 59); // Slate-800
+            pdf.text("RAPPORT D'INVENTAIRE", 14, 28);
+            
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(10);
+            pdf.setTextColor(100, 116, 139); // Slate-400
+            const dateStr = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            pdf.text(`Document généré le ${dateStr} à ${timeStr}`, 14, 35);
+            
+            // --- TABLE HEADERS ---
+            const startY = 50;
+            pdf.setFillColor(248, 250, 252); // Slate-50
+            pdf.rect(14, startY - 7, 182, 10, "F");
+            
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(10);
+            pdf.setTextColor(71, 85, 105); // Slate-600
+            
+            pdf.text("PRODUIT", 16, startY);
+            pdf.text("CATÉGORIE", 75, startY);
+            pdf.text("STOCK", 110, startY);
+            pdf.text("P. ACHAT", 135, startY);
+            pdf.text("P. VENTE", 165, startY);
+            
+            // --- TABLE ROWS ---
+            let currentY = startY + 10;
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(9);
+            pdf.setTextColor(30, 41, 59);
 
-            pdf.text("Rapport d'Inventaire - BarPilote", 10, 10);
-            pdf.addImage(imgData, "PNG", 0, 20, pdfWidth, pdfHeight);
-            pdf.save("Inventaire_BarPilote.pdf");
+            myStock.forEach((item, index) => {
+                // Background alterna color for readability
+                if (index % 2 === 0) {
+                    pdf.setFillColor(255, 255, 255);
+                } else {
+                    pdf.setFillColor(252, 253, 254);
+                }
+                pdf.rect(14, currentY - 6, 182, 9, "F");
+                
+                // Content
+                pdf.setFont("helvetica", "bold");
+                pdf.text(item.drink.name.substring(0, 30), 16, currentY);
+                
+                pdf.setFont("helvetica", "normal");
+                pdf.text(item.drink.category.substring(0, 20), 75, currentY);
+                
+                pdf.text(`${item.boughtQuantity} btls`, 110, currentY);
+                
+                const displayCurrency = item.currency === "CDF" ? "FC" : "$";
+                const unitCost = item.purchaseStrategy === "Casier" ? item.purchasePrice / (item.bottlesPerCrate || 24) : item.purchasePrice;
+                
+                // Formatage intelligent : 2 décimales pour USD, arrondi pour CDF
+                const formattedUnitCost = item.currency === "USD" ? unitCost.toFixed(2) : Math.round(unitCost).toLocaleString();
+                const formattedSellingPrice = item.currency === "USD" ? item.sellingPrice.toFixed(2) : item.sellingPrice.toLocaleString();
+
+                pdf.text(`${formattedUnitCost} ${displayCurrency}`, 135, currentY);
+                pdf.text(`${formattedSellingPrice} ${displayCurrency}`, 165, currentY);
+                
+                currentY += 9;
+                
+                // Add new page if needed
+                if (currentY > 270) {
+                    pdf.addPage();
+                    currentY = 20;
+                }
+            });
+
+            // --- FOOTER ---
+            pdf.setFontSize(8);
+            pdf.setTextColor(148, 163, 184); // Slate-300
+            pdf.text("Logiciel de gestion BarPilote - www.barpilote.com", 14, 287);
+
+            pdf.save(`Inventaire_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error("Export Error:", error);
-            alert("Erreur lors de l'exportation PDF.");
+            alert("Erreur lors de la génération du PDF.");
+        } finally {
+            setIsExporting(false);
         }
-        setIsExporting(false);
     };
 
     const currentEditingItem = myStock.find(s => s.id === editingStockId);
 
+
+    if (!isMounted) return null;
+
+    if (authError) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
+                <span className="material-symbols-outlined text-6xl text-red-500 mb-4">lock</span>
+                <h1 className="text-2xl font-bold text-slate-900 mb-2">Session expirée</h1>
+                <p className="text-slate-500 mb-6">Veuillez vous reconnecter pour accéder à l'inventaire.</p>
+                <button onClick={() => router.push("/auth/login")} className="bg-orange-600 text-white px-8 py-3 rounded-full font-bold shadow-lg">Se Connecter</button>
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+                <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mb-4"></div>
+                <p className="text-slate-500 font-medium animate-pulse">Chargement de votre cave...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-32">
@@ -419,6 +736,7 @@ export default function InventoryAdvancedPage() {
                                                 const unitCost = stock.purchaseStrategy === "Casier" ? stock.purchasePrice / (stock.bottlesPerCrate || 24) : stock.purchasePrice;
                                                 const margin = ((stock.sellingPrice - unitCost) / stock.sellingPrice) * 100;
                                                 const lowStock = stock.boughtQuantity <= stock.alertThreshold;
+                                                const displayCurrency = stock.currency === "CDF" ? "FC" : "$";
 
                                                 return (
                                                     <tr key={stock.id} onClick={() => handleOpenEdit(stock)} className={`hover:bg-orange-50/50 transition-colors cursor-pointer group ${editingStockId === stock.id ? 'bg-orange-50/80 ring-1 ring-inset ring-orange-200' : ''}`}>
@@ -443,11 +761,19 @@ export default function InventoryAdvancedPage() {
                                                             </div>
                                                         </td>
                                                         <td className="p-4">
-                                                            <span className="font-semibold text-slate-600 text-sm">{stock.purchasePrice > 0 ? `${unitCost.toLocaleString()} ${stock.currency}` : "Non configuré"}</span>
+                                                            <span className="font-semibold text-slate-600 text-sm">
+                                                                {stock.purchasePrice > 0 ? (
+                                                                    stock.currency === "USD" ? `${unitCost.toFixed(2)} $` : `${Math.round(unitCost).toLocaleString()} FC`
+                                                                ) : "Non configuré"}
+                                                            </span>
                                                             {stock.purchasePrice > 0 && <p className="text-[9px] text-slate-400 mt-0.5">{stock.purchaseStrategy === "Casier" ? `Acheté par casier de ${stock.bottlesPerCrate}` : "Acheté à la pièce"}</p>}
                                                         </td>
                                                         <td className="p-4">
-                                                            <span className={`font-black text-lg ${stock.sellingPrice === 0 ? 'text-slate-300' : 'text-slate-900'}`}>{stock.sellingPrice > 0 ? `${stock.sellingPrice.toLocaleString()} ${stock.currency}` : `0 ${stock.currency}`}</span>
+                                                            <span className={`font-black text-lg ${stock.sellingPrice === 0 ? 'text-slate-300' : 'text-slate-900'}`}>
+                                                                {stock.sellingPrice > 0 ? (
+                                                                    stock.currency === "USD" ? `${stock.sellingPrice.toFixed(2)} $` : `${stock.sellingPrice.toLocaleString()} FC`
+                                                                ) : `0 ${displayCurrency}`}
+                                                            </span>
                                                         </td>
                                                         <td className="p-4">
                                                             {stock.sellingPrice > 0 ? (
@@ -524,8 +850,8 @@ export default function InventoryAdvancedPage() {
 
                                         {/* Devise Toggle */}
                                         <div className="flex bg-orange-100/50 p-1 rounded-xl mb-2">
-                                            <button type="button" onClick={() => setCurrency("$")} className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${currency === "$" ? "bg-orange-600 text-white shadow-sm" : "text-orange-900/40"}`}>Dollar ($)</button>
-                                            <button type="button" onClick={() => setCurrency("FC")} className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${currency === "FC" ? "bg-orange-600 text-white shadow-sm" : "text-orange-900/40"}`}>Franc C. (FC)</button>
+                                            <button type="button" onClick={() => setCurrency("USD")} className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${currency === "USD" ? "bg-orange-600 text-white shadow-sm" : "text-orange-900/40"}`}>Dollar ($)</button>
+                                            <button type="button" onClick={() => setCurrency("CDF")} className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${currency === "CDF" ? "bg-orange-600 text-white shadow-sm" : "text-orange-900/40"}`}>Franc C. (FC)</button>
                                         </div>
 
                                         {/* Stratégie Toggle */}
@@ -547,15 +873,17 @@ export default function InventoryAdvancedPage() {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Prix Achat (1 Casier en {currency})</label>
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Prix Achat (1 Casier en {currency === "CDF" ? "FC" : "$"})</label>
                                                     <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">{currency}</span>
-                                                        <input required type="number" min="0" step="1" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)} className="w-full pl-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 outline-none focus:border-orange-500" />
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">{currency === "CDF" ? "FC" : "$"}</span>
+                                                        <input required type="number" min="0" step={currency === "USD" ? "0.01" : "1"} value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)} className="w-full pl-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 outline-none focus:border-orange-500" />
                                                     </div>
                                                 </div>
                                                 <div className="bg-orange-50/50 p-2 rounded-lg text-center border border-orange-100">
                                                     <span className="text-[10px] uppercase font-bold text-orange-600 tracking-wider">Coût de Revient par Bouteille</span>
-                                                    <p className="font-extrabold text-lg text-orange-700">{calculateCostPerBottle().toLocaleString()} {currency}</p>
+                                                    <p className="font-extrabold text-lg text-orange-700">
+                                                        {currency === "USD" ? calculateCostPerBottle().toFixed(2) : Math.round(calculateCostPerBottle()).toLocaleString()} {currency === "CDF" ? "FC" : "$"}
+                                                    </p>
                                                 </div>
                                             </>
                                         ) : (
@@ -565,9 +893,9 @@ export default function InventoryAdvancedPage() {
                                                     <input type="number" min="0" value={bottlesBought} onChange={(e) => setBottlesBought(parseInt(e.target.value) || 0)} className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 outline-none focus:border-orange-500 text-center" />
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Prix Achat (1 Bouteille en {currency})</label>
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Prix Achat (1 Bouteille en {currency === "CDF" ? "FC" : "$"})</label>
                                                     <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">{currency}</span>
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">{currency === "CDF" ? "FC" : "$"}</span>
                                                         <input required type="number" min="0" step="1" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)} className="w-full pl-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 outline-none focus:border-orange-500" />
                                                     </div>
                                                 </div>
@@ -578,10 +906,10 @@ export default function InventoryAdvancedPage() {
                                     {/* BLOCK 2: VENTE & ALERTE */}
                                     <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 normal-case">
                                         <div>
-                                            <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Prix de Vente Unitaire ({currency})</label>
+                                            <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 block mb-1">Prix de Vente Unitaire ({currency === "CDF" ? "FC" : "$"})</label>
                                             <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">{currency}</span>
-                                                <input required type="number" min="0" step="1" value={sellingPrice} onChange={(e) => setSellingPrice(parseFloat(e.target.value) || 0)} className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-3xl text-slate-900 outline-none focus:border-orange-500 focus:bg-white transition-all shadow-inner" />
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">{currency === "CDF" ? "FC" : "$"}</span>
+                                                <input required type="number" min="0" step={currency === "USD" ? "0.01" : "1"} value={sellingPrice} onChange={(e) => setSellingPrice(parseFloat(e.target.value) || 0)} className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-3xl text-slate-900 outline-none focus:border-orange-500 focus:bg-white transition-all shadow-inner" />
                                             </div>
                                             {sellingPrice > 0 && purchasePrice > 0 && (
                                                 <div className="mt-2 text-right">
@@ -667,13 +995,23 @@ export default function InventoryAdvancedPage() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 block mb-2 px-1">Catégorie</label>
+                                        <div className="flex items-center justify-between mb-2 px-1">
+                                            <label className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 block">Catégorie</label>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setShowAddCategory(true)}
+                                                className="text-[10px] font-bold text-orange-600 hover:underline"
+                                            >
+                                                + Nouvelle
+                                            </button>
+                                        </div>
                                         <select
-                                            value={newDrinkData.category}
-                                            onChange={(e) => setNewDrinkData({ ...newDrinkData, category: e.target.value })}
+                                            value={newDrinkData.categoryId}
+                                            onChange={(e) => setNewDrinkData({ ...newDrinkData, categoryId: e.target.value })}
                                             className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 outline-none focus:border-orange-500 appearance-none"
                                         >
-                                            {CUSTOM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                            <option value="">Sélectionner...</option>
+                                            {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                                         </select>
                                     </div>
                                     <div>
@@ -690,7 +1028,11 @@ export default function InventoryAdvancedPage() {
                                 </div>
 
                                 <div className="pt-2">
-                                    <button type="submit" className="w-full bg-slate-900 text-white rounded-2xl py-5 font-black uppercase tracking-widest shadow-xl hover:shadow-2xl hover:bg-black active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                                    <button 
+                                        type="submit" 
+                                        disabled={!newDrinkData.name || !newDrinkData.categoryId}
+                                        className={`w-full rounded-2xl py-5 font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 ${(!newDrinkData.name || !newDrinkData.categoryId) ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:shadow-2xl hover:bg-black active:scale-[0.98]'}`}
+                                    >
                                         <span className="material-symbols-outlined">add_circle</span>
                                         Ajouter au Catalogue
                                     </button>
@@ -699,7 +1041,34 @@ export default function InventoryAdvancedPage() {
                         </div>
                     </div>
                 )}
+                {/* MODAL: ADD CATEGORY */}
+                {showAddCategory && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowAddCategory(false)} />
+                        <div className="relative bg-white w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95">
+                            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                                <h3 className="font-bold text-lg">Nouvelle Catégorie</h3>
+                                <button onClick={() => setShowAddCategory(false)}><span className="material-symbols-outlined">close</span></button>
+                            </div>
+                            <form onSubmit={handleCreateCategory} className="p-6 space-y-4">
+                                <input 
+                                    autoFocus
+                                    placeholder="Ex: Whiskies, Cigares..." 
+                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold outline-none focus:border-orange-500"
+                                    value={newCategoryName}
+                                    onChange={e => setNewCategoryName(e.target.value)}
+                                />
+                                <button type="submit" className="w-full bg-orange-600 text-white p-4 rounded-xl font-bold shadow-lg shadow-orange-500/20">
+                                    Créer la Catégorie
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </main>
+
+            {/* BOTTOM NAV */}
+            <BottomNav activePage="inventory" />
         </div>
     );
 }

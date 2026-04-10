@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Bar, PilotProfile, Table, Category, MasterProduct, StockItem, Sale
+from .models import Bar, PilotProfile, Table, Category, MasterProduct, StockItem, Sale, StockSupply, OrderItem, Order
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,9 +27,21 @@ class TableSerializer(serializers.ModelSerializer):
 class StockItemSerializer(serializers.ModelSerializer):
     produit_details = MasterProductSerializer(source='produit', read_only=True)
     marge = serializers.ReadOnlyField(source='marge_pourcentage')
+    cout_revient = serializers.ReadOnlyField()
 
     class Meta:
         model = StockItem
+        fields = [
+            'id', 'bar', 'produit', 'produit_details', 'strategie_gestion',
+            'quantite_actuelle', 'seuil_alerte', 'devise', 
+            'prix_achat_casier', 'bouteilles_par_casier', 
+            'prix_achat_unitaire', 'prix_vente_unitaire',
+            'marge', 'cout_revient'
+        ]
+
+class StockSupplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockSupply
         fields = '__all__'
 
 class SaleSerializer(serializers.ModelSerializer):
@@ -39,6 +51,32 @@ class SaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sale
         fields = '__all__'
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.ReadOnlyField(source='product_item.produit.nom')
+    
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'order', 'product_item', 'product_name', 'quantite', 'prix_unitaire', 'devise', 'statut', 'date_creation']
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+    table_nom = serializers.ReadOnlyField(source='table.nom')
+    serveur_nom = serializers.SerializerMethodField()
+    statut_label = serializers.CharField(source='get_statut_display', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'bar', 'table', 'table_nom', 'serveur', 'serveur_nom', 
+            'statut', 'statut_label', 'total_usd', 'total_cdf', 
+            'items', 'date_creation', 'date_service'
+        ]
+
+    def get_serveur_nom(self, obj):
+        if obj.serveur:
+            return f"{obj.serveur.prenom} {obj.serveur.nom}"
+        return "Non assigné"
 
 class PilotProfileSerializer(serializers.ModelSerializer):
     user_email = serializers.ReadOnlyField(source='user.email')

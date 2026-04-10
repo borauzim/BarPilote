@@ -57,8 +57,13 @@ export default function OnboardingIdentityPage() {
                         geocoder.geocode({ location: pos }, (results: any, status: any) => {
                             if (status === "OK" && results[0]) {
                                 setBarAddress(results[0].formatted_address);
+                            } else {
+                                // Fallback aux coordonnées si l'API Geocoding n'est pas activée
+                                setBarAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
                             }
                         });
+                    } else {
+                        setBarAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
                     }
                 },
                 (error) => {
