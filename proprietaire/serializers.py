@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Bar, PilotProfile, Table, Category, MasterProduct, StockItem, Sale, StockSupply, OrderItem, Order
+from .models import Bar, PilotProfile, Table, Category, MasterProduct, StockItem, Sale, StockSupply, OrderItem, Order, StaffShift
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,6 +23,7 @@ class TableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Table
         fields = '__all__'
+        read_only_fields = ['bar']
 
 class StockItemSerializer(serializers.ModelSerializer):
     produit_details = MasterProductSerializer(source='produit', read_only=True)
@@ -38,6 +39,7 @@ class StockItemSerializer(serializers.ModelSerializer):
             'prix_achat_unitaire', 'prix_vente_unitaire',
             'marge', 'cout_revient'
         ]
+        read_only_fields = ['bar']
 
 class StockSupplySerializer(serializers.ModelSerializer):
     class Meta:
@@ -60,7 +62,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'order', 'product_item', 'product_name', 'quantite', 'prix_unitaire', 'devise', 'statut', 'date_creation']
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
+    items = OrderItemSerializer(many=True, required=False)
     table_nom = serializers.ReadOnlyField(source='table.nom')
     serveur_nom = serializers.SerializerMethodField()
     statut_label = serializers.CharField(source='get_statut_display', read_only=True)
@@ -78,15 +80,39 @@ class OrderSerializer(serializers.ModelSerializer):
             return f"{obj.serveur.prenom} {obj.serveur.nom}"
         return "Non assigné"
 
+    def create(self, validated_data):
+        items_data = validated_data.pop('items', [])
+        order = Order.objects.create(**validated_data)
+        for item_data in items_data:
+            OrderItem.objects.create(order=order, **item_data)
+        return order
+
 class PilotProfileSerializer(serializers.ModelSerializer):
     user_email = serializers.ReadOnlyField(source='user.email')
     role_label = serializers.CharField(source='get_role_display', read_only=True)
-    
+    bar_nom = serializers.ReadOnlyField(source='bar.nom')
+    gerant_nom = serializers.SerializerMethodField()
+
     class Meta:
         model = PilotProfile
         fields = [
             'id', 'user', 'user_email', 'role', 'role_label', 
             'nom', 'postnom', 'prenom', 'sexe', 'telephone', 
-            'photo_profil', 'bar'
+            'photo_profil', 'bar', 'bar_nom', 'gerant_nom'
         ]
         read_only_fields = ['user', 'bar']
+
+    def get_gerant_nom(self, obj):
+        if obj.bar:
+            gerant = obj.bar.proprietaires.first()
+            if gerant:
+                return f"{gerant.prenom} {gerant.nom}"
+        return "Gérant BarPilote"
+
+class StaffShiftSerializer(serializers.ModelSerializer):
+    worker_name = serializers.ReadOnlyField(source='worker.prenom')
+    
+    class Meta:
+        model = StaffShift
+        fields = ['id', 'worker', 'worker_name', 'bar', 'start_time', 'end_time', 'status']
+        read_only_fields = ['worker', 'bar', 'start_time', 'end_time']

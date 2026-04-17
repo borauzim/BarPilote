@@ -385,7 +385,6 @@ export default function InventoryAdvancedPage() {
         const costPerBottle = buyStrategy === "Bouteille" ? purchasePrice : (purchasePrice / bottlesPerCrate);
         
         const payload = {
-            bar: barId,
             produit: item.drink.id,
             strategie_gestion: buyStrategy === "Casier" ? "CASIER" : "UNITE",
             quantite_actuelle: calculateTotalBottles(),

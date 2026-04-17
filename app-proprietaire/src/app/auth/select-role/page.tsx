@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getAuthClient, getToken } from "@/lib/auth";
 
@@ -8,6 +8,11 @@ export default function SelectRolePage() {
     const router = useRouter();
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const roles = [
         {
@@ -52,6 +57,8 @@ export default function SelectRolePage() {
                 
                 if (selectedRole === "PROPRIETAIRE") {
                     router.push("/onboarding/establishment-type");
+                } else if (selectedRole === "SERVEUR") {
+                    router.push("/auth/scan");
                 } else {
                     router.push("/onboarding/profile");
                 }
@@ -59,6 +66,8 @@ export default function SelectRolePage() {
                 console.error("Erreur sauvegarde rôle:", error);
                 if (selectedRole === "PROPRIETAIRE") {
                     router.push("/onboarding/establishment-type");
+                } else if (selectedRole === "SERVEUR") {
+                    router.push("/auth/scan");
                 } else {
                     router.push("/onboarding/profile");
                 }
@@ -116,7 +125,8 @@ export default function SelectRolePage() {
 
                 <button
                     onClick={handleContinue}
-                    disabled={!selectedRole}
+                    disabled={!isMounted || !selectedRole || isLoading}
+                    suppressHydrationWarning={true}
                     className="w-full citrus-gradient text-white font-bold py-5 rounded-full shadow-2xl shadow-orange-600/20 active:scale-95 transition-all duration-200 uppercase tracking-tighter text-lg disabled:opacity-30 flex items-center justify-center gap-3"
                 >
                     Continuer vers le Profil

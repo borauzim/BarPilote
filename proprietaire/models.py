@@ -264,6 +264,22 @@ class Order(models.Model):
     date_maj = models.DateTimeField(auto_now=True)
     date_service = models.DateTimeField(null=True, blank=True) # Quand le dernier item est servi
 
+    def recalculate_totals(self):
+        """Calcule les sommes totales par devise."""
+        from django.db.models import Sum
+        sums = self.items.values('devise').annotate(total=Sum(models.F('quantite') * models.F('prix_unitaire')))
+        
+        self.total_usd = 0
+        self.total_cdf = 0
+        
+        for entry in sums:
+            if entry['devise'] == 'USD':
+                self.total_usd = entry['total']
+            elif entry['devise'] == 'CDF':
+                self.total_cdf = entry['total']
+        
+        self.save(update_fields=['total_usd', 'total_cdf'])
+
     def __str__(self):
         return f"Order {self.id.hex[:6]} - {self.table.nom} ({self.get_statut_display()})"
 
@@ -308,7 +324,7 @@ class StaffShift(models.Model):
     def __str__(self):
         return f"Shift {self.worker.prenom} - {self.status} ({self.start_time.strftime('%H:%M')})"
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 @receiver(post_save, sender=User)
@@ -320,3 +336,9 @@ def create_pilot_profile(sender, instance, created, **kwargs):
 def save_pilot_profile(sender, instance, **kwargs):
     if hasattr(instance, 'pilot_profile'):
         instance.pilot_profile.save()
+
+@receiver([post_save, post_delete], sender=OrderItem)
+def update_order_totals(sender, instance, **kwargs):
+    """Met à jour le ticket parent dès qu'une ligne change."""
+    if instance.order:
+        instance.order.recalculate_totals()

@@ -12,6 +12,11 @@ export default function JoinBarPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
     const [errorMsg, setErrorMsg] = useState("");
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Vérifie si on est connecté
     const isLogged = !!getToken();
@@ -34,9 +39,9 @@ export default function JoinBarPage() {
             console.log("Rejoint avec succès :", response.data);
             setStatus("success");
             
-            // Redirection vers profile/dashboard au bout de 2s
+            // Redirection vers la saisie d'identité au lieu du dashboard
             setTimeout(() => {
-                router.push("/dashboard"); // Ajuster vers la vigie du serveur dans le futur
+                router.push("/onboarding/staff-profile");
             }, 2000);
         } catch (error: any) {
             console.error("Erreur pour rejoindre :", error);
@@ -82,7 +87,7 @@ export default function JoinBarPage() {
                     >
                         {isLoading ? (
                             <span className="material-symbols-outlined animate-spin">refresh</span>
-                        ) : !isLogged ? (
+                        ) : (!isMounted || !isLogged) ? (
                             <>
                                 <span className="material-symbols-outlined">login</span>
                                 Se connecter pour rejoindre

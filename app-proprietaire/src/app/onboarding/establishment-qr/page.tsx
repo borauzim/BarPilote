@@ -7,10 +7,13 @@ import jsPDF from "jspdf";
 
 export default function EstablishmentQRPage() {
     const router = useRouter();
+
+    const [isMounted, setIsMounted] = useState(false);
     const [barInfo, setBarInfo] = useState({ code: "", name: "" });
     const [joinUrl, setJoinUrl] = useState("");
 
     useEffect(() => {
+        setIsMounted(true);
         const code = localStorage.getItem("bar_code_invitation") || "INVALID_CODE";
         const name = localStorage.getItem("bar_name") || "Votre Établissement";
         setBarInfo({ code, name });
@@ -22,86 +25,133 @@ export default function EstablishmentQRPage() {
     const slugify = (text: string) =>
         text.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '_');
 
-    const handleDownloadPDF = () => {
-        const qrCanvas = document.getElementById('qr-personnel') as HTMLCanvasElement;
+    // Convert an image URL to a base64 string
+    const getBase64ImageFromUrl = async (imageUrl: string): Promise<string> => {
+        const res = await fetch(imageUrl);
+        const blob = await res.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
+
+    if (!isMounted) return null;
+
+    const handleDownloadPDF = async () => {
+        if (!joinUrl) return;
+        
+        // Retrieve the generated QR Canvas from DOM
+        const qrCanvas = document.getElementById('qr-canvas-personnel') as HTMLCanvasElement;
         const qrData = qrCanvas ? qrCanvas.toDataURL('image/png') : null;
 
-        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 120] });
+        // Fetch the orange version of the logo for the PDF
+        const logoBase64 = await getBase64ImageFromUrl("/logobarpilote_orange.png");
+
         const W = 80;
+        const H = 140; 
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [W, H] });
 
-        // ── FOND BLANC ──
+        // BACKGROUND
         pdf.setFillColor(255, 255, 255);
-        pdf.rect(0, 0, W, 120, 'F');
+        pdf.rect(0, 0, W, H, 'F');
 
-        // ── BarPilote ──
+        // ==== 1. LOGO AND "BarPilote" ====
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(13);
+        pdf.setFontSize(14);
+        const titleText = 'BarPilote';
+        const titleWidth = pdf.getTextWidth(titleText);
+        const logoWidth = 6;
+        const spacing = 1.5;
+        const totalHeaderWidth = logoWidth + spacing + titleWidth;
+        const startX = (W - totalHeaderWidth) / 2;
+
+        pdf.addImage(logoBase64, 'PNG', startX, 19, logoWidth, logoWidth);
+
         pdf.setTextColor(234, 88, 12);
-        pdf.text('BarPilote', W / 2, 14, { align: 'center' });
+        pdf.text(titleText, startX + logoWidth + spacing, 24);
 
-        // ── NOM DU BAR ──
-        pdf.setFontSize(6);
-        pdf.setTextColor(148, 163, 184);
-        pdf.text(barInfo.name.toUpperCase(), W / 2, 21, { align: 'center', charSpace: 1.5 });
-
-        // ── MESSAGE ──
-        pdf.setFontSize(5);
-        pdf.setTextColor(100, 116, 139);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text('Scannez pour rejoindre l\'equipe et acceder\nau systeme de commande', W / 2, 26, { align: 'center' });
-
-        // ── BADGE PERSONNEL (pill sombre) ──
-        pdf.setFillColor(26, 28, 29);
-        pdf.roundedRect(22, 31, 36, 5, 2.5, 2.5, 'F');
-        pdf.setFontSize(4.5);
-        pdf.setTextColor(255, 255, 255);
+        // ==== 2. BAR NAME ====
+        pdf.setFontSize(6.5);
+        pdf.setTextColor(148, 163, 184); 
         pdf.setFont('helvetica', 'bold');
-        pdf.text('BADGE PERSONNEL', W / 2, 34.5, { align: 'center', charSpace: 1.5 });
+        pdf.text(barInfo.name.toUpperCase(), W / 2, 32, { align: 'center' });
 
-        // ── BORDURE QR ──
+        // ==== 3. CUSTOMER MESSAGE ====
+        pdf.setFontSize(5);
+        pdf.setTextColor(100, 116, 139); 
+        pdf.setFont('helvetica', 'normal');
+        pdf.text("Scannez pour rejoindre l'equipe et acceder au", W / 2, 38, { align: 'center' });
+        pdf.text("systeme de commande", W / 2, 40.5, { align: 'center' });
+
+        // ==== 4. PERSONNEL PILL & PADLOCK ====
+        const pillText = "BADGE PERSONNEL";
+        pdf.setFontSize(5);
+        pdf.setFont('helvetica', 'bold');
+        const textW = pdf.getTextWidth(pillText);
+        const lockW = 2.5;
+        const lockTextGap = 1.5;
+        const totalPillContentW = lockW + lockTextGap + textW;
+        
+        const pillW = 36;
+        const pillH = 7;
+        const pillX = (W - pillW) / 2;
+        const pillY = 45;
+        
+        // Draw Pill
+        pdf.setFillColor(26, 28, 29); 
+        pdf.roundedRect(pillX, pillY, pillW, pillH, 3.5, 3.5, 'F'); 
+
+        // Content Start X
+        const contentStartX = (W - totalPillContentW) / 2;
+
+        // Draw Padlock
+        const plX = contentStartX;
+        const plY = pillY + 3.5; 
+        pdf.setDrawColor(250, 170, 0); 
+        pdf.setLineWidth(0.3);
+        pdf.ellipse(plX + 1.25, plY - 1, 1, 1.2, 'S'); 
+        pdf.setFillColor(250, 170, 0); 
+        pdf.rect(plX, plY - 1, lockW, 2.5, 'F'); 
+        pdf.setFillColor(26, 28, 29); 
+        pdf.circle(plX + 1.25, plY + 0.25, 0.3, 'F'); 
+
+        // Draw Text
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(pillText, plX + lockW + lockTextGap, pillY + 4.5);
+
+        // ==== 5. QR CODE ====
         pdf.setDrawColor(234, 88, 12);
-        pdf.setLineWidth(0.8);
-        pdf.roundedRect(13, 40, 54, 54, 4, 4, 'S');
-
-        // ── QR CODE ──
+        pdf.setLineWidth(1.2);
+        pdf.roundedRect(12, 57, 56, 56, 4, 4, 'S');
         if (qrData) {
-            pdf.addImage(qrData, 'PNG', 15, 42, 50, 50);
+            pdf.addImage(qrData, 'PNG', 14, 59, 52, 52);
         }
 
-        // ── TAG ZONE ──
+        // ==== 6. FOOTER TEXTS ====
         pdf.setFontSize(5);
-        pdf.setTextColor(234, 88, 12);
+        pdf.setTextColor(148, 163, 184); 
         pdf.setFont('helvetica', 'bold');
-        pdf.text('ZONE DE SERVICE ACTIVE', W / 2, 100, { align: 'center', charSpace: 2 });
+        pdf.text('ZONE DE SERVICE ACTIVE', W / 2, 121, { align: 'center' });
 
-        // ── FOOTER URL ──
-        pdf.setFontSize(4.5);
-        pdf.setTextColor(148, 163, 184);
-        pdf.text('LIEN D\'INVITATION', W / 2, 107, { align: 'center', charSpace: 1 });
-        pdf.setTextColor(234, 88, 12);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(joinUrl, W / 2, 112, { align: 'center', maxWidth: 72 });
+        pdf.setFontSize(5);
+        pdf.setTextColor(148, 163, 184); 
+        pdf.text("LIEN D'INVITATION", W / 2, 127, { align: 'center' });
+
+        pdf.setFontSize(5);
+        pdf.setTextColor(234, 88, 12); 
+        pdf.setFont('helvetica', 'bold');
+        const splitUrl = pdf.splitTextToSize(joinUrl, 70);
+        pdf.text(splitUrl, W / 2, 131, { align: 'center' });
 
         pdf.save(`Badge_Personnel_${slugify(barInfo.name)}.pdf`);
+        
         setTimeout(() => router.push("/tables"), 1500);
     };
 
     return (
         <div className="min-h-screen bg-[#f8f9fa] text-slate-900 flex flex-col items-center justify-center p-6">
-
-            {/* QR Canvas caché — lu directement par jsPDF */}
-            <div style={{ position: 'fixed', left: '-9999px', top: 0, pointerEvents: 'none' }}>
-                {joinUrl && (
-                    <QRCodeCanvas
-                        id="qr-personnel"
-                        value={joinUrl}
-                        size={300}
-                        level="H"
-                        bgColor="#ffffff"
-                        fgColor="#000000"
-                    />
-                )}
-            </div>
 
             {/* ─── APERÇU UI ─── */}
             <main className="max-w-md w-full space-y-6 text-center">
@@ -109,37 +159,59 @@ export default function EstablishmentQRPage() {
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FF5E00]">Onboarding</span>
                     <h1 className="text-3xl font-black tracking-tight text-[#1a1c1d]">Badge du Personnel</h1>
                     <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                        Ce badge QR permet à vos serveurs de s'identifier et de rejoindre automatiquement l'équipe de{" "}
+                        Ce badge QR permet à vos serveurs de rejoindre automatiquement l&apos;équipe de{" "}
                         <span className="text-orange-600 font-bold">{barInfo.name}</span>.
                     </p>
                 </div>
 
-                {/* Aperçu du badge */}
-                <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100 flex flex-col items-center gap-4">
-                    {/* Mini logo */}
+                {/* Aperçu du badge fidèle - CE BLOC EST CAPTURÉ PAR HTML2CANVAS */}
+                <div className="bg-[#ffffff] rounded-[2rem] p-8 border border-[#f1f5f9] flex flex-col items-center gap-3">
+                    {/* Logo authentique de l'application */}
                     <div className="flex items-center gap-2">
-                        <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
-                            <path d="M8 22 Q18 6 28 22" stroke="#ea580c" strokeWidth="3.5" strokeLinecap="round"/>
-                            <path d="M12 26 Q18 14 24 26" stroke="#ea580c" strokeWidth="3" strokeLinecap="round"/>
-                        </svg>
+                        <div 
+                            className="w-6 h-6 bg-[#FF5E00]"
+                            style={{
+                                WebkitMaskImage: 'url(/logobarpilote.png)', 
+                                WebkitMaskSize: 'contain', 
+                                WebkitMaskRepeat: 'no-repeat', 
+                                WebkitMaskPosition: 'center',
+                                maskImage: 'url(/logobarpilote.png)', 
+                                maskSize: 'contain', 
+                                maskRepeat: 'no-repeat', 
+                                maskPosition: 'center'
+                            }}
+                        />
                         <span className="text-[#FF5E00] font-black tracking-tight">BarPilote</span>
                     </div>
 
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{barInfo.name}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#94a3b8]">{barInfo.name}</p>
 
-                    <div className="bg-[#1a1c1d] text-white text-[9px] font-black uppercase tracking-[3px] px-4 py-1.5 rounded-full">
-                        🔒 Badge Personnel
+                    <p className="text-[10px] text-[#64748b] font-medium max-w-[240px] leading-relaxed">
+                        Scannez pour rejoindre l&apos;équipe et accéder au système de commande
+                    </p>
+
+                    <div className="bg-[#1a1c1d] text-[#ffffff] text-[9px] font-black uppercase tracking-[3px] px-4 py-1.5 rounded-full flex items-center gap-1.5">
+                        <span className="text-yellow-500 material-symbols-outlined text-xs">lock</span> BADGE PERSONNEL
                     </div>
 
-                    {/* QR Code Aperçu */}
-                    <div className="border-4 border-[#FF5E00] p-4 rounded-[1.5rem]">
+                    {/* QR Code avec bordure orange — ID pour jsPDF */}
+                    <div id="qr-personnel-wrapper" className="border-4 border-[#FF5E00] p-4 rounded-[1.5rem]">
                         {joinUrl && (
-                            <QRCodeCanvas value={joinUrl} size={180} level="H" bgColor="#fff" fgColor="#000" />
+                            <QRCodeCanvas
+                                id="qr-canvas-personnel"
+                                value={joinUrl}
+                                size={180}
+                                level="H"
+                                bgColor="#ffffff"
+                                fgColor="#000000"
+                            />
                         )}
                     </div>
 
-                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Lien d'Invitation</div>
-                    <p className="text-[10px] font-bold text-[#FF5E00] break-all max-w-[280px]">{joinUrl}</p>
+                    <div className="text-[9px] font-black uppercase tracking-widest text-[#94a3b8] mt-2">Zone de Service Active</div>
+
+                    <div className="text-[9px] font-black uppercase tracking-widest text-[#94a3b8] mt-1">Lien d&apos;Invitation</div>
+                    <p className="text-[9px] font-bold text-[#FF5E00] break-all max-w-[280px]">{joinUrl}</p>
                 </div>
 
                 {/* Info Box */}
@@ -159,7 +231,8 @@ export default function EstablishmentQRPage() {
                 <div className="space-y-4 pt-2">
                     <button
                         onClick={handleDownloadPDF}
-                        className="w-full bg-[#FF5E00] text-white py-4 rounded-xl font-bold text-base shadow-lg shadow-orange-600/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                        disabled={!joinUrl}
+                        className="w-full bg-[#FF5E00] text-white py-4 rounded-xl font-bold text-base shadow-lg shadow-orange-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                         <span className="material-symbols-outlined">download</span>
                         Télécharger le Badge Personnel (PDF)

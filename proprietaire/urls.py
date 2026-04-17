@@ -4,13 +4,14 @@ from .api_views import (
     BarViewSet, PilotProfileViewSet, TableViewSet, CategoryViewSet,
     MasterProductViewSet, StockItemViewSet, SaleViewSet, StockSupplyViewSet,
     DashboardViewSet, OrderViewSet, OrderItemViewSet, FinancialReportViewSet,
-    StaffManagementViewSet
+    StaffManagementViewSet, StaffShiftViewSet
 )
 
 router = DefaultRouter()
 router.register(r'bars', BarViewSet)
 router.register(r'profile', PilotProfileViewSet)
 router.register(r'tables', TableViewSet)
+router.register(r'shifts', StaffShiftViewSet)
 router.register(r'supplies', StockSupplyViewSet)
 router.register(r'categories', CategoryViewSet)
 router.register(r'master-products', MasterProductViewSet)

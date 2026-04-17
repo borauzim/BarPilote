@@ -57,9 +57,8 @@ export default function TablesManagementPage() {
     const handleAddTable = async () => {
         const token = getToken();
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        const barId = localStorage.getItem("bar_id");
 
-        if (!token || !barId) return;
+        if (!token) return;
 
         try {
             const response = await fetch(`${apiUrl}/api/proprietaire/tables/`, {
@@ -69,7 +68,6 @@ export default function TablesManagementPage() {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    bar: barId,
                     nom: `Table ${stats?.tables?.length + 1 || 1}`
                 })
             });
@@ -99,82 +97,109 @@ export default function TablesManagementPage() {
     const slugify = (text: string) =>
         text.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '_');
 
+    // Convert an image URL to a base64 string
+    const getBase64ImageFromUrl = async (imageUrl: string): Promise<string> => {
+        const res = await fetch(imageUrl);
+        const blob = await res.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
+
     const handleDownloadSingle = (table: any) => {
         setSelectedTable(table);
         // Attendre le prochain cycle de rendu pour que le canvas QR soit mis à jour
         setTimeout(() => generateBadgePDF(table), 300);
     };
 
-    const generateBadgePDF = (table: any) => {
-        // Récupérer le canvas QR généré dynamiquement dans le DOM
+    const generateBadgePDF = async (table: any) => {
         const qrCanvas = document.getElementById(`qr-table-${table.id}`) as HTMLCanvasElement;
         const qrData = qrCanvas ? qrCanvas.toDataURL('image/png') : null;
 
-        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, 120] });
-        const W = 80; // largeur PDF en mm
+        // Fetch the orange version of the logo for the PDF
+        const logoBase64 = await getBase64ImageFromUrl("/logobarpilote_orange.png");
 
-        // ── FOND BLANC ──
+        const W = 80;
+        const H = 140; 
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [W, H] });
+
+        // BACKGROUND
         pdf.setFillColor(255, 255, 255);
-        pdf.rect(0, 0, W, 120, 'F');
+        pdf.rect(0, 0, W, H, 'F');
 
-        // ── ARCS du LOGO (SVG dessiné en PDF) ──
-        pdf.setDrawColor(234, 88, 12);
-        pdf.setLineWidth(0.8);
-        // Arc 1 (grand)
-        pdf.lines([[5, -8], [5, -8]], 28, 14, [1, 1], '', false);
-        pdf.ellipse(40, 18, 10, 5, 'S');
-        // ── TEXTE BarPilote ──
+        // ==== 1. LOGO AND "BarPilote" ====
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(13);
+        pdf.setFontSize(14);
+        const titleText = 'BarPilote';
+        const titleWidth = pdf.getTextWidth(titleText);
+        const logoWidth = 6;
+        const spacing = 1.5;
+        const totalHeaderWidth = logoWidth + spacing + titleWidth;
+        const startX = (W - totalHeaderWidth) / 2;
+
+        pdf.addImage(logoBase64, 'PNG', startX, 19, logoWidth, logoWidth);
         pdf.setTextColor(234, 88, 12);
-        pdf.text('BarPilote', W / 2, 16, { align: 'center' });
+        pdf.text(titleText, startX + logoWidth + spacing, 24);
 
-        // ── NOM DU BAR ──
-        pdf.setFontSize(6);
-        pdf.setTextColor(148, 163, 184);
+        // ==== 2. BAR NAME ====
+        pdf.setFontSize(6.5);
+        pdf.setTextColor(148, 163, 184); 
         pdf.setFont('helvetica', 'bold');
-        pdf.text(barName, W / 2, 23, { align: 'center', charSpace: 1.5 });
+        pdf.text(barName, W / 2, 32, { align: 'center' });
 
-        // ── MESSAGE CLIENT ──
+        // ==== 3. CUSTOMER MESSAGE ====
         pdf.setFontSize(5);
-        pdf.setTextColor(100, 116, 139);
+        pdf.setTextColor(100, 116, 139); 
         pdf.setFont('helvetica', 'normal');
-        pdf.text('Scannez pour commander depuis votre table', W / 2, 28, { align: 'center' });
+        pdf.text("Scannez pour commander depuis votre table", W / 2, 38, { align: 'center' });
 
-        // ── NOM DE LA TABLE ──
+        // ==== 4. TABLE PILL ====
+        const pillText = String(table.nom).toUpperCase();
+        pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(28);
-        pdf.setTextColor(15, 23, 42);
-        pdf.text(table.nom, W / 2, 42, { align: 'center' });
+        const textW = pdf.getTextWidth(pillText);
+        
+        const pillPad = 12;
+        const pillW = textW + pillPad;
+        const pillH = 10;
+        const pillX = (W - pillW) / 2;
+        const pillY = 43;
+        
+        // Draw Pill
+        pdf.setFillColor(26, 28, 29); // #1a1c1d
+        pdf.roundedRect(pillX, pillY, pillW, pillH, 5, 5, 'F'); 
 
-        // ── SOUS-TITRE ORANGE ──
-        pdf.setFontSize(5);
-        pdf.setTextColor(234, 88, 12);
-        pdf.text('ZONE DE SERVICE ACTIVE', W / 2, 48, { align: 'center', charSpace: 2 });
+        // Draw Text
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(pillText, W / 2, pillY + 6.8, { align: 'center' });
 
-        // ── BORDURE QR (rectangle arrondi orange) ──
+        // ==== 5. QR CODE ====
         pdf.setDrawColor(234, 88, 12);
-        pdf.setLineWidth(0.8);
-        pdf.roundedRect(13, 52, 54, 54, 4, 4, 'S');
-
-        // ── QR CODE IMAGE ──
+        pdf.setLineWidth(1.2);
+        pdf.roundedRect(12, 57, 56, 56, 4, 4, 'S');
         if (qrData) {
-            pdf.addImage(qrData, 'PNG', 15, 54, 50, 50);
-        } else {
-            pdf.setFontSize(5);
-            pdf.setTextColor(150, 150, 150);
-            pdf.text('QR Code indisponible', W / 2, 78, { align: 'center' });
+            pdf.addImage(qrData, 'PNG', 14, 59, 52, 52);
         }
 
-        // ── FOOTER ──
-        pdf.setFontSize(4.5);
-        pdf.setTextColor(148, 163, 184);
+        // ==== 6. FOOTER TEXTS ====
+        pdf.setFontSize(5);
+        pdf.setTextColor(148, 163, 184); 
         pdf.setFont('helvetica', 'bold');
-        pdf.text('PORTAIL DE COMMANDE', W / 2, 112, { align: 'center', charSpace: 1 });
-        pdf.setTextColor(234, 88, 12);
-        pdf.setFont('helvetica', 'normal');
-        const url = `barpilote.com/${slugify(barName)}/${table.id}`;
-        pdf.text(url, W / 2, 116, { align: 'center', maxWidth: 72 });
+        pdf.text('ZONE DE SERVICE ACTIVE', W / 2, 121, { align: 'center' });
+
+        pdf.setFontSize(5);
+        pdf.setTextColor(148, 163, 184); 
+        pdf.text("PORTAIL DE COMMANDE", W / 2, 127, { align: 'center' });
+
+        pdf.setFontSize(5);
+        pdf.setTextColor(234, 88, 12); 
+        pdf.setFont('helvetica', 'bold');
+        const tableUrl = `barpilote.com/${slugify(barName)}/${table.id}`;
+        const splitUrl = pdf.splitTextToSize(tableUrl, 70);
+        pdf.text(splitUrl, W / 2, 131, { align: 'center' });
 
         pdf.save(`Badge_${table.nom.replace(/\s+/g, '_')}.pdf`);
     };

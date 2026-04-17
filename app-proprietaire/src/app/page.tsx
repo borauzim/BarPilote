@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getToken } from "@/lib/auth";
+import { getToken, deleteToken } from "@/lib/auth";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, ReferenceLine 
@@ -19,6 +19,11 @@ export default function DashboardPage() {
     setIsMounted(true);
     fetchStats();
   }, []);
+
+  const handleLogout = () => {
+    deleteToken();
+    router.push("/auth/login");
+  };
 
   const fetchStats = async () => {
     const token = getToken();
@@ -94,12 +99,20 @@ export default function DashboardPage() {
             {stats?.bar_info?.nom || "BarPilote"}
           </span>
         </div>
-        <button 
-          onClick={() => router.push("/onboarding")}
-          className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
-        >
-          <span className="material-symbols-outlined text-2xl">settings</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={() => router.push("/onboarding")}
+            className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <span className="material-symbols-outlined text-2xl">settings</span>
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="p-2 text-slate-400 hover:text-orange-600 transition-colors"
+          >
+            <span className="material-symbols-outlined text-2xl">logout</span>
+          </button>
+        </div>
       </header>
 
       <main className="px-6 mt-10 space-y-6">

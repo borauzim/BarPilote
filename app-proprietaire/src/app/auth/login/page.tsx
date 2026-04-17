@@ -14,7 +14,8 @@ function LoginContent() {
         onSuccess: async (tokenResponse) => {
             setIsLoading(true);
             setErrorMsg(null);
-            console.log("Google Access Token:", tokenResponse.access_token);
+            console.log("🟢 Google Login Success! Token:", tokenResponse.access_token);
+            alert("Connexion Google réussie côté client, envoi au serveur...");
             try {
                 // Envoi du token à Django (dj-rest-auth)
                 const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/`, {
@@ -50,7 +51,8 @@ function LoginContent() {
             }
         },
         onError: (errorResponse) => {
-            console.log("Google Login Failed", errorResponse);
+            console.log("❌ Google Login Failed", errorResponse);
+            alert("Erreur Google : " + JSON.stringify(errorResponse));
             setErrorMsg("La connexion avec Google a échoué.");
             setIsLoading(false);
         },

@@ -4,4 +4,12 @@ from dj_rest_auth.registration.views import SocialLoginView
 
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
-    callback_url = "http://localhost:3000"
+    client_class = OAuth2Client
+
+    @property
+    def callback_url(self):
+        # Support dynamique pour localhost:3000 et localhost:3001
+        origin = self.request.META.get('HTTP_ORIGIN')
+        if origin:
+            return origin
+        return "http://localhost:3000"

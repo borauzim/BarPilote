@@ -5,12 +5,38 @@ from django.utils import timezone
 from django.db.models import Sum, Count, Max, F
 from django.db.models.functions import ExtractHour
 from datetime import timedelta
-from .models import Bar, PilotProfile, Table, Category, MasterProduct, StockItem, Sale, StockSupply, Order, OrderItem
+from .models import Bar, PilotProfile, Table, Category, MasterProduct, StockItem, Sale, StockSupply, Order, OrderItem, StaffShift
 from .serializers import (
     BarSerializer, PilotProfileSerializer, TableSerializer, CategorySerializer, 
     MasterProductSerializer, StockItemSerializer, SaleSerializer, StockSupplySerializer,
-    OrderSerializer, OrderItemSerializer
+    OrderSerializer, OrderItemSerializer, StaffShiftSerializer
 )
+
+class StaffShiftViewSet(viewsets.ModelViewSet):
+    queryset = StaffShift.objects.all()
+    serializer_class = StaffShiftSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # A waiter sees only their own shifts, an owner sees all shifts for their bar
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if not profile: return StaffShift.objects.none()
+        
+        if profile.role == 'PROPRIETAIRE':
+            return StaffShift.objects.filter(bar=profile.bar)
+        return StaffShift.objects.filter(worker=profile)
+
+    def perform_create(self, serializer):
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if profile and profile.bar:
+            # Check if there is already an active shift
+            if StaffShift.objects.filter(worker=profile, status__in=['ACTIVE', 'BREAK']).exists():
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError("Vous avez déjà une session active.")
+            serializer.save(worker=profile, bar=profile.bar)
+        else:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Vous devez être rattaché à un établissement.")
 
 class StockSupplyViewSet(viewsets.ModelViewSet):
     queryset = StockSupply.objects.all()
@@ -18,8 +44,10 @@ class StockSupplyViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # On ne voit que les approvisionnements de son propre bar
-        return StockSupply.objects.filter(item__bar__proprietaires__user=self.request.user)
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if not profile or not profile.bar:
+            return StockSupply.objects.none()
+        return StockSupply.objects.filter(item__bar=profile.bar)
 
 class PilotProfileViewSet(viewsets.ModelViewSet):
     queryset = PilotProfile.objects.all()
@@ -79,13 +107,43 @@ class BarViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(bar)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='check-invitation/(?P<code>[^/.]+)')
+    def check_invitation(self, request, code=None):
+        try:
+            bar = Bar.objects.get(code_invitation=code)
+        except Bar.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Ce code d'invitation est invalide.")
+            
+        proprietaire = bar.proprietaires.first()
+        proprietaire_nom = f"{proprietaire.prenom} {proprietaire.nom}" if proprietaire else "Propriétaire BarPilote"
+        
+        return Response({
+            "id": bar.id,
+            "nom": bar.nom,
+            "proprietaire_nom": proprietaire_nom,
+            "type_etablissement": bar.get_type_etablissement_display()
+        })
+
 class TableViewSet(viewsets.ModelViewSet):
     queryset = Table.objects.all()
     serializer_class = TableSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Table.objects.filter(bar__proprietaires__user=self.request.user)
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if not profile or not profile.bar:
+            return Table.objects.none()
+        return Table.objects.filter(bar=profile.bar)
+
+    def perform_create(self, serializer):
+        from .models import PilotProfile
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if profile and profile.bar:
+            serializer.save(bar=profile.bar)
+        else:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Vous n'avez pas de bar associé.")
 
     @action(detail=False, methods=['get'])
     def analytics(self, request):
@@ -159,7 +217,24 @@ class StockItemViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return StockItem.objects.filter(bar__proprietaires__user=self.request.user)
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if not profile or not profile.bar:
+            return StockItem.objects.none()
+        return StockItem.objects.filter(bar=profile.bar)
+
+    def perform_create(self, serializer):
+        from .models import PilotProfile
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if profile and profile.bar:
+            # On vérifie si l'item existe déjà pour ce bar pour éviter le doublon via l'API
+            from .models import StockItem
+            if StockItem.objects.filter(bar=profile.bar, produit=serializer.validated_data['produit']).exists():
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError("Ce produit est déjà dans votre stock.")
+            serializer.save(bar=profile.bar)
+        else:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Vous n'avez pas de bar associé.")
 
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
@@ -167,7 +242,10 @@ class SaleViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Sale.objects.filter(bar__proprietaires__user=self.request.user)
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if not profile or not profile.bar:
+            return Sale.objects.none()
+        return Sale.objects.filter(bar=profile.bar)
 
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
@@ -175,7 +253,10 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return OrderItem.objects.filter(order__bar__proprietaires__user=self.request.user)
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if not profile or not profile.bar:
+            return OrderItem.objects.none()
+        return OrderItem.objects.filter(order__bar=profile.bar)
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -183,7 +264,18 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Order.objects.filter(bar__proprietaires__user=self.request.user)
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if not profile or not profile.bar:
+            return Order.objects.none()
+        return Order.objects.filter(bar=profile.bar)
+
+    def perform_create(self, serializer):
+        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        if profile and profile.bar:
+            serializer.save(bar=profile.bar, serveur=profile)
+        else:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Vous n'avez pas de bar associé à votre profil.")
 
     @action(detail=True, methods=['post'])
     def mark_served(self, request, pk=None):
@@ -191,29 +283,35 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.statut = 'SERVED'
         order.date_service = timezone.now()
         order.save()
-        return Response({'status': 'Order marked as served'})
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def mark_paid(self, request, pk=None):
+        from django.db import transaction
         order = self.get_object()
-        order.statut = 'PAID'
-        order.save()
         
-        # Archiver dans Sale pour les statistiques historiques
-        for line in order.items.all():
-            Sale.objects.create(
-                bar=order.bar,
-                table=order.table,
-                item=line.product_item,
-                quantite=line.quantite,
-                prix_unitaire_applique=line.prix_unitaire,
-                devise=line.devise
-            )
-            # Décrémenter le stock
-            line.product_item.quantite_actuelle -= line.quantite
-            line.product_item.save()
+        with transaction.atomic():
+            order.statut = 'PAID'
+            order.save()
+            
+            # Archiver dans Sale pour les statistiques historiques
+            for line in order.items.all():
+                from .models import Sale
+                Sale.objects.create(
+                    bar=order.bar,
+                    table=order.table,
+                    item=line.product_item,
+                    quantite=line.quantite,
+                    prix_unitaire_applique=line.prix_unitaire,
+                    devise=line.devise
+                )
+                # Décrémenter le stock
+                line.product_item.quantite_actuelle -= line.quantite
+                line.product_item.save()
 
-        return Response({'status': 'Order paid and stock updated'})
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
 
 class DashboardViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
@@ -470,7 +568,7 @@ class StaffManagementViewSet(viewsets.ViewSet):
                 bar=bar, 
                 table__orders__serveur=server,
                 table__orders__date_creation__date=today
-            ).distinct().aggregate(models.Sum('prix_unitaire_applique'))['prix_unitaire_applique__sum'] or 0
+            ).distinct().aggregate(Sum('prix_unitaire_applique'))['prix_unitaire_applique__sum'] or 0
             
             # Tables actives
             active_tables_count = Order.objects.filter(
