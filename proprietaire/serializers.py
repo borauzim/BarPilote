@@ -60,6 +60,9 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = ['id', 'order', 'product_item', 'product_name', 'quantite', 'prix_unitaire', 'devise', 'statut', 'date_creation']
+        extra_kwargs = {
+            'order': {'required': False, 'allow_null': True}
+        }
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, required=False)
@@ -74,6 +77,10 @@ class OrderSerializer(serializers.ModelSerializer):
             'statut', 'statut_label', 'total_usd', 'total_cdf', 
             'items', 'date_creation', 'date_service'
         ]
+        extra_kwargs = {
+            'bar': {'required': False, 'allow_null': True},
+            'serveur': {'required': False, 'allow_null': True}
+        }
 
     def get_serveur_nom(self, obj):
         if obj.serveur:

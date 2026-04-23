@@ -3,15 +3,68 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode";
+import { getToken } from "@/lib/auth";
+import { getApiUrl } from "@/lib/apiConfig";
+import axios from "axios";
 
 export default function ScanPage() {
     const router = useRouter();
     const [scanResult, setScanResult] = useState<string | null>(null);
     const [isScanning, setIsScanning] = useState(false);
     const [cameraActive, setCameraActive] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
     const scannerRef = useRef<Html5Qrcode | null>(null);
 
     useEffect(() => {
+        // Vérifier si l'utilisateur est déjà un serveur avec bar assigné
+        const checkExistingProfile = async () => {
+            const token = getToken();
+            if (!token) {
+                router.push("/auth/login");
+                return;
+            }
+
+            try {
+                const apiUrl = getApiUrl();
+                const response = await axios.get(`${apiUrl}/api/proprietaire/profiles/me/`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (response.data && response.data.role === 'SERVEUR') {
+                    const profile = response.data;
+                    
+                    // Si le serveur a déjà un bar assigné, rediriger vers dashboard
+                    if (profile.bar) {
+                        console.log("Serveur avec bar détecté, redirection vers dashboard");
+                        router.push("/dashboard");
+                        return;
+                    }
+                    // Sinon, continuer vers le scan
+                    console.log("Serveur sans bar, continuation vers scan");
+                } else if (response.data && response.data.role) {
+                    // Autre rôle, rediriger selon le rôle
+                    switch (response.data.role) {
+                        case 'PROPRIETAIRE':
+                            router.push("/dashboard/proprietaire");
+                            break;
+                        case 'EVENEMENT':
+                            router.push("/dashboard/evenement");
+                            break;
+                        default:
+                            router.push("/dashboard");
+                            break;
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.error("Erreur vérification profil:", error);
+            } finally {
+                setIsChecking(false);
+            }
+        };
+
+        checkExistingProfile();
+
         // Initialiser le scanner uniquement côté client
         const html5QrCode = new Html5Qrcode("reader");
         scannerRef.current = html5QrCode;
@@ -41,14 +94,16 @@ export default function ScanPage() {
             }
         };
 
-        startScanner();
+        if (!isChecking) {
+            startScanner();
+        }
 
         return () => {
             if (scannerRef.current && scannerRef.current.isScanning) {
                 scannerRef.current.stop().catch((e) => console.log("Stop error", e));
             }
         };
-    }, []);
+    }, [isChecking]);
 
     const handleScanSuccess = (text: string) => {
         const proceedToJoin = (decodedText: string) => {
@@ -70,6 +125,17 @@ export default function ScanPage() {
             proceedToJoin(text);
         }
     };
+
+    if (isChecking) {
+        return (
+            <div className="min-h-screen bg-[#0c0d0d] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4 animate-pulse">
+                    <span className="material-symbols-outlined text-orange-500 text-5xl">person_check</span>
+                    <p className="text-zinc-500 text-xs font-bold tracking-widest uppercase">Vérification du profil...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-black min-h-screen flex flex-col font-sans text-white overflow-hidden relative">

@@ -28,7 +28,7 @@ export default function PilotProfilePage() {
             try {
                 setIsLoading(true);
                 const api = getAuthClient();
-                const response = await api.get('/api/proprietaire/profile/me/');
+                const response = await api.get('/api/proprietaire/profiles/me/');
 
                 const data = response.data;
                 console.log("Profil chargé:", data);
@@ -84,7 +84,7 @@ export default function PilotProfilePage() {
             }
 
             const api = getAuthClient();
-            const response = await api.patch('/api/proprietaire/profile/me/', payload);
+            const response = await api.patch('/api/proprietaire/profiles/me/', payload);
             console.log("✅ Profil mis à jour:", response.data);
 
             router.push("/onboarding");

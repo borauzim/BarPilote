@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { getToken } from "@/lib/auth";
+import { getAuthClient } from "@/lib/auth";
 import BottomNav from "@/components/BottomNav";
+import ExecutiveCard from "@/components/ExecutiveCard";
 
 // --- Types ---
 interface MasterDrink {
@@ -26,551 +26,190 @@ interface BarStock {
     sellingPrice: number; 
     currency: "USD" | "CDF";
     alertThreshold: number;
-    db_id?: string; // ID réel en base de données
+    db_id?: string;
 }
 
 interface CategoryData {
     id: number;
     nom: string;
-    icon: string;
 }
-
-// --- Mock Data ---
-const MASTER_CATALOG_MOCK: MasterDrink[] = [
-    { id: "M01", name: "Primus", category: "Bières Locales", volume: "72cl", imageUrl: "/drinks-3d/img-1.png" },
-    { id: "M02", name: "Tembo", category: "Bières Locales", volume: "65cl", imageUrl: "/drinks-3d/img-2.png" },
-    { id: "M03", name: "Nkoyi Blonde", category: "Bières Locales", volume: "65cl", imageUrl: "/drinks-3d/img-3.png" },
-    { id: "M04", name: "Nkoyi Black", category: "Bières Locales", volume: "65cl", imageUrl: "/drinks-3d/img-4.png" },
-    { id: "M05", name: "Castel Beer", category: "Bières Locales", volume: "65cl", imageUrl: "/drinks-3d/img-5.png" },
-    { id: "M06", name: "Beaufort Premium Lager", category: "Bières Locales", volume: "50cl", imageUrl: "/drinks-3d/img-6.png" },
-    { id: "M07", name: "Mützig", category: "Bières Locales", volume: "65cl", imageUrl: "/drinks-3d/img-7.png" },
-    { id: "M08", name: "Class", category: "Bières Locales", volume: "50cl", imageUrl: "/drinks-3d/img-8.png" },
-    { id: "M10", name: "Turbo King", category: "Bières Locales", volume: "65cl", imageUrl: "/drinks-3d/img-10.png" },
-    { id: "M13", name: "N'Tay Rock", category: "Bières Locales", volume: "65cl", imageUrl: "/drinks-3d/img-13.png" },
-    { id: "M14", name: "Legend Extra Stout", category: "Bières Locales", volume: "65cl", imageUrl: "/drinks-3d/img-14.png" },
-    { id: "M15", name: "33 Export", category: "Bières Locales", volume: "65cl", imageUrl: "/drinks-3d/img-15.png" },
-    { id: "M16", name: "Doppel Munich", category: "Bières Locales", volume: "50cl", imageUrl: "/drinks-3d/img-16.png" },
-    { id: "M17", name: "Skol", category: "Bières Locales", volume: "72cl", imageUrl: "/drinks-3d/img-17.png" },
-    { id: "M21", name: "Simba", category: "Bières Locales", volume: "72cl", imageUrl: "/drinks-3d/img-21.png" },
-
-    // Bières Importées
-    { id: "M09", name: "Super Bock", category: "Bières Importées", volume: "33cl", imageUrl: "/drinks-3d/img-9.png" },
-    { id: "M11", name: "Heineken Pure Malt", category: "Bières Importées", volume: "33cl", imageUrl: "/drinks-3d/img-11.png" },
-    { id: "M12", name: "Tiger Lager", category: "Bières Importées", volume: "33cl", imageUrl: "/drinks-3d/img-12.png" },
-    { id: "M18", name: "Guinness Special Export", category: "Bières Importées", volume: "33cl", imageUrl: "/drinks-3d/img-18.png" },
-    { id: "M19", name: "Leffe Blonde", category: "Bières Importées", volume: "33cl", imageUrl: "/drinks-3d/img-19.png" },
-    { id: "M20", name: "Leffe Rouge", category: "Bières Importées", volume: "33cl", imageUrl: "/drinks-3d/img-20.png" },
-    { id: "M22", name: "Meteor Pils", category: "Bières Importées", volume: "33cl", imageUrl: "/drinks-3d/img-22.png" },
-    { id: "M27", name: "Amstel Premium Lager", category: "Bières Importées", volume: "33cl", imageUrl: "/drinks-3d/img-27.png" },
-
-    // Alcopops & Ciders
-    { id: "M23", name: "Booster Whisky Cola", category: "Alcopops & Ciders", volume: "50cl", imageUrl: "/drinks-3d/img-23.png" },
-    { id: "M24", name: "Booster Cider", category: "Alcopops & Ciders", volume: "50cl", imageUrl: "/drinks-3d/img-24.png" },
-    { id: "M25", name: "Booster Gin Tonic", category: "Alcopops & Ciders", volume: "50cl", imageUrl: "/drinks-3d/img-25.png" },
-    { id: "M26", name: "Savanna Dry", category: "Alcopops & Ciders", volume: "33cl", imageUrl: "/drinks-3d/img-26.png" },
-
-    // Whiskies & Spiritueux
-    { id: "M30", name: "Jack Daniel's Old No.7", category: "Whiskies", volume: "70cl", imageUrl: "/drinks-3d/img-19.png" },
-    { id: "M31", name: "Johnnie Walker Black Label", category: "Whiskies", volume: "75cl", imageUrl: "/drinks-3d/img-20.png" },
-    { id: "M32", name: "Chivas Regal 12 ans", category: "Whiskies", volume: "75cl", imageUrl: "/drinks-3d/img-21.png" },
-    { id: "M33", name: "J&B Rare", category: "Whiskies", volume: "75cl", imageUrl: "/drinks-3d/img-22.png" },
-    { id: "M34", name: "Hennesy VS", category: "Cognacs", volume: "70cl", imageUrl: "/drinks-3d/img-23.png" },
-
-    // Vins & Champagnes
-    { id: "M40", name: "Moët & Chandon Brut Imperial", category: "Champagnes", volume: "75cl", imageUrl: "/drinks-3d/img-24.png" },
-    { id: "M41", name: "Veuve Clicquot Ponsardin", category: "Champagnes", volume: "75cl", imageUrl: "/drinks-3d/img-25.png" },
-    { id: "M42", name: "Mouton Cadet Bordeaux Rouge", category: "Vins", volume: "75cl", imageUrl: "/drinks-3d/img-26.png" },
-    { id: "M43", name: "JP Chenet Cabernet Syrah", category: "Vins", volume: "75cl", imageUrl: "/drinks-3d/img-27.png" },
-
-    // Sucrés (Softs)
-    { id: "M50", name: "Coca-Cola Classic", category: "Sucrés (Softs)", volume: "30cl", imageUrl: "/drinks-3d/img-11.png" },
-    { id: "M51", name: "Fanta Orange", category: "Sucrés (Softs)", volume: "30cl", imageUrl: "/drinks-3d/img-12.png" },
-    { id: "M52", name: "Sprite", category: "Sucrés (Softs)", volume: "30cl", imageUrl: "/drinks-3d/img-13.png" },
-    { id: "M53", name: "Schweppes Tonic", category: "Sucrés (Softs)", volume: "33cl", imageUrl: "/drinks-3d/img-14.png" },
-];
-
-const CUSTOM_CATEGORIES = ["Bières", "Whiskies", "Vins", "Sucrés (Softs)", "Cocktails", "Autre"];
 
 export default function InventoryAdvancedPage() {
     const router = useRouter();
-    const tableRef = useRef<HTMLDivElement>(null);
-    const [isExporting, setIsExporting] = useState(false);
-
-    // --- States ---
-    const [isMounted, setIsMounted] = useState(false);
     const [viewState, setViewState] = useState<"MY_STOCK" | "CATALOG">("MY_STOCK");
     const [myStock, setMyStock] = useState<BarStock[]>([]);
     const [masterCatalog, setMasterCatalog] = useState<MasterDrink[]>([]);
     const [categories, setCategories] = useState<CategoryData[]>([]);
-    const [customMasterDrinks, setCustomMasterDrinks] = useState<MasterDrink[]>([]);
-
     const [isLoading, setIsLoading] = useState(true);
-    const [authError, setAuthError] = useState(false);
-    const [barId, setBarId] = useState("");
+    const [isExporting, setIsExporting] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
 
-    // Catalog View States
+    // Search & Filter
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeCategory, setActiveCategory] = useState<string>("Toutes");
+    const [activeCategoryId, setActiveCategoryId] = useState<string>("all");
+
+    // Editing State
+    const [editingStockId, setEditingStockId] = useState<string | null>(null);
+    const [formConfig, setFormConfig] = useState<any>({
+        strategy: "Casier",
+        bottlesPerCrate: 24,
+        quantity: 1,
+        purchasePrice: 0,
+        sellingPrice: 0,
+        currency: "USD",
+        threshold: 12
+    });
 
     useEffect(() => {
         setIsMounted(true);
-        const token = getToken();
-        if (!token) {
-            setAuthError(true);
-            setIsLoading(false);
-            return;
-        }
-
-        const storedBarId = localStorage.getItem("bar_id");
-        if (storedBarId) {
-            setBarId(storedBarId);
-            fetchInitialData(token, storedBarId);
-        } else {
-            // Tentative de synchro via le profil si bar_id absent
-            syncFromProfile(token);
-        }
+        fetchInitialData();
     }, []);
 
-    const syncFromProfile = async (token: string) => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        try {
-            const resp = await fetch(`${apiUrl}/api/proprietaire/profile/me/`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (resp.ok) {
-                const profile = await resp.json();
-                const id = typeof profile.bar === 'object' ? profile.bar.id : profile.bar;
-                if (id) {
-                    localStorage.setItem("bar_id", id);
-                    setBarId(id);
-                    fetchInitialData(token, id);
-                }
-            }
-        } catch (e) { console.error(e); }
-    };
-
-    const fetchInitialData = async (token: string, bid: string) => {
+    const fetchInitialData = async () => {
         setIsLoading(true);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         try {
-            // 1. Charger les catégories
-            const catResp = await fetch(`${apiUrl}/api/proprietaire/categories/`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (catResp.ok) setCategories(await catResp.json());
+            const api = getAuthClient();
+            
+            // 1. Categories
+            const catResp = await api.get("/api/proprietaire/categories/");
+            setCategories(catResp.data);
 
-            // 2. Charger le catalogue global
-            const prodResp = await fetch(`${apiUrl}/api/proprietaire/master-products/`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (prodResp.ok) {
-                const products = await prodResp.json();
-                setMasterCatalog(products.map((p: any) => ({
-                    id: p.id,
-                    name: p.nom,
-                    category: p.categorie_nom || "Autre",
-                    volume: p.volume,
-                    imageUrl: p.photo || "/drinks-3d/img-19.png"
-                })));
-            }
+            // 2. Master Catalog (Real products from backend)
+            const prodResp = await api.get("/api/proprietaire/master-products/");
+            setMasterCatalog(prodResp.data.map((p: any) => ({
+                id: p.id,
+                name: p.nom,
+                category: p.categorie_nom || "Autre",
+                volume: p.volume,
+                imageUrl: p.photo || "/drinks-3d/img-19.png"
+            })));
 
-            // 3. Charger le stock du bar
-            const stockResp = await fetch(`${apiUrl}/api/proprietaire/stock/`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (stockResp.ok) {
-                const stock = await stockResp.json();
-                setMyStock(stock.map((s: any) => ({
-                    db_id: s.id,
-                    id: `S_${s.produit}_${Date.now()}`,
-                    drink: {
-                        id: s.produit,
-                        name: s.produit_details?.nom || "Inconnu",
-                        category: s.produit_details?.categorie_nom || "Autre",
-                        volume: s.produit_details?.volume || "",
-                        imageUrl: s.produit_details?.photo || "/drinks-3d/img-19.png"
-                    },
-                    boughtQuantity: s.quantite_actuelle,
-                    purchaseStrategy: s.strategie_gestion === "CASIER" ? "Casier" : "Bouteille",
-                    bottlesPerCrate: s.bouteilles_par_casier,
-                    purchasePrice: s.strategie_gestion === "CASIER" ? s.prix_achat_casier : s.prix_achat_unitaire,
-                    sellingPrice: s.prix_vente_unitaire,
-                    currency: s.devise === "CDF" ? "FC" : "$",
-                    alertThreshold: s.seuil_alerte
-                })));
-            }
-        } catch (error) {
+            // 3. My Stock
+            const stockResp = await api.get("/api/proprietaire/stock/");
+            setMyStock(stockResp.data.map((s: any) => ({
+                db_id: s.id,
+                id: `S_${s.id}`,
+                drink: {
+                    id: s.produit,
+                    name: s.produit_details?.nom || "Inconnu",
+                    category: s.produit_details?.categorie_nom || "Autre",
+                    volume: s.produit_details?.volume || "",
+                    imageUrl: s.produit_details?.photo || "/drinks-3d/img-19.png"
+                },
+                boughtQuantity: s.quantite_actuelle,
+                purchaseStrategy: s.strategie_gestion === "CASIER" ? "Casier" : "Bouteille",
+                bottlesPerCrate: s.bouteilles_par_casier,
+                purchasePrice: s.strategie_gestion === "CASIER" ? s.prix_achat_casier : s.prix_achat_unitaire,
+                sellingPrice: s.prix_vente_unitaire,
+                currency: s.devise === "CDF" ? "CDF" : "USD",
+                alertThreshold: s.seuil_alerte
+            })));
+
+        } catch (error: any) {
             console.error("Fetch Error:", error);
+            if (error.response?.status === 401) router.push("/auth/login");
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Add Custom Drink State
-    const [showAddCustomMaster, setShowAddCustomMaster] = useState(false);
-    const [showAddCategory, setShowAddCategory] = useState(false);
-    const [newCategoryName, setNewCategoryName] = useState("");
-    const [newDrinkData, setNewDrinkData] = useState({ name: "", categoryId: "", volume: "33cl", photoFile: null as File | null });
-    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const filteredCatalog = useMemo(() => {
+        return masterCatalog.filter(drink => {
+            const matchesSearch = drink.name.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesCat = activeCategoryId === "all" || drink.category.toLowerCase() === categories.find(c => c.id.toString() === activeCategoryId)?.nom.toLowerCase();
+            return matchesSearch && matchesCat;
+        });
+    }, [masterCatalog, searchQuery, activeCategoryId, categories]);
 
-    // Form/Editing State
-    const [editingStockId, setEditingStockId] = useState<string | null>(null);
-
-    // Temp Form Config
-    const [buyStrategy, setBuyStrategy] = useState<"Bouteille" | "Casier">("Casier");
-    const [bottlesPerCrate, setBottlesPerCrate] = useState<number>(24);
-    const [cratesBought, setCratesBought] = useState<number>(1);
-    const [bottlesBought, setBottlesBought] = useState<number>(10);
-    const [purchasePrice, setPurchasePrice] = useState<number>(0);
-    const [sellingPrice, setSellingPrice] = useState<number>(0);
-    const [currency, setCurrency] = useState<"USD" | "CDF">("USD");
-    const [alertThreshold, setAlertThreshold] = useState<number>(12);
-
-    // Combined Catalog
-    const ALL_MASTER_DRINKS = [...masterCatalog, ...customMasterDrinks];
-    const ALL_CATEGORIES_DISPLAY = ["Toutes", ...categories.map(c => c.nom)];
-
-    // --- Handlers ---
-    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setNewDrinkData({ ...newDrinkData, photoFile: file });
-            setPhotoPreview(URL.createObjectURL(file));
-        }
-    };
-
-    const handleCreateCategory = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const token = getToken();
-        if (!token || !newCategoryName) return;
-
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        try {
-            const resp = await fetch(`${apiUrl}/api/proprietaire/categories/`, {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}` 
-                },
-                body: JSON.stringify({ nom: newCategoryName, icon: "local_bar" })
-            });
-
-            if (resp.ok) {
-                const newCat = await resp.json();
-                setCategories([...categories, newCat]);
-                setNewDrinkData({ ...newDrinkData, categoryId: newCat.id.toString() });
-                setShowAddCategory(false);
-                setNewCategoryName("");
-            }
-        } catch (e) { console.error(e); }
-    };
-
-    const handleCreateCustomMaster = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const token = getToken();
-        if (!token) return;
-
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        
-        try {
-            const formData = new FormData();
-            formData.append("nom", newDrinkData.name);
-            formData.append("categorie", newDrinkData.categoryId || (categories[0]?.id.toString() || "1"));
-            formData.append("volume", newDrinkData.volume);
-            if (newDrinkData.photoFile) {
-                formData.append("photo", newDrinkData.photoFile);
-            }
-
-            const resp = await fetch(`${apiUrl}/api/proprietaire/master-products/`, {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${token}` },
-                body: formData
-            });
-
-            if (resp.ok) {
-                const created = await resp.json();
-                const newMaster: MasterDrink = {
-                    id: created.id,
-                    name: created.nom,
-                    category: created.categorie_nom,
-                    volume: created.volume,
-                    imageUrl: created.photo || photoPreview || "/drinks-3d/img-19.png",
-                };
-                setMasterCatalog([...masterCatalog, newMaster]);
-                setShowAddCustomMaster(false);
-                setNewDrinkData({ name: "", categoryId: "", volume: "33cl", photoFile: null });
-                setPhotoPreview(null);
-            } else {
-                const errorData = await resp.json();
-                console.error("Server Error:", errorData);
-                alert("Erreur lors de l'ajout : " + (errorData.nom || errorData.categorie || "Vérifiez que tous les champs sont remplis."));
-            }
-        } catch (error) {
-            console.error("Create Master Error:", error);
-            alert("Erreur de connexion au serveur. Vérifiez que votre backend est lancé.");
-        }
-    };
-
-    const filteredCatalog = ALL_MASTER_DRINKS.filter((item) => {
-        const matchCat = activeCategory === "Toutes" || item.category === activeCategory;
-        const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchCat && matchSearch;
-    });
-
-    // 1. Add from Catalog to My Stock
     const handleAddToMyStock = (drink: MasterDrink) => {
-        // Prevent duplicates
         if (myStock.find(s => s.drink.id === drink.id)) {
             setViewState("MY_STOCK");
-            // Highlight it?
             return;
         }
-
-        const newStockItem: BarStock = {
-            id: `TEMP_${drink.id}_${Date.now()}`,
+        const initialItem: BarStock = {
+            id: `TEMP_${drink.id}`,
             drink,
             boughtQuantity: 0,
-            purchaseStrategy: drink.category.includes("Bières") ? "Casier" : "Bouteille",
+            purchaseStrategy: "Casier",
             bottlesPerCrate: 24,
             purchasePrice: 0,
             sellingPrice: 0,
-            currency: currency, // Utilise la devise actuellement sélectionnée
-            alertThreshold: drink.category.includes("Bières") ? 24 : 3,
+            currency: "USD",
+            alertThreshold: 12
         };
-
-        setMyStock([...myStock, newStockItem]);
+        setMyStock([...myStock, initialItem]);
         setViewState("MY_STOCK");
-        handleOpenEdit(newStockItem); // Ouvrir direct la config
+        handleOpenEdit(initialItem);
     };
 
-    // 2. Select an item in My Stock to configure
     const handleOpenEdit = (stock: BarStock) => {
         setEditingStockId(stock.id);
-        setBuyStrategy(stock.purchaseStrategy);
-        setBottlesPerCrate(stock.bottlesPerCrate || 24);
-        setPurchasePrice(stock.purchasePrice);
-        setSellingPrice(stock.sellingPrice);
-        setCurrency(stock.currency === "CDF" ? "CDF" : "USD");
-        setAlertThreshold(stock.alertThreshold);
-        // Reset counters for the form
-        if (stock.purchaseStrategy === "Casier") {
-            setCratesBought(Math.floor(stock.boughtQuantity / (stock.bottlesPerCrate || 24)) || 1);
-        } else {
-            setBottlesBought(stock.boughtQuantity || 10);
-        }
+        setFormConfig({
+            strategy: stock.purchaseStrategy,
+            bottlesPerCrate: stock.bottlesPerCrate || 24,
+            quantity: stock.purchaseStrategy === "Casier" ? Math.floor(stock.boughtQuantity / (stock.bottlesPerCrate || 24)) : stock.boughtQuantity,
+            purchasePrice: stock.purchasePrice,
+            sellingPrice: stock.sellingPrice,
+            currency: stock.currency,
+            threshold: stock.alertThreshold
+        });
     };
 
-    const calculateTotalBottles = () => buyStrategy === "Casier" ? cratesBought * bottlesPerCrate : bottlesBought;
-    const calculateCostPerBottle = () => {
-        if (purchasePrice <= 0) return 0;
-        return buyStrategy === "Casier" ? purchasePrice / bottlesPerCrate : purchasePrice;
-    };
-    const calculateMargin = () => {
-        const cost = calculateCostPerBottle();
-        if (sellingPrice <= 0 || cost <= 0) return 0;
-        return ((sellingPrice - cost) / sellingPrice) * 100;
-    };
-
-    // 3. Save Configuration
-    const handleSaveConfig = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingStockId) return;
-        const token = getToken();
-        if (!token) return;
-
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    const handleSaveConfig = async () => {
         const item = myStock.find(s => s.id === editingStockId);
         if (!item) return;
 
-        const costPerBottle = buyStrategy === "Bouteille" ? purchasePrice : (purchasePrice / bottlesPerCrate);
-        
+        const api = getAuthClient();
         const payload = {
             produit: item.drink.id,
-            strategie_gestion: buyStrategy === "Casier" ? "CASIER" : "UNITE",
-            quantite_actuelle: calculateTotalBottles(),
-            seuil_alerte: alertThreshold,
-            devise: currency,
-            prix_achat_casier: purchasePrice,
-            bouteilles_par_casier: bottlesPerCrate,
-            prix_achat_unitaire: Math.round(costPerBottle * 100) / 100, // Arrondi à 2 décimales
-            prix_vente_unitaire: sellingPrice
+            strategie_gestion: formConfig.strategy === "Casier" ? "CASIER" : "UNITE",
+            quantite_actuelle: formConfig.strategy === "Casier" ? formConfig.quantity * formConfig.bottlesPerCrate : formConfig.quantity,
+            seuil_alerte: formConfig.threshold,
+            devise: formConfig.currency,
+            prix_achat_casier: formConfig.strategy === "Casier" ? formConfig.purchasePrice : 0,
+            bouteilles_par_casier: formConfig.bottlesPerCrate,
+            prix_achat_unitaire: formConfig.strategy === "Bouteille" ? formConfig.purchasePrice : (formConfig.purchasePrice / formConfig.bottlesPerCrate),
+            prix_vente_unitaire: formConfig.sellingPrice
         };
 
         try {
             const isNew = item.id.startsWith("TEMP_");
-            const url = isNew ? `${apiUrl}/api/proprietaire/stock/` : `${apiUrl}/api/proprietaire/stock/${item.db_id}/`;
-            const method = isNew ? "POST" : "PATCH";
-
-            const resp = await fetch(url, {
-                method,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (resp.ok) {
-                const saved = await resp.json();
-                setMyStock(myStock.map(s => {
-                    if (s.id === editingStockId) {
-                        return {
-                            ...s,
-                            db_id: saved.id,
-                            id: `S_${saved.produit}_${Date.now()}`, // stabilize ID
-                            boughtQuantity: saved.quantite_actuelle,
-                            purchaseStrategy: saved.strategie_gestion === "CASIER" ? "Casier" : "Bouteille",
-                            bottlesPerCrate: saved.bouteilles_par_casier,
-                            purchasePrice: saved.strategie_gestion === "CASIER" ? saved.prix_achat_casier : saved.prix_achat_unitaire,
-                            sellingPrice: saved.prix_vente_unitaire,
-                            currency: saved.devise === "CDF" ? "CDF" : "USD",
-                            alertThreshold: saved.seuil_alerte,
-                        };
-                    }
-                    return s;
-                }));
+            const resp = isNew 
+                ? await api.post("/api/proprietaire/stock/", payload)
+                : await api.patch(`/api/proprietaire/stock/${item.db_id}/`, payload);
+            
+            if (resp.status < 300) {
                 setEditingStockId(null);
-            } else {
-                const errorData = await resp.json();
-                console.error("Save Config Error Details:", errorData);
-                // Afficher le premier message d'erreur trouvé
-                const firstError = Object.values(errorData)[0];
-                alert("Erreur d'enregistrement : " + (Array.isArray(firstError) ? firstError[0] : firstError));
+                fetchInitialData(); // Refresh to get correct IDs
             }
-        } catch (error) {
-            console.error("Save Config Network Error:", error);
-            alert("Erreur de connexion. Vérifiez votre réseau.");
+        } catch (err) {
+            console.error("Save Error:", err);
+            alert("Erreur lors de l'enregistrement. Vérifiez les prix.");
         }
     };
 
-    const handleDeleteFromStock = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setMyStock(myStock.filter(s => s.id !== id));
-        if (editingStockId === id) setEditingStockId(null);
-    };
-
-    const handleExportPDF = async () => {
-        if (!myStock || myStock.length === 0) {
-            alert("Veuillez d'abord ajouter des boissons à votre stock.");
-            return;
-        }
+    const handleExportPDF = () => {
         setIsExporting(true);
-        try {
-            const pdf = new jsPDF("p", "mm", "a4");
-            
-            // --- HEADER ---
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(22);
-            pdf.setTextColor(249, 115, 22); // Orange-500
-            pdf.text("BARPILOTE", 14, 20);
-            
-            pdf.setFontSize(14);
-            pdf.setTextColor(30, 41, 59); // Slate-800
-            pdf.text("RAPPORT D'INVENTAIRE", 14, 28);
-            
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(10);
-            pdf.setTextColor(100, 116, 139); // Slate-400
-            const dateStr = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-            const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-            pdf.text(`Document généré le ${dateStr} à ${timeStr}`, 14, 35);
-            
-            // --- TABLE HEADERS ---
-            const startY = 50;
-            pdf.setFillColor(248, 250, 252); // Slate-50
-            pdf.rect(14, startY - 7, 182, 10, "F");
-            
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(10);
-            pdf.setTextColor(71, 85, 105); // Slate-600
-            
-            pdf.text("PRODUIT", 16, startY);
-            pdf.text("CATÉGORIE", 75, startY);
-            pdf.text("STOCK", 110, startY);
-            pdf.text("P. ACHAT", 135, startY);
-            pdf.text("P. VENTE", 165, startY);
-            
-            // --- TABLE ROWS ---
-            let currentY = startY + 10;
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(9);
-            pdf.setTextColor(30, 41, 59);
+        const doc = new jsPDF();
+        doc.setFont("helvetica", "bold");
+        doc.text("INVENTAIRE BARPILOTE", 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Généré le: ${new Date().toLocaleDateString()}`, 14, 30);
 
-            myStock.forEach((item, index) => {
-                // Background alterna color for readability
-                if (index % 2 === 0) {
-                    pdf.setFillColor(255, 255, 255);
-                } else {
-                    pdf.setFillColor(252, 253, 254);
-                }
-                pdf.rect(14, currentY - 6, 182, 9, "F");
-                
-                // Content
-                pdf.setFont("helvetica", "bold");
-                pdf.text(item.drink.name.substring(0, 30), 16, currentY);
-                
-                pdf.setFont("helvetica", "normal");
-                pdf.text(item.drink.category.substring(0, 20), 75, currentY);
-                
-                pdf.text(`${item.boughtQuantity} btls`, 110, currentY);
-                
-                const displayCurrency = item.currency === "CDF" ? "FC" : "$";
-                const unitCost = item.purchaseStrategy === "Casier" ? item.purchasePrice / (item.bottlesPerCrate || 24) : item.purchasePrice;
-                
-                // Formatage intelligent : 2 décimales pour USD, arrondi pour CDF
-                const formattedUnitCost = item.currency === "USD" ? unitCost.toFixed(2) : Math.round(unitCost).toLocaleString();
-                const formattedSellingPrice = item.currency === "USD" ? item.sellingPrice.toFixed(2) : item.sellingPrice.toLocaleString();
+        let y = 45;
+        myStock.forEach(item => {
+            doc.text(`${item.drink.name} (${item.drink.volume})`, 14, y);
+            doc.text(`${item.boughtQuantity} btls`, 80, y);
+            doc.text(`${item.sellingPrice} ${item.currency}`, 120, y);
+            y += 8;
+            if (y > 280) { doc.addPage(); y = 20; }
+        });
 
-                pdf.text(`${formattedUnitCost} ${displayCurrency}`, 135, currentY);
-                pdf.text(`${formattedSellingPrice} ${displayCurrency}`, 165, currentY);
-                
-                currentY += 9;
-                
-                // Add new page if needed
-                if (currentY > 270) {
-                    pdf.addPage();
-                    currentY = 20;
-                }
-            });
-
-            // --- FOOTER ---
-            pdf.setFontSize(8);
-            pdf.setTextColor(148, 163, 184); // Slate-300
-            pdf.text("Logiciel de gestion BarPilote - www.barpilote.com", 14, 287);
-
-            pdf.save(`Inventaire_${new Date().toISOString().split('T')[0]}.pdf`);
-        } catch (error) {
-            console.error("Export Error:", error);
-            alert("Erreur lors de la génération du PDF.");
-        } finally {
-            setIsExporting(false);
-        }
+        doc.save(`Inventaire_${Date.now()}.pdf`);
+        setIsExporting(false);
     };
-
-    const currentEditingItem = myStock.find(s => s.id === editingStockId);
-
 
     if (!isMounted) return null;
-
-    if (authError) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
-                <span className="material-symbols-outlined text-6xl text-red-500 mb-4">lock</span>
-                <h1 className="text-2xl font-bold text-slate-900 mb-2">Session expirée</h1>
-                <p className="text-slate-500 mb-6">Veuillez vous reconnecter pour accéder à l'inventaire.</p>
-                <button onClick={() => router.push("/auth/login")} className="bg-orange-600 text-white px-8 py-3 rounded-full font-bold shadow-lg">Se Connecter</button>
-            </div>
-        );
-    }
-
-    if (isLoading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-                <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mb-4"></div>
-                <p className="text-slate-500 font-medium animate-pulse">Chargement de votre cave...</p>
-            </div>
-        );
-    }
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-32">

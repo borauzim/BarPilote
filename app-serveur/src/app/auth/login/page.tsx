@@ -4,6 +4,8 @@ import React from "react";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { setToken } from "@/lib/auth";
+import { getApiUrl } from "@/lib/apiConfig";
+import AuthGuard from "@/components/AuthGuard";
 
 // Le composant d'interface pur qui gère le bouton et les requêtes
 function LoginContent() {
@@ -17,16 +19,17 @@ function LoginContent() {
             
             try {
                 // Envoi du token à Django (dj-rest-auth)
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+                const apiUrl = getApiUrl();
                 const response = await axios.post(`${apiUrl}/api/auth/google/`, {
                     access_token: tokenResponse.access_token,
                 });
                 
                 // dj-rest-auth avec USE_JWT=True renvoie { access, refresh, user }
                 const token = response.data.access || response.data.access_token || response.data.key;
+                const refreshToken = response.data.refresh || response.data.refresh_token;
                 
                 if (token) {
-                    setToken(token);
+                    setToken(token, refreshToken);
                     
                     // Logic spécifique serveur : vérifier s'il y a un code d'invitation en attente
                     const pendingCode = localStorage.getItem("join_code_pending");
@@ -34,7 +37,31 @@ function LoginContent() {
                         localStorage.removeItem("join_code_pending");
                         window.location.href = `/join/${pendingCode}`;
                     } else {
-                        window.location.href = "/auth/select-role";
+                        // Récupérer le profil pour rediriger selon le rôle
+                        try {
+                            const profileResponse = await axios.get(`${apiUrl}/api/proprietaire/profiles/me/`, {
+                                headers: { "Authorization": `Bearer ${token}` }
+                            });
+                            const profile = profileResponse.data;
+                            
+                            switch (profile.role) {
+                                case 'PROPRIETAIRE':
+                                    window.location.href = "/dashboard/proprietaire";
+                                    break;
+                                case 'SERVEUR':
+                                    window.location.href = "/dashboard";
+                                    break;
+                                case 'EVENEMENT':
+                                    window.location.href = "/dashboard/evenement";
+                                    break;
+                                default:
+                                    window.location.href = "/dashboard";
+                                    break;
+                            }
+                        } catch (profileError) {
+                            console.error("Erreur récupération profil:", profileError);
+                            window.location.href = "/dashboard";
+                        }
                     }
                 } else {
                     setErrorMsg("Erreur d'authentification : aucun token reçu du serveur.");
@@ -153,7 +180,9 @@ export default function LoginPage() {
 
     return (
         <GoogleOAuthProvider clientId={clientId}>
-            <LoginContent />
+            <AuthGuard>
+                <LoginContent />
+            </AuthGuard>
         </GoogleOAuthProvider>
     );
 }

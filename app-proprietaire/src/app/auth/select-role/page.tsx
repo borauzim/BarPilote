@@ -50,7 +50,7 @@ export default function SelectRolePage() {
                 }
 
                 const api = getAuthClient();
-                await api.patch('/api/proprietaire/profile/me/', {
+                await api.patch('/api/proprietaire/profiles/me/', {
                     role: selectedRole
                 });
                 console.log("Rôle sauvegardé:", selectedRole);
@@ -58,7 +58,8 @@ export default function SelectRolePage() {
                 if (selectedRole === "PROPRIETAIRE") {
                     router.push("/onboarding/establishment-type");
                 } else if (selectedRole === "SERVEUR") {
-                    router.push("/auth/scan");
+                    // Redirection cross-app vers le scanner pour rejoindre un bar
+                    window.location.href = "http://localhost:3001/auth/scan";
                 } else {
                     router.push("/onboarding/profile");
                 }
@@ -67,7 +68,7 @@ export default function SelectRolePage() {
                 if (selectedRole === "PROPRIETAIRE") {
                     router.push("/onboarding/establishment-type");
                 } else if (selectedRole === "SERVEUR") {
-                    router.push("/auth/scan");
+                    window.location.href = "http://localhost:3001/auth/scan";
                 } else {
                     router.push("/onboarding/profile");
                 }

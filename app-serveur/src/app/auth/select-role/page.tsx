@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { getToken } from "@/lib/auth";
+import { getApiUrl } from "@/lib/apiConfig";
 
 export default function SelectRolePage() {
     const router = useRouter();
@@ -13,6 +14,74 @@ export default function SelectRolePage() {
 
     useEffect(() => {
         setIsMounted(true);
+        
+        // Vérifier si l'utilisateur a déjà un rôle
+        const checkExistingRole = async () => {
+            const token = getToken();
+            if (!token) {
+                router.push("/auth/login");
+                return;
+            }
+
+            try {
+                const apiUrl = getApiUrl();
+                console.log("Vérification du profil pour:", apiUrl);
+                console.log("Token utilisé:", token ? "présent" : "absent");
+                
+                const response = await axios.get(`${apiUrl}/api/proprietaire/profiles/me/`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                console.log("Réponse API:", response.status, response.data);
+                
+                if (response.status === 200 && response.data) {
+                    const profile = response.data;
+                    console.log("Profil récupéré:", profile);
+                    
+                    // Si l'utilisateur a déjà un rôle, rediriger selon le rôle
+                    if (profile.role) {
+                        console.log("Rôle existant détecté:", profile.role);
+                        console.log("Bar assigné:", profile.bar);
+                        
+                        switch (profile.role) {
+                            case 'SERVEUR':
+                                // Vérifier si le serveur a un bar assigné
+                                if (profile.bar) {
+                                    console.log("Serveur avec bar, redirection vers dashboard");
+                                    router.push("/dashboard");
+                                } else {
+                                    // Serveur sans bar, rediriger vers scan
+                                    console.log("Serveur sans bar, redirection vers scan");
+                                    router.push("/auth/scan");
+                                }
+                                break;
+                            case 'PROPRIETAIRE':
+                                console.log("Propriétaire détecté, redirection vers dashboard propriétaire");
+                                router.push("/dashboard/proprietaire");
+                                break;
+                            case 'EVENEMENT':
+                                console.log("Organisateur événement détecté, redirection vers dashboard événement");
+                                router.push("/dashboard/evenement");
+                                break;
+                            default:
+                                console.log("Rôle non reconnu, redirection vers dashboard par défaut");
+                                router.push("/dashboard");
+                                break;
+                        }
+                        return;
+                    } else {
+                        console.log("Aucun rôle détecté, affichage sélection");
+                    }
+                } else {
+                    console.log("Erreur API - Status:", response.status, "Data:", response.data);
+                }
+            } catch (error) {
+                console.error("Erreur vérification rôle:", error);
+                // En cas d'erreur, laisser l'utilisateur choisir
+            }
+        };
+
+        checkExistingRole();
     }, []);
 
     const roles = [
@@ -49,19 +118,15 @@ export default function SelectRolePage() {
                     return;
                 }
 
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-                await axios.patch(`${apiUrl}/api/proprietaire/profile/me/`, {
+                const apiUrl = getApiUrl();
+                await axios.patch(`${apiUrl}/api/proprietaire/profiles/me/`, {
                     role: selectedRole
                 }, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 
-                if (selectedRole === "SERVEUR") {
-                    router.push("/auth/scan");
-                } else {
-                    // Proprietors or other roles might need redirection to the owner app or profile
-                    router.push("/dashboard");
-                }
+                // On renvoie vers le Hub qui décidera de la suite (Scan ou Dashboard)
+                router.push("/");
             } catch (error) {
                 console.error("Erreur sauvegarde rôle:", error);
                 router.push("/dashboard");

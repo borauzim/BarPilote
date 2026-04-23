@@ -9,7 +9,7 @@ from .api_views import (
 
 router = DefaultRouter()
 router.register(r'bars', BarViewSet)
-router.register(r'profile', PilotProfileViewSet)
+router.register(r'profiles', PilotProfileViewSet)
 router.register(r'tables', TableViewSet)
 router.register(r'shifts', StaffShiftViewSet)
 router.register(r'supplies', StockSupplyViewSet)

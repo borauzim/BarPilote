@@ -107,7 +107,7 @@ class BarViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(bar)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], url_path='check-invitation/(?P<code>[^/.]+)')
+    @action(detail=False, methods=['get'], url_path='check-invitation/(?P<code>[^/.]+)', permission_classes=[permissions.AllowAny])
     def check_invitation(self, request, code=None):
         try:
             bar = Bar.objects.get(code_invitation=code)
@@ -264,22 +264,71 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        profile = PilotProfile.objects.filter(user=self.request.user).first()
+        # Optimisation: utiliser select_related pour réduire les requêtes
+        profile = PilotProfile.objects.select_related('bar').filter(user=self.request.user).first()
         if not profile or not profile.bar:
             return Order.objects.none()
-        return Order.objects.filter(bar=profile.bar)
+        return Order.objects.select_related('table', 'serveur', 'bar').filter(bar=profile.bar)
 
     def perform_create(self, serializer):
-        profile = PilotProfile.objects.filter(user=self.request.user).first()
-        if profile and profile.bar:
-            serializer.save(bar=profile.bar, serveur=profile)
-        else:
+        # Optimisation: utiliser select_related pour éviter les requêtes supplémentaires
+        from django.db import transaction
+        from .models import PilotProfile
+        
+        with transaction.atomic():
+            profile = PilotProfile.objects.select_related('bar', 'user').filter(user=self.request.user).first()
+            if profile and profile.bar:
+                serializer.save(bar=profile.bar, serveur=profile)
+            else:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError("Vous n'avez pas de bar associé à votre profil.")
+
+    @action(detail=True, methods=['post'])
+    def accept_order(self, request, pk=None):
+        """Accepter une commande et l'assigner au serveur actuel"""
+        order = self.get_object()
+        
+        # Récupérer le profil du serveur actuel
+        from .models import PilotProfile
+        profile = PilotProfile.objects.filter(user=request.user).first()
+        
+        if not profile:
             from rest_framework.exceptions import ValidationError
-            raise ValidationError("Vous n'avez pas de bar associé à votre profil.")
+            raise ValidationError("Profil de serveur non trouvé.")
+        
+        if order.serveur is not None and order.serveur != profile:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Cette commande est déjà assignée à un autre serveur.")
+        
+        # Assigner la commande au serveur
+        order.serveur = profile
+        order.statut = 'IN_PROGRESS'
+        order.save()
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def mark_served(self, request, pk=None):
         order = self.get_object()
+        
+        # Récupérer le profil du serveur actuel
+        from .models import PilotProfile
+        profile = PilotProfile.objects.filter(user=request.user).first()
+        
+        if not profile:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Profil de serveur non trouvé.")
+        
+        # Si la commande n'est pas assignée, l'assigner automatiquement
+        if order.serveur is None:
+            order.serveur = profile
+        
+        # Si la commande est assignée à quelqu'un d'autre, vérifier les permissions
+        elif order.serveur != profile:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Vous ne pouvez pas confirmer une commande assignée à un autre serveur.")
+        
+        # Marquer comme servie
         order.statut = 'SERVED'
         order.date_service = timezone.now()
         order.save()
@@ -290,6 +339,15 @@ class OrderViewSet(viewsets.ModelViewSet):
     def mark_paid(self, request, pk=None):
         from django.db import transaction
         order = self.get_object()
+        
+        # Vérifier que la commande est bien servie
+        if order.statut != 'SERVED':
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Seules les commandes servies peuvent être payées.")
+        
+        # Récupérer les informations de paiement
+        payment_method = request.data.get('payment_method', 'cash')
+        payment_amount = request.data.get('payment_amount', order.total_usd)
         
         with transaction.atomic():
             order.statut = 'PAID'

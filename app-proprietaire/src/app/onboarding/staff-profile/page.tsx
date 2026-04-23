@@ -85,16 +85,15 @@ export default function StaffOnboardingPage() {
         try {
             const api = getAuthClient();
             // On récupère le profil actuel pour avoir son ID
-            const profileResp = await api.get("/api/proprietaire/profiles/me/");
+            const profileResp = await api.get("/api/proprietaire/profile/me/");
             const profileId = profileResp.data.id;
             
-            // Mise à jour du profil (on utilise PATCH pour ne pas écraser les autres infos)
-            await api.patch(`/api/proprietaire/profiles/${profileId}/`, data, {
+            await api.patch(`/api/proprietaire/profile/${profileId}/`, data, {
                 headers: { "Content-Type": "multipart/form-data" }
             });
 
-            // Succès ! Direction le dashboard
-            router.push("/dashboard");
+            // Succès ! Redirection vers le Dashboard Serveur
+            window.location.href = "http://localhost:3001/dashboard";
         } catch (error) {
             console.error("Erreur lors de la mise à jour du profil :", error);
             alert("Une erreur est survenue lors de l'enregistrement de votre profil.");

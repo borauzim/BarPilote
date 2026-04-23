@@ -4,6 +4,7 @@ import React from "react";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { setToken } from "@/lib/auth";
+import { getApiUrl } from "@/lib/apiConfig";
 
 // Le composant d'interface pur qui gère le bouton et les requêtes
 function LoginContent() {
@@ -17,17 +18,18 @@ function LoginContent() {
             console.log("🟢 Google Login Success! Token:", tokenResponse.access_token);
             alert("Connexion Google réussie côté client, envoi au serveur...");
             try {
-                // Envoi du token à Django (dj-rest-auth)
-                const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/`, {
+                const apiUrl = getApiUrl();
+                const response = await axios.post(`${apiUrl}/api/auth/google/`, {
                     access_token: tokenResponse.access_token,
                 });
                 console.log("Réponse complète du Pilot Engine:", JSON.stringify(response.data));
                 
                 // dj-rest-auth avec USE_JWT=True renvoie { access, refresh, user }
                 const token = response.data.access || response.data.access_token || response.data.key;
+                const refreshToken = response.data.refresh || response.data.refresh_token;
                 
                 if (token) {
-                    setToken(token);
+                    setToken(token, refreshToken);
                     console.log("Token sauvegardé dans les cookies ✅");
                 } else {
                     console.error("❌ Aucun token trouvé dans la réponse Django !", response.data);

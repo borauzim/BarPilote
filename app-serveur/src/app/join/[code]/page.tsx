@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
-import { getToken } from "@/lib/auth";
+import { getAuthClient, getToken } from "@/lib/auth";
+import { getApiUrl } from "@/lib/apiConfig";
 
 export default function JoinBarPage() {
     const { code } = useParams();
@@ -20,8 +21,9 @@ export default function JoinBarPage() {
     }, [code]);
 
     const fetchBarInfo = async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const apiUrl = getApiUrl();
         try {
+            // check-invitation est un endpoint public (AllowAny)
             const resp = await axios.get(`${apiUrl}/api/proprietaire/bars/check-invitation/${code}/`);
             setBarInfo(resp.data);
         } catch (err: any) {
@@ -41,15 +43,15 @@ export default function JoinBarPage() {
         }
 
         setIsJoining(true);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        setError(null);
 
         try {
-            await axios.post(`${apiUrl}/api/proprietaire/bars/join/${code}/`, {}, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            const api = getAuthClient();
+            await api.post(`/api/proprietaire/bars/join/${code}/`);
             // Redirection vers le profil pour compléter les informations
             router.push("/onboarding/staff-profile");
         } catch (err: any) {
+            console.error("Erreur pour rejoindre :", err);
             setError(err.response?.data?.detail || "Erreur lors de l'affiliation.");
         } finally {
             setIsJoining(false);
