@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{% block title %}BarPilote Dashboard{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f3f3f5",
+                        "tertiary": "#0061a4",
+                        "on-secondary-fixed": "#370e00",
+                        "tertiary-fixed": "#d1e4ff",
+                        "on-surface": "#1a1c1d",
+                        "primary-container": "#ff5e00",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#732600",
+                        "outline": "#8f7065",
+                        "primary-fixed": "#ffdbce",
+                        "on-secondary-fixed-variant": "#7d2d04",
+                        "on-tertiary-fixed-variant": "#00497d",
+                        "on-tertiary-fixed": "#001d36",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#1a1c1d",
+                        "inverse-primary": "#ffb599",
+                        "on-tertiary-container": "#002d51",
+                        "tertiary-container": "#0097fb",
+                        "background": "#f9f9fb",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#531900",
+                        "surface-variant": "#e2e2e4",
+                        "surface-bright": "#f9f9fb",
+                        "secondary-container": "#fd8d5f",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "primary": "#a63b00",
+                        "inverse-on-surface": "#f0f0f2",
+                        "surface": "#f9f9fb",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-surface-variant": "#5b4137",
+                        "secondary-fixed": "#ffdbce",
+                        "primary-fixed-dim": "#ffb599",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d9dadc",
+                        "on-primary-fixed": "#370e00",
+                        "on-error-container": "#93000a",
+                        "secondary": "#9c431c",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#a63b00",
+                        "surface-container-high": "#e8e8ea",
+                        "outline-variant": "#e4bfb1",
+                        "inverse-surface": "#2f3132",
+                        "surface-container": "#eeeef0",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e2e2e4",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#9fcaff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f7;
+            -webkit-font-smoothing: antialiased;
+            min-height: max(884px, 100dvh);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .citrus-gradient {
+            background: linear-gradient(145deg, #ff5e00 0%, #a63b00 100%);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="text-on-surface min-h-screen pb-32">
+    <!-- TopAppBar -->
+    <header id="main-header" class="fixed top-0 w-full z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+        <div class="flex items-center justify-between px-6 h-16 w-full max-w-7xl mx-auto">
+            <div class="flex items-center gap-4">
+                {% if user.pilot_profile.photo_profil %}
+                <img alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.pilot_profile.photo_profil.url }}"/>
+                {% else %}
+                <img alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.socialaccount_set.all.0.get_avatar_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN' }}"/>
+                {% endif %}
+                <span class="text-2xl font-black tracking-tighter text-orange-600">BarPilote</span>
+            </div>
+            
+            <nav class="hidden md:flex items-center gap-8">
+                <a class="{% if request.resolver_match.url_name == 'dashboard_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'dashboard_html' %}">Dashboard</a>
+                <a class="{% if request.resolver_match.url_name == 'inventory_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'inventory_html' %}">Stock</a>
+                <a class="{% if request.resolver_match.url_name == 'finance_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'finance_html' %}">Finance</a>
+                <a class="{% if request.resolver_match.url_name == 'team_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'team_html' %}">Équipe</a>
+                <a class="{% if request.resolver_match.url_name == 'tables_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'tables_html' %}">Tables</a>
+            </nav>
+
+            <div class="flex items-center gap-2">
+                <a href="{% url 'account_logout' %}" class="flex items-center justify-center p-2 rounded-full hover:bg-surface-container text-gray-400 hover:text-error transition-colors active:scale-95 duration-200" title="Déconnexion">
+                    <span class="material-symbols-outlined">logout</span>
+                </a>
+                <button class="flex items-center justify-center p-2 rounded-full hover:bg-surface-container transition-colors active:scale-95 duration-200">
+                    <span class="material-symbols-outlined text-on-surface">notifications</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- BottomNavBar (Mobile Only) -->
+    <nav id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full glass-nav flex justify-around items-center px-6 pb-10 pt-4 rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.05)] z-50">
+        <a class="flex flex-col items-center gap-1 {% if request.resolver_match.url_name == 'dashboard_html' %}text-orange-600{% else %}text-on-surface-variant{% endif %}" href="{% url 'dashboard_html' %}">
+            <span class="material-symbols-outlined" style="{% if request.resolver_match.url_name == 'dashboard_html' %}font-variation-settings: 'FILL' 1;{% endif %}">dashboard</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Tableau</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 {% if request.resolver_match.url_name == 'inventory_html' %}text-orange-600{% else %}text-on-surface-variant{% endif %}" href="{% url 'inventory_html' %}">
+            <span class="material-symbols-outlined" style="{% if request.resolver_match.url_name == 'inventory_html' %}font-variation-settings: 'FILL' 1;{% endif %}">inventory_2</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Stock</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 {% if request.resolver_match.url_name == 'team_html' %}text-orange-600{% else %}text-on-surface-variant{% endif %}" href="{% url 'team_html' %}">
+            <span class="material-symbols-outlined" style="{% if request.resolver_match.url_name == 'team_html' %}font-variation-settings: 'FILL' 1;{% endif %}">badge</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Équipe</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 {% if request.resolver_match.url_name == 'tables_html' %}text-orange-600{% else %}text-on-surface-variant{% endif %}" href="{% url 'tables_html' %}">
+            <span class="material-symbols-outlined" style="{% if request.resolver_match.url_name == 'tables_html' %}font-variation-settings: 'FILL' 1;{% endif %}">qr_code_2</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Tables</span>
+        </a>
+    </nav>
+
+    {% block extra_body %}{% endblock %}
+</body>
+</html>

@@ -40,6 +40,10 @@ class Bar(models.Model):
     def __str__(self):
         return self.nom
 
+def upload_pilot_photo(instance, filename):
+    """Sépare les dossiers de stockage par rôle"""
+    return f'profils/{instance.role.lower()}/{filename}'
+
 class PilotProfile(models.Model):
     """
     Modèle étendant l'utilisateur Django par défaut pour y ajouter 
@@ -72,7 +76,7 @@ class PilotProfile(models.Model):
     
     sexe = models.CharField(max_length=1, choices=SEXE_CHOICES, blank=True, verbose_name="Sexe")
     telephone = models.CharField(max_length=20, blank=True, verbose_name="Numéro de téléphone")
-    photo_profil = models.ImageField(upload_to='pilot_photos/', blank=True, null=True, verbose_name="Photo de Profil")
+    photo_profil = models.ImageField(upload_to=upload_pilot_photo, blank=True, null=True, verbose_name="Photo de Profil")
     
     def __str__(self):
         return f"{self.get_role_display()}: {self.prenom} {self.nom} ({self.postnom})"

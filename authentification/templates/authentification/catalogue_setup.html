@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Configuration du Catalogue - BarPilote</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .citrus-gradient { background: linear-gradient(135deg, #FF5E00 0%, #FF9248 100%); }
+        .executive-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="text-[#111827]">
+
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-100 py-6 px-8 flex items-center justify-between sticky top-0 z-40">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 citrus-gradient rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <span class="material-symbols-outlined font-bold">inventory_2</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight">Configuration Catalogue</h1>
+                    <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{{ bar.nom }}</p>
+                </div>
+            </div>
+            <a href="{% url 'dashboard_html' %}" class="bg-gray-50 text-gray-400 p-3 rounded-xl hover:bg-gray-100 transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </a>
+        </header>
+
+        <!-- Messages Notification -->
+        {% if messages %}
+        <div class="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 pointer-events-none">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'success' %}bg-emerald-600{% else %}bg-red-600{% endif %} text-white p-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-auto">
+                <span class="material-symbols-outlined">{% if message.tags == 'success' %}check_circle{% else %}error{% endif %}</span>
+                <p class="font-bold text-sm">{{ message }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        <script>
+            // Auto-hide messages after 3 seconds
+            setTimeout(() => {
+                const msgs = document.querySelectorAll('.fixed.z-50 > div');
+                msgs.forEach(m => {
+                    m.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                    setTimeout(() => m.parentElement.remove(), 500);
+                });
+            }, 3000);
+        </script>
+        {% endif %}
+
+        <main class="flex-1 p-8 max-w-7xl mx-auto w-full">
+            
+            <!-- Search & Actions -->
+            <div class="flex flex-col md:flex-row gap-6 mb-12">
+                <form class="flex-1 relative" method="get">
+                    <input type="text" name="q" value="{{ query }}" placeholder="Rechercher un produit (ex: Primus, Heineken...)" 
+                           class="w-full bg-white border-gray-200 rounded-2xl py-4 pl-14 pr-6 focus:ring-2 focus:ring-orange-500 focus:border-transparent executive-shadow transition-all font-medium">
+                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                    {% if selected_category %}
+                    <input type="hidden" name="category" value="{{ selected_category }}">
+                    {% endif %}
+                </form>
+                
+                <button onclick="openCreateModal()" class="citrus-gradient text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest executive-shadow flex items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all">
+                    <span class="material-symbols-outlined">add</span>
+                    Produit Manquant
+                </button>
+            </div>
+
+            <!-- Categories -->
+            <div class="flex flex-wrap gap-3 mb-8">
+                <a href="?q={{ query }}" class="px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all {% if not selected_category %}bg-orange-600 text-white shadow-lg{% else %}bg-white text-gray-500 hover:bg-gray-100 border border-gray-200{% endif %}">
+                    Tous
+                </a>
+                {% for cat in categories %}
+                <a href="?category={{ cat.id }}&q={{ query }}" class="px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all {% if selected_category|add:0 == cat.id %}bg-orange-600 text-white shadow-lg{% else %}bg-white text-gray-500 hover:bg-gray-100 border border-gray-200{% endif %}">
+                    {{ cat.nom }}
+                </a>
+                {% endfor %}
+            </div>
+
+            <!-- Products Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for product in products %}
+                <div class="bg-white rounded-[32px] p-6 executive-shadow border border-gray-50 flex flex-col group hover:border-orange-500/20 transition-all duration-300">
+                    <div class="w-full aspect-square bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden relative">
+                        {% if product.photo %}
+                        <img src="{{ product.photo.url }}" alt="{{ product.nom }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <span class="material-symbols-outlined text-5xl text-gray-200">liquor</span>
+                        {% endif %}
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-orange-600 uppercase tracking-widest">
+                            {{ product.volume }}
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-black leading-tight mb-1">{{ product.nom }}</h3>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">{{ product.categorie.nom }}</p>
+                    
+                    <div class="mt-auto">
+                        {% if product.id in in_stock_ids %}
+                        <div class="w-full py-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 border border-emerald-100">
+                            <span class="material-symbols-outlined text-sm">check_circle</span>
+                            Déjà en stock
+                        </div>
+                        {% else %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add_to_stock">
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            <button type="submit" class="w-full py-3 bg-gray-50 text-gray-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                                Ajouter au stock
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full py-20 text-center">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
+                        <span class="material-symbols-outlined text-4xl">inventory</span>
+                    </div>
+                    <h3 class="text-xl font-black">Aucun produit trouvé</h3>
+                    <p class="text-gray-400 mt-2 max-w-xs mx-auto">Ce produit n'est pas dans notre catalogue. Utilisez le bouton en haut pour le créer !</p>
+                </div>
+                {% endfor %}
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modal: Create Missing Product -->
+    <div id="createModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[40px] w-full max-w-lg p-10 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="createModalContent">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-2xl font-black tracking-tight">Produit Manquant</h2>
+                    <p class="text-sm text-gray-400 mt-1">Ajoutez ce produit au catalogue global.</p>
+                </div>
+                <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-900">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_and_add">
+                
+                <!-- Photo Upload -->
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Photo du produit</label>
+                    <div class="relative group">
+                        <input type="file" name="photo" id="photo_input" class="hidden" accept="image/*" onchange="previewImage(this)">
+                        <label for="photo_input" class="w-full h-32 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer group-hover:border-orange-500/30 transition-all overflow-hidden">
+                            <div id="photo_preview_placeholder" class="flex flex-col items-center">
+                                <span class="material-symbols-outlined text-3xl text-gray-300">add_a_photo</span>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Cliquez pour ajouter</span>
+                            </div>
+                            <img id="photo_preview" class="hidden w-full h-full object-cover">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Nom du produit</label>
+                    <input type="text" name="nom" required placeholder="ex: Mutzig Classique" 
+                           class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-orange-500 transition-all">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Catégorie</label>
+                        <select name="categorie_id" required class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-orange-500 transition-all">
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Volume</label>
+                        <input type="text" name="volume" required placeholder="ex: 65cl" 
+                               class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-orange-500 transition-all">
+                    </div>
+                </div>
+
+                <div class="pt-6">
+                    <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:shadow-orange-500/20 transition-all active:scale-95">
+                        Créer & Ajouter au stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('photo_preview');
+            const placeholder = document.getElementById('photo_preview_placeholder');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function openCreateModal() {
+            const modal = document.getElementById('createModal');
+            const content = document.getElementById('createModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeCreateModal() {
+            const modal = document.getElementById('createModal');
+            const content = document.getElementById('createModalContent');
+            content.classList.add('scale-95', 'opacity-0');
+            content.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+    </script>
+</body>
+</html>

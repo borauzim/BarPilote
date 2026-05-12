@@ -50,9 +50,12 @@ pure_eval==0.2.3
 pycparser==3.0
 Pygments==2.20.0
 PyJWT==2.12.1
+pypdf==6.10.2
 python-dateutil==2.9.0.post0
 pyzmq==27.1.0
+qrcode==8.2
 referencing==0.37.0
+reportlab==4.5.0
 requests==2.33.1
 rest-framework-simplejwt==0.0.2
 rpds-py==0.30.0

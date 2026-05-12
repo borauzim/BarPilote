@@ -1,0 +1,64 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Sélectionnez votre Rôle - BarPilote{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex flex-col items-center justify-center">
+    <div class="text-center mb-10 flex flex-col items-center">
+        <!-- Logo -->
+        <div class="w-16 h-16 mb-6 flex items-center justify-center">
+            <div
+                class="w-full h-full bg-orange-600 drop-shadow-md"
+                style="-webkit-mask-image: url('{% static 'logo.png' %}'); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-image: url('{% static 'logo.png' %}'); mask-size: contain; mask-repeat: no-repeat; mask-position: center;"
+            ></div>
+        </div>
+        <h1 class="text-3xl font-black tracking-tight text-on-surface mb-2">Bienvenue sur BarPilote</h1>
+        <p class="text-on-surface-variant font-medium">Pour continuer, veuillez sélectionner votre rôle.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+        <!-- Rôle Propriétaire -->
+        <form method="post" action="{% url 'select_role' %}" class="w-full">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="PROPRIETAIRE">
+            <button type="submit" class="w-full bg-surface-container-lowest p-8 rounded-2xl executive-shadow hover:-translate-y-1 transition-all duration-300 group text-left border-2 border-transparent hover:border-orange-500">
+                <div class="w-16 h-16 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl">storefront</span>
+                </div>
+                <h3 class="text-xl font-bold text-on-surface mb-2">Propriétaire / Manager</h3>
+                <p class="text-on-surface-variant/80 text-sm">
+                    Je gère un établissement. Je souhaite configurer mes tables, mon stock et suivre mes ventes en direct.
+                </p>
+            </button>
+        </form>
+
+        <!-- Rôle Serveur -->
+        <form method="post" action="{% url 'select_role' %}" class="w-full">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="SERVEUR">
+            <button type="submit" class="w-full bg-[#0c0d0d] p-8 rounded-2xl executive-shadow hover:-translate-y-1 transition-all duration-300 group text-left border-2 border-transparent hover:border-orange-500">
+                <div class="w-16 h-16 rounded-2xl bg-orange-500/20 text-orange-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl">room_service</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Serveur / Protocole</h3>
+                <p class="text-zinc-400 text-sm">
+                    Je travaille dans un établissement. Je souhaite prendre des commandes et suivre mes livraisons.
+                </p>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<style>
+    /* Masquer le header et footer sur la page de sélection de rôle */
+    header, nav {
+        display: none !important;
+    }
+    main {
+        padding-top: 2rem !important;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'proprietaire/base.html' %}
+
+{% block title %}Dashboard Serveur - BarPilote{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex flex-col items-center justify-center text-center">
+    <div class="w-24 h-24 bg-[#0c0d0d] rounded-3xl flex items-center justify-center shadow-xl mb-6">
+        <span class="material-symbols-outlined text-orange-500 text-5xl">room_service</span>
+    </div>
+    <h1 class="text-3xl font-black text-on-surface mb-4">Cockpit Serveur</h1>
+    <p class="text-on-surface-variant max-w-md">
+        Votre espace serveur est en cours de construction. Bientôt, vous pourrez voir vos tables assignées et prendre des commandes ici.
+    </p>
+    
+    <div class="mt-8">
+        <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="px-6 py-2 bg-surface-container-high rounded-full font-semibold hover:bg-surface-container-highest transition-colors">
+                Déconnexion
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

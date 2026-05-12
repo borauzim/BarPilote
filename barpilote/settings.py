@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'proprietaire',
+    'serveur',  # Nouvelle application serveur
+    'authentification',
     
     # Auth & API
     'corsheaders',
@@ -57,7 +59,9 @@ SITE_ID = 1
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'proprietaire.middleware.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'proprietaire.middleware.SessionManagementMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -78,6 +82,9 @@ CORS_ALLOWED_ORIGINS = [
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
+LOGIN_REDIRECT_URL = '/auth/login/redirect/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/auth/login/'
+
 REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'barpilote-auth',
@@ -110,6 +117,11 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
+        },
+        'APP': {
+            'client_id': '1096537323559-8i3ijevjqaok39o7qbgodanppto6k6ma.apps.googleusercontent.com',
+            'secret': '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',
+            'key': ''
         }
     }
 }
@@ -132,6 +144,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'barpilote.wsgi.application'
+    
+# Session Settings
+SESSION_COOKIE_AGE = 86400 * 30  # 30 jours
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 
 # Database
@@ -143,6 +162,20 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Session Configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 86400  # 24 heures
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # True en production avec HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# Configuration avancée des sessions
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
+# Nettoyage automatique des sessions expirées
+SESSION_COOKIE_DOMAIN = None
 
 
 # Password validation
@@ -180,6 +213,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Auth Backends
 AUTHENTICATION_BACKENDS = [
@@ -191,3 +227,9 @@ AUTHENTICATION_BACKENDS = [
 SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
 ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Création automatique du User lors du premier login social
+SOCIALACCOUNT_LOGIN_ON_GET = True  # Rediriger immédiatement vers Google sans page intermédiaire
+ACCOUNT_SESSION_REMEMBER = True  # Garder la session active par défaut
+ACCOUNT_LOGOUT_ON_GET = True  # Déconnexion immédiate sans page de confirmation
+
+# Google Maps Configuration
+GOOGLE_MAPS_API_KEY = 'AIzaSyASTWqTlQeuJL90FEwiuluw675kqSaW-A8'

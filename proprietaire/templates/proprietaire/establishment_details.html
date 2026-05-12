@@ -1,0 +1,261 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Détails de l'Établissement - BarPilote{% endblock %}
+
+{% block content %}
+<div class="min-h-[90vh] flex flex-col items-center py-12 max-w-2xl mx-auto w-full px-6">
+    <!-- Branding -->
+    <div class="flex flex-col items-center mb-12">
+        <div class="w-16 h-16 mb-4 flex items-center justify-center">
+            <div
+                class="w-full h-full bg-orange-600 drop-shadow-lg"
+                style="-webkit-mask-image: url('{% static 'logo.png' %}'); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-image: url('{% static 'logo.png' %}'); mask-size: contain; mask-repeat: no-repeat; mask-position: center;"
+            ></div>
+        </div>
+        <span class="text-xl font-black tracking-tighter text-on-surface">BarPilote</span>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-12 space-y-3">
+        <h1 class="text-3xl font-black tracking-tight text-on-surface">Identité de l'Établissement</h1>
+        <p class="text-on-surface-variant font-medium">Finalisez la configuration de votre {{ bar_type|lower }}.</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="w-full space-y-8">
+        {% csrf_token %}
+        
+        <!-- Logo Upload (WhatsApp Style) -->
+        <div class="flex flex-col items-center gap-4 mb-10">
+            <div class="relative group cursor-pointer">
+                <div class="w-32 h-32 rounded-2xl overflow-hidden border-4 border-white shadow-2xl bg-surface-container flex items-center justify-center">
+                    <img id="logo-preview" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN" 
+                         class="w-full h-full object-cover transition-all group-hover:scale-105 brightness-95" alt="Logo">
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span class="text-white text-5xl font-light opacity-80 drop-shadow-lg">+</span>
+                    </div>
+                </div>
+                <div class="absolute bottom-0 right-0 bg-orange-600 w-10 h-10 rounded-full flex items-center justify-center text-white border-4 border-white shadow-lg">
+                    <span class="material-symbols-outlined text-xl">add_a_photo</span>
+                </div>
+                <input type="file" name="logo" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewLogo(this)">
+            </div>
+            <p class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant">Logo de l'établissement</p>
+        </div>
+
+        <!-- Read Only Info -->
+        <div class="p-6 bg-surface-container-low rounded-2xl border border-surface-container flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white">
+                {% if profile.photo_profil %}
+                    <img src="{{ profile.photo_profil.url }}" class="w-full h-full object-cover">
+                {% else %}
+                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN" class="w-full h-full object-cover">
+                {% endif %}
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-orange-600 uppercase tracking-widest">Propriétaire</p>
+                <p class="font-bold text-on-surface">{{ profile.prenom }} {{ profile.nom }}</p>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Nom -->
+            <div class="space-y-2">
+                <label for="name" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">
+                    {% if bar_type == 'LOUNGE' %}Nom du Lounge Bar
+                    {% elif bar_type == 'CLUB' %}Nom de la Boîte de nuit
+                    {% else %}Nom du Bar de Quartier{% endif %}
+                </label>
+                <input type="text" id="name" name="name" required placeholder="Ex: Le Bar Pilote Central" 
+                       class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-bold text-lg">
+            </div>
+
+            <!-- Adresse (Google Maps Autocomplete) -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center ml-1">
+                    <label for="address" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant">Adresse Physique</label>
+                    <button type="button" onclick="getCurrentLocation()" class="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-1 hover:opacity-70 transition-all">
+                        <span class="material-symbols-outlined text-sm">my_location</span>
+                        Ma position actuelle
+                    </button>
+                </div>
+                <div class="relative">
+                    <span class="absolute left-5 top-1/2 -translate-y-1/2 text-orange-600 material-symbols-outlined">location_on</span>
+                    <input type="text" id="address" name="address" required placeholder="Rechercher une adresse..." 
+                           class="w-full bg-white border-2 border-surface-container-high rounded-2xl pl-14 pr-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium">
+                </div>
+                
+                <!-- Satellite Map Preview -->
+                <div id="map-container" class="w-full h-48 rounded-2xl bg-surface-container-low border-2 border-surface-container overflow-hidden mt-4 relative transition-all duration-500">
+                    <div id="map-preview" class="w-full h-full"></div>
+                    <!-- Overlay for empty state -->
+                    <div id="map-overlay" class="absolute inset-0 flex flex-col items-center justify-center text-on-surface-variant/40 space-y-2 pointer-events-none">
+                        <span class="material-symbols-outlined text-4xl">satellite_alt</span>
+                        <p class="text-[10px] font-bold uppercase tracking-widest">Vue Satellite Active</p>
+                    </div>
+                    <!-- Enlarge Toggle -->
+                    <button type="button" onclick="toggleMapSize()" class="absolute top-4 right-4 bg-white/90 backdrop-blur shadow-md w-10 h-10 rounded-xl flex items-center justify-center text-on-surface hover:bg-orange-600 hover:text-white transition-all">
+                        <span id="map-toggle-icon" class="material-symbols-outlined">expand_more</span>
+                    </button>
+                </div>
+                
+                <p class="text-[10px] text-on-surface-variant/60 ml-1 font-medium italic">La carte se mettra à jour automatiquement lors de la sélection de l'adresse.</p>
+            </div>
+        </div>
+
+        <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-[0.98] transition-all mt-4">
+            Ouvrir mon Établissement
+        </button>
+        
+        <p class="text-center text-[0.6875rem] uppercase tracking-widest text-on-surface-variant/60 font-semibold mt-4">Étape 3 sur 3</p>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+    function previewLogo(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('logo-preview').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Google Maps Autocomplete Logic
+    let map, marker, autocomplete;
+
+    function initAutocomplete() {
+        const mapOptions = {
+            center: { lat: -4.322447, lng: 15.307045 }, // Kinshasa par défaut
+            zoom: 15,
+            mapTypeId: 'satellite',
+            disableDefaultUI: true,
+            zoomControl: true,
+        };
+        
+        map = new google.maps.Map(document.getElementById('map-preview'), mapOptions);
+        marker = new google.maps.Marker({
+            map: map,
+            draggable: true,
+            animation: google.maps.Animation.DROP,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#ff5e00",
+                fillOpacity: 1,
+                strokeWeight: 4,
+                strokeColor: "#ffffff",
+            }
+        });
+
+        const geocoder = new google.maps.Geocoder();
+
+        // Déplacer le marqueur au clic sur la carte
+        map.addListener("click", (mapsMouseEvent) => {
+            const pos = mapsMouseEvent.latLng;
+            marker.setPosition(pos);
+            updateAddressFromPos(pos);
+        });
+
+        // Déplacer le marqueur par drag-and-drop
+        marker.addListener("dragend", () => {
+            updateAddressFromPos(marker.getPosition());
+        });
+
+        function updateAddressFromPos(pos) {
+            geocoder.geocode({ location: pos }, (results, status) => {
+                if (status === "OK" && results[0]) {
+                    document.getElementById('address').value = results[0].formatted_address;
+                    document.getElementById('map-overlay').classList.add('hidden');
+                }
+            });
+        }
+
+        const input = document.getElementById('address');
+        autocomplete = new google.maps.places.Autocomplete(input);
+        autocomplete.bindTo('bounds', map);
+
+        // Appel automatique au chargement
+        getCurrentLocation();
+
+        autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) return;
+
+            if (place.geometry.viewport) {
+                map.fitBounds(place.geometry.viewport);
+            } else {
+                map.setCenter(place.geometry.location);
+                map.setZoom(19);
+            }
+            
+            marker.setPosition(place.geometry.location);
+            marker.setVisible(true);
+            document.getElementById('map-overlay').classList.add('hidden');
+        });
+    }
+
+    function getCurrentLocation() {
+        console.log("Tentative de géolocalisation...");
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    console.log("Position trouvée :", pos);
+                    if (map) {
+                        map.setCenter(pos);
+                        map.setZoom(19);
+                        marker.setPosition(pos);
+                        marker.setVisible(true);
+                        document.getElementById('map-overlay').classList.add('hidden');
+                        
+                        const geocoder = new google.maps.Geocoder();
+                        geocoder.geocode({ location: pos }, (results, status) => {
+                            if (status === "OK" && results[0]) {
+                                document.getElementById('address').value = results[0].formatted_address;
+                            }
+                        });
+                    }
+                },
+                (error) => {
+                    console.error("Erreur de géolocalisation :", error.message);
+                    if (error.code === 1) {
+                        alert("Veuillez autoriser l'accès à la localisation dans votre navigateur pour utiliser cette fonction.");
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        } else {
+            alert("Votre navigateur ne supporte pas la géolocalisation.");
+        }
+    }
+
+    function toggleMapSize() {
+        const container = document.getElementById('map-container');
+        const icon = document.getElementById('map-toggle-icon');
+        if (container.classList.contains('h-48')) {
+            container.classList.remove('h-48');
+            container.classList.add('h-[500px]');
+            icon.innerText = 'expand_less';
+        } else {
+            container.classList.remove('h-[500px]');
+            container.classList.add('h-48');
+            icon.innerText = 'expand_more';
+        }
+        // Redraw map after resize
+        setTimeout(() => google.maps.event.trigger(map, 'resize'), 500);
+    }
+</script>
+<style>
+    header, nav { display: none !important; }
+    main { padding-top: 0 !important; }
+</style>
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initAutocomplete" async defer></script>
+{% endblock %}

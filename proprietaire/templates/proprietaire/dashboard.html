@@ -1,0 +1,169 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Tableau de Bord - BarPilote{% endblock %}
+
+{% block content %}
+    <!-- Live Revenue Section (The Digital Sommelier Hero) -->
+    <section class="bg-surface-container-lowest rounded-xl p-8 executive-shadow flex flex-col md:flex-row md:items-end justify-between gap-6 overflow-hidden relative">
+        <div class="relative z-10">
+            <p class="text-[0.6875rem] font-bold uppercase tracking-wider text-on-surface-variant mb-2">REVENU DU JOUR</p>
+            <div class="flex flex-col gap-2">
+                <div class="flex items-baseline gap-4">
+                    <h1 class="text-[2.75rem] md:text-5xl font-black tracking-tight leading-none text-on-surface">{{ total_revenue_usd|default:"0.00" }} <span class="text-2xl font-bold opacity-40">USD</span></h1>
+                    <div class="flex items-center text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold">
+                        <span class="material-symbols-outlined text-sm mr-1">trending_up</span>+12%
+                    </div>
+                </div>
+                {% if total_revenue_cdf > 0 %}
+                <p class="text-xl font-bold text-on-surface-variant opacity-60">{{ total_revenue_cdf|default:"0" }} <span class="text-sm">CDF</span></p>
+                {% endif %}
+            </div>
+            <p class="mt-6 text-on-surface-variant/40 font-medium text-[10px] uppercase tracking-widest">Dernière mise à jour à {% now "H:i" %}</p>
+        </div>
+        <!-- Asymmetric Momentum Visual -->
+        <div class="hidden md:block w-48 h-24 opacity-10">
+            <svg class="w-full h-full" viewBox="0 0 100 40">
+                <path d="M0 35 Q 20 30, 40 38 T 80 10 T 100 5" fill="none" stroke="#FF5E00" stroke-linecap="round" stroke-width="4"></path>
+            </svg>
+        </div>
+        <div class="absolute top-0 right-0 w-48 h-48 citrus-gradient opacity-[0.02] rounded-full -mr-24 -mt-24"></div>
+    </section>
+
+    <!-- Bento Grid: Stats & Stock -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Stats Column -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Active Tables -->
+                <div class="bg-surface-container-lowest p-8 rounded-xl executive-shadow group hover:translate-y-[-4px] transition-all">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="p-3 rounded-2xl bg-orange-50 text-orange-600">
+                            <span class="material-symbols-outlined">table_restaurant</span>
+                        </div>
+                    </div>
+                    <h3 class="text-sm font-bold tracking-wide text-on-surface-variant mb-1 uppercase">TABLES ACTIVES</h3>
+                    <p class="text-4xl font-black text-on-surface tracking-tight">{{ tables_actives|default:"0" }}</p>
+                    <div class="mt-6 h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                        <div class="h-full bg-orange-600 rounded-full transition-all duration-1000" style="width: {{ tables_capacity_percent|default:0 }}%;"></div>
+                    </div>
+                    <p class="mt-3 text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">{{ tables_capacity_percent|default:0 }}% DE CAPACITÉ</p>
+                </div>
+
+                <!-- Orders in Flight -->
+                <div class="bg-surface-container-lowest p-8 rounded-xl executive-shadow group hover:translate-y-[-4px] transition-all">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="p-3 rounded-2xl bg-orange-50 text-orange-600">
+                            <span class="material-symbols-outlined">liquor</span>
+                        </div>
+                    </div>
+                    <h3 class="text-sm font-bold tracking-wide text-on-surface-variant mb-1 uppercase">COMMANDES EN COURS</h3>
+                    <p class="text-4xl font-black text-on-surface tracking-tight">{{ active_orders|default:"0" }}</p>
+                    <div class="flex gap-1.5 mt-6">
+                        {% for i in "12345" %}
+                        <div class="h-1.5 flex-1 {% if forloop.counter <= active_orders %}bg-orange-600{% else %}bg-surface-container-highest{% endif %} rounded-full transition-colors"></div>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-3 text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">PRÉP. MOYENNE : 4:20M</p>
+                </div>
+            </div>
+
+            <!-- Recent Transactions Table -->
+            <div class="bg-surface-container-lowest p-8 rounded-xl executive-shadow">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-xl font-black tracking-tight text-on-surface">Journal en direct</h2>
+                    <button class="text-orange-600 text-xs font-bold uppercase tracking-widest hover:opacity-70">Tout voir</button>
+                </div>
+                <div class="space-y-1">
+                    <!-- Row Header -->
+                    <div class="grid grid-cols-4 px-4 py-3 text-[10px] font-black text-on-surface-variant/40 tracking-widest uppercase">
+                        <div class="col-span-2">DÉTAILS COMMANDE</div>
+                        <div>STATUT</div>
+                        <div class="text-right">TOTAL</div>
+                    </div>
+                    
+                    {% for order in recent_orders %}
+                    <div class="grid grid-cols-4 px-4 py-4 rounded-xl hover:bg-surface-container transition-all items-center group cursor-pointer border-b border-surface-container-low last:border-0">
+                        <div class="col-span-2 flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-orange-600 group-hover:bg-white transition-colors">
+                                <span class="material-symbols-outlined">receipt_long</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-on-surface">{{ order.table.nom }}</p>
+                                <p class="text-[10px] text-on-surface-variant/60 uppercase font-bold tracking-tighter">{{ order.date_creation|timesince }} • {{ order.items.count }} ARTICLES</p>
+                            </div>
+                        </div>
+                        <div>
+                            {% if order.statut == 'PAID' %}
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 uppercase">RÉGLÉ</span>
+                            {% elif order.statut == 'SERVED' %}
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-100 text-blue-700 uppercase">SERVI</span>
+                            {% elif order.statut == 'PREPARING' %}
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-orange-100 text-orange-700 uppercase">PRÉP.</span>
+                            {% else %}
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-zinc-100 text-zinc-600 uppercase">ATTENTE</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-black text-on-surface">{% if order.total_usd > 0 %}${{ order.total_usd }}{% else %}{{ order.total_cdf }} FC{% endif %}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="py-12 text-center">
+                        <p class="text-sm text-on-surface-variant font-medium">Aucune commande aujourd'hui.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="space-y-6">
+            <!-- Critical Stock Card -->
+            <div class="bg-surface-container-lowest p-6 rounded-xl executive-shadow">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-sm font-bold text-on-surface uppercase tracking-widest">Stock Critique</h3>
+                    <span class="material-symbols-outlined text-orange-600">warning</span>
+                </div>
+                <div class="space-y-6">
+                    {% for stock in critical_stocks %}
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-[11px] font-bold">
+                            <span class="text-on-surface-variant">{{ stock.item.produit.nom }}</span>
+                            <span class="text-orange-600">{{ stock.item.quantite_actuelle }} restants</span>
+                        </div>
+                        <div class="h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                            <div class="h-full bg-orange-600 rounded-full" style="width: {{ stock.percent }}%"></div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="py-4 text-center">
+                        <p class="text-xs text-emerald-600 font-bold">Stock optimal ✅</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="w-full mt-8 py-3 bg-surface-container text-on-surface-variant text-[11px] font-bold rounded-xl uppercase tracking-widest hover:bg-surface-container-high transition-colors">
+                    Gérer l'inventaire
+                </button>
+            </div>
+
+            <!-- Executive Tip -->
+            <div class="bg-orange-600 text-white rounded-xl p-8 shadow-xl relative overflow-hidden">
+                <div class="relative z-10">
+                    <h5 class="font-black text-lg mb-2 uppercase tracking-tighter">Conseil Pilote</h5>
+                    <p class="text-white/80 text-xs leading-relaxed font-medium">Le pic d'activité est attendu dans 45 min. Vérifiez que l'équipe Terrasse est prête.</p>
+                </div>
+                <div class="absolute -right-8 -bottom-8 opacity-20">
+                    <span class="material-symbols-outlined text-8xl">analytics</span>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_body %}
+    <!-- Floating Action Button -->
+    <button class="fixed bottom-24 right-6 md:bottom-12 md:right-12 citrus-gradient text-white w-16 h-16 rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-all z-40">
+        <span class="material-symbols-outlined text-3xl">add</span>
+    </button>
+{% endblock %}

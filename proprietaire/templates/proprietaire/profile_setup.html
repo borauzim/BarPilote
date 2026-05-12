@@ -1,0 +1,125 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Informations Personnelles - BarPilote{% endblock %}
+
+{% block content %}
+<div class="min-h-[90vh] flex flex-col items-center py-12 max-w-2xl mx-auto w-full px-6">
+    <!-- Branding -->
+    <div class="flex flex-col items-center mb-12">
+        <div class="w-16 h-16 mb-4 flex items-center justify-center">
+            <div
+                class="w-full h-full bg-orange-600 drop-shadow-lg"
+                style="-webkit-mask-image: url('{% static 'logo.png' %}'); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-image: url('{% static 'logo.png' %}'); mask-size: contain; mask-repeat: no-repeat; mask-position: center;"
+            ></div>
+        </div>
+        <span class="text-xl font-black tracking-tighter text-on-surface">BarPilote</span>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-12 space-y-3">
+        <h1 class="text-3xl font-black tracking-tight text-on-surface">Parlez-nous de vous</h1>
+        <p class="text-on-surface-variant font-medium">Complétez votre profil de pilote pour continuer.</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="w-full space-y-6">
+        {% csrf_token %}
+        
+        <!-- WhatsApp Style Avatar Upload -->
+        <div class="flex justify-center mb-10">
+            <div class="relative group cursor-pointer">
+                <!-- Avatar Container -->
+                <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl bg-surface-container flex items-center justify-center relative">
+                    <img id="photo-preview" src="{{ user.socialaccount_set.all.0.get_avatar_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN' }}" 
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 brightness-95" alt="Avatar">
+                    <!-- Plus Sign Overlay -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span class="text-white text-5xl font-light opacity-80 drop-shadow-lg">+</span>
+                    </div>
+                </div>
+                
+                <!-- Camera Overlay (WhatsApp Style) -->
+                <div class="absolute bottom-0 right-0 bg-orange-600 w-10 h-10 rounded-full flex items-center justify-center text-white border-4 border-white shadow-lg transition-transform group-hover:scale-110">
+                    <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">photo_camera</span>
+                </div>
+                
+                <!-- Hidden Input -->
+                <input type="file" id="photo_profil" name="photo_profil" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewImage(this)">
+            </div>
+        </div>
+
+        <!-- Email (Auto-récupéré) -->
+        <div class="space-y-2">
+            <label class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Email (Compte Google)</label>
+            <input type="email" value="{{ user.email }}" disabled 
+                   class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 font-medium text-gray-500 cursor-not-allowed">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Prénom -->
+            <div class="space-y-2">
+                <label for="prenom" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Prénom</label>
+                <input type="text" id="prenom" name="prenom" required placeholder="Ex: Jean" value="{{ user.first_name }}"
+                       class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium">
+            </div>
+
+            <!-- Nom -->
+            <div class="space-y-2">
+                <label for="nom" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Nom</label>
+                <input type="text" id="nom" name="nom" required placeholder="Ex: KABILA" value="{{ user.last_name }}"
+                       class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium uppercase">
+            </div>
+
+            <!-- Postnom -->
+            <div class="space-y-2">
+                <label for="postnom" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Postnom (Optionnel)</label>
+                <input type="text" id="postnom" name="postnom" placeholder="Ex: MWANZA" 
+                       class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium uppercase">
+            </div>
+
+            <!-- Sexe -->
+            <div class="space-y-2">
+                <label for="sexe" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Sexe</label>
+                <select id="sexe" name="sexe" class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium appearance-none">
+                    <option value="M">Masculin</option>
+                    <option value="F">Féminin</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- WhatsApp -->
+        <div class="space-y-2">
+            <label for="telephone" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Numéro WhatsApp</label>
+            <div class="relative">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-bold">+243</span>
+                <input type="tel" id="telephone" name="telephone" required placeholder="812345678" 
+                       class="w-full bg-white border-2 border-surface-container-high rounded-2xl pl-16 pr-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium">
+            </div>
+        </div>
+
+        <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-[0.98] transition-all mt-4">
+            Enregistrer et continuer
+        </button>
+        
+        <p class="text-center text-[0.6875rem] uppercase tracking-widest text-on-surface-variant/60 font-semibold mt-4">Étape 1 sur 2</p>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('photo-preview').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+<style>
+    header, nav { display: none !important; }
+    main { padding-top: 0 !important; }
+</style>
+{% endblock %}

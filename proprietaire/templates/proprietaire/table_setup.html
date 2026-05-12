@@ -1,0 +1,125 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Configuration des Tables - BarPilote{% endblock %}
+
+{% block content %}
+<div class="min-h-[90vh] flex flex-col items-center py-12 max-w-4xl mx-auto w-full px-6">
+    <!-- Branding -->
+    <div class="flex flex-col items-center mb-12">
+        <div class="w-12 h-12 mb-4 flex items-center justify-center">
+            <div
+                class="w-full h-full bg-orange-600"
+                style="-webkit-mask-image: url('{% static 'logo.png' %}'); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-image: url('{% static 'logo.png' %}'); mask-size: contain; mask-repeat: no-repeat; mask-position: center;"
+            ></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-12 space-y-3">
+        <h1 class="text-3xl font-black tracking-tight text-on-surface">Configuration des Tables</h1>
+        <p class="text-on-surface-variant font-medium">Combien de tables souhaitez-vous activer pour le lancement ?</p>
+    </div>
+
+    <!-- Promo Banner -->
+    <div class="w-full max-w-2xl bg-orange-50 border border-orange-100 p-6 rounded-3xl flex items-start gap-5 mb-10 executive-shadow animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div class="w-12 h-12 rounded-2xl bg-orange-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-orange-600/20">
+            <span class="material-symbols-outlined font-bold">card_giftcard</span>
+        </div>
+        <div class="space-y-1">
+            <h3 class="text-orange-900 font-black text-sm uppercase tracking-widest">Offre de Lancement</h3>
+            <p class="text-orange-800/80 text-sm font-medium leading-relaxed">
+                Profitez de BarPilote <span class="font-black text-orange-600">gratuitement pendant 1 mois</span> ! 
+                Par la suite, l'abonnement sera de seulement <span class="font-black text-orange-600 text-base">2.5$ par table</span>.
+            </p>
+        </div>
+    </div>
+
+    <form method="post" class="w-full flex flex-col items-center gap-12">
+        {% csrf_token %}
+        
+        <!-- Table Counter Visual -->
+        <div class="flex flex-col items-center gap-8 w-full max-w-md">
+            <div class="relative w-56 h-56 rounded-full border-8 border-surface-container flex items-center justify-center bg-white shadow-2xl transition-all duration-300">
+                <input type="number" name="table_count" id="table_count" value="10" min="1" 
+                       class="w-full text-center text-7xl font-black text-orange-600 border-none focus:ring-0 bg-transparent"
+                       oninput="adjustFontSize(this); updatePreview(this.value)">
+                <div class="absolute -bottom-4 bg-orange-600 text-white px-6 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.2em] shadow-lg">Tables</div>
+            </div>
+            
+            <div class="w-full space-y-4">
+                <input type="range" min="1" max="200" value="10" class="w-full accent-orange-600 h-2 bg-surface-container rounded-lg appearance-none cursor-pointer" 
+                       oninput="document.getElementById('table_count').value = this.value; updatePreview(this.value)">
+                <div class="flex justify-between text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">
+                    <span>1 Table</span>
+                    <span>200+ Tables</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Preview Grid (Mockup) -->
+        <div class="w-full space-y-6">
+            <p class="text-center text-[0.6875rem] font-bold uppercase tracking-[0.2em] text-on-surface-variant/60">Aperçu de vos Badges QR</p>
+            <div id="qr-preview-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 opacity-40 grayscale pointer-events-none">
+                <!-- Will be populated by JS -->
+            </div>
+        </div>
+
+        <!-- Primary Action -->
+        <div class="w-full max-w-md">
+            <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-[0.98] transition-all">
+                Générer les Tables & Terminer
+            </button>
+            <p class="text-center mt-6 text-[0.6875rem] uppercase tracking-widest text-on-surface-variant/60 font-semibold">Dernière étape !</p>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+    function adjustFontSize(input) {
+        const length = input.value.length;
+        if (length > 3) {
+            input.style.fontSize = '3rem';
+        } else if (length > 2) {
+            input.style.fontSize = '4.5rem';
+        } else {
+            input.style.fontSize = '5rem';
+        }
+    }
+
+    function updatePreview(count) {
+        const grid = document.getElementById('qr-preview-grid');
+        grid.innerHTML = '';
+        const limit = Math.min(count, 10); // Don't show too many previews
+        for (let i = 1; i <= limit; i++) {
+            grid.innerHTML += `
+                <div class="aspect-square bg-white border border-surface-container rounded-xl flex flex-col items-center justify-center p-4">
+                    <span class="material-symbols-outlined text-3xl mb-1">qr_code_2</span>
+                    <span class="text-[9px] font-black">TABLE ${i}</span>
+                </div>
+            `;
+        }
+        if (count > 10) {
+            grid.innerHTML += `
+                <div class="aspect-square bg-surface-container rounded-xl flex items-center justify-center">
+                    <span class="text-[10px] font-black text-on-surface-variant">+${count - 10}</span>
+                </div>
+            `;
+        }
+    }
+    
+    // Initial preview
+    updatePreview(10);
+
+    // Link number input to range
+    document.getElementById('table_count').addEventListener('input', function() {
+        updatePreview(this.value);
+    });
+</script>
+<style>
+    header, nav { display: none !important; }
+    main { padding-top: 0 !important; }
+</style>
+{% endblock %}

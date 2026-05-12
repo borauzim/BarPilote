@@ -1,0 +1,112 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Choisir l'Établissement - BarPilote{% endblock %}
+
+{% block content %}
+<div class="min-h-[90vh] flex flex-col items-center py-12 max-w-5xl mx-auto w-full px-6">
+    <!-- Branding -->
+    <div class="flex flex-col items-center mb-12">
+        <div class="w-20 h-20 mb-4 flex items-center justify-center">
+            <div
+                class="w-full h-full bg-orange-600 drop-shadow-lg"
+                style="-webkit-mask-image: url('{% static 'logo.png' %}'); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-image: url('{% static 'logo.png' %}'); mask-size: contain; mask-repeat: no-repeat; mask-position: center;"
+            ></div>
+        </div>
+        <span class="text-2xl font-black tracking-tighter text-on-surface">BarPilote</span>
+    </div>
+    
+    <!-- Editorial Header -->
+    <div class="text-center mb-16 space-y-4">
+        <span class="text-[0.6875rem] font-bold uppercase tracking-[0.2em] text-orange-600">CONFIGURATION INITIALE</span>
+        <h1 class="text-4xl md:text-5xl font-black tracking-tight leading-none text-on-surface">Choisir l'Établissement</h1>
+        <p class="text-lg text-on-surface-variant max-w-md mx-auto font-medium">Sélectionnez le type d'expérience que vous offrez à vos clients.</p>
+    </div>
+
+    <form method="post" class="w-full flex flex-col items-center">
+        {% csrf_token %}
+        
+        <!-- Selection Grid: Bento Style -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-12">
+            <!-- Lounge -->
+            <label class="relative cursor-pointer group">
+                <input type="radio" name="type" value="LOUNGE" class="peer hidden" checked>
+                <div class="h-full flex flex-col items-start p-8 rounded-xl bg-surface-container-lowest shadow-[0_10px_30px_rgba(26,28,29,0.04)] border-2 border-transparent peer-checked:border-primary-container peer-checked:ring-2 peer-checked:ring-primary-container transition-all duration-300">
+                    <div class="mb-12 p-4 rounded-2xl bg-surface-container text-on-surface-variant group-hover:bg-primary-container/10 group-hover:text-primary-container transition-colors peer-checked:bg-primary-container/10 peer-checked:text-primary-container">
+                        <span class="material-symbols-outlined text-4xl">chair</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold tracking-tight mb-2 text-on-surface">Lounge Bar</h3>
+                        <p class="text-sm text-on-surface-variant leading-relaxed">Ambiance décontractée axée sur les cocktails premium et le confort.</p>
+                    </div>
+                    <div class="absolute top-6 right-6 text-primary-container opacity-0 peer-checked:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                    </div>
+                </div>
+            </label>
+
+            <!-- Nightclub -->
+            <label class="relative cursor-pointer group">
+                <input type="radio" name="type" value="CLUB" class="peer hidden">
+                <div class="h-full flex flex-col items-start p-8 rounded-xl bg-surface-container-lowest shadow-[0_10px_30px_rgba(26,28,29,0.04)] border-2 border-transparent peer-checked:border-primary-container peer-checked:ring-2 peer-checked:ring-primary-container transition-all duration-300">
+                    <div class="mb-12 p-4 rounded-2xl bg-surface-container text-on-surface-variant group-hover:bg-primary-container/10 group-hover:text-primary-container transition-colors peer-checked:bg-primary-container/10 peer-checked:text-primary-container">
+                        <span class="material-symbols-outlined text-4xl">celebration</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold tracking-tight mb-2 text-on-surface">Boîte de nuit</h3>
+                        <p class="text-sm text-on-surface-variant leading-relaxed">Environnement à fort volume avec services VIP et divertissements.</p>
+                    </div>
+                    <div class="absolute top-6 right-6 text-primary-container opacity-0 peer-checked:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                    </div>
+                </div>
+            </label>
+
+            <!-- Local Bar -->
+            <label class="relative cursor-pointer group">
+                <input type="radio" name="type" value="BAR" class="peer hidden">
+                <div class="h-full flex flex-col items-start p-8 rounded-xl bg-surface-container-lowest shadow-[0_10px_30px_rgba(26,28,29,0.04)] border-2 border-transparent peer-checked:border-primary-container peer-checked:ring-2 peer-checked:ring-primary-container transition-all duration-300">
+                    <div class="mb-12 p-4 rounded-2xl bg-surface-container text-on-surface-variant group-hover:bg-primary-container/10 group-hover:text-primary-container transition-colors peer-checked:bg-primary-container/10 peer-checked:text-primary-container">
+                        <span class="material-symbols-outlined text-4xl">sports_bar</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold tracking-tight mb-2 text-on-surface">Bar de Quartier</h3>
+                        <p class="text-sm text-on-surface-variant leading-relaxed">Lieu communautaire axé sur un service rapide et une clientèle fidèle.</p>
+                    </div>
+                    <div class="absolute top-6 right-6 text-primary-container opacity-0 peer-checked:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                    </div>
+                </div>
+            </label>
+        </div>
+
+        <!-- Primary Action -->
+        <div class="w-full max-w-md">
+            <button type="submit" class="w-full bg-gradient-to-br from-primary-container to-primary text-white py-5 px-8 rounded-full font-bold text-[1rem] shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all active:scale-95 duration-200 uppercase tracking-widest">
+                Confirmer le type
+            </button>
+            <p class="text-center mt-6 text-[0.6875rem] uppercase tracking-widest text-on-surface-variant/60 font-semibold">Étape 2 sur 3</p>
+        </div>
+    </form>
+</div>
+
+<!-- Background Decoration -->
+<div class="fixed top-0 right-0 -z-10 w-1/2 h-1/2 bg-gradient-to-b from-primary-container/5 to-transparent blur-3xl pointer-events-none"></div>
+<div class="fixed bottom-0 left-0 -z-10 w-1/3 h-1/3 bg-gradient-to-t from-primary/5 to-transparent blur-3xl pointer-events-none"></div>
+{% endblock %}
+
+{% block extra_body %}
+<style>
+    header, nav { display: none !important; }
+    main { padding-top: 0 !important; }
+    
+    .peer:checked + div .material-symbols-outlined {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    
+    .peer:checked + div div:first-child {
+        background-color: rgb(255 94 0 / 0.1);
+        color: #ff5e00;
+    }
+</style>
+{% endblock %}

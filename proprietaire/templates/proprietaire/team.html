@@ -1,0 +1,68 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Mon Équipe - BarPilote{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight text-on-surface">Mon Équipe</h1>
+            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Gérez vos serveurs, protocoles et suivez leurs performances.</p>
+        </div>
+        <button class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
+            <span class="material-symbols-outlined">person_add</span>
+            <span>Inviter un membre</span>
+        </button>
+    </div>
+
+    <!-- Staff Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for member in staff %}
+        <div class="bg-surface-container-lowest p-6 rounded-2xl executive-shadow border-t-4 border-surface-container group hover:translate-y-[-4px] transition-all">
+            <div class="flex flex-col items-center text-center">
+                <!-- Avatar -->
+                <div class="relative mb-4">
+                    {% if member.photo_profil %}
+                    <img src="{{ member.photo_profil.url }}" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg" alt="{{ member.nom }}">
+                    {% else %}
+                    <div class="w-20 h-20 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center border-4 border-white shadow-lg">
+                        <span class="material-symbols-outlined text-3xl">person</span>
+                    </div>
+                    {% endif %}
+                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center {% if member.is_online %}bg-emerald-500{% else %}bg-zinc-400{% endif %}"></div>
+                </div>
+
+                <h3 class="text-lg font-black text-on-surface">{{ member.prenom }} {{ member.nom }}</h3>
+                <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest mt-1">{{ member.get_role_display }}</p>
+                
+                <div class="mt-6 w-full grid grid-cols-2 gap-4 pt-6 border-t border-surface-container">
+                    <div>
+                        <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Tables Gérées</p>
+                        <p class="text-lg font-black text-on-surface">12</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Impact CA</p>
+                        <p class="text-lg font-black text-on-surface">$1,240</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex w-full gap-2">
+                    <button class="flex-1 py-2 bg-surface-container text-on-surface-variant text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-surface-container-high transition-all">Détails</button>
+                    <button class="flex-1 py-2 bg-white border border-surface-container text-error text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-error/5 transition-all">Retirer</button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-24 text-center">
+            <h2 class="text-xl font-black text-on-surface">Vous êtes seul pour le moment</h2>
+            <p class="text-on-surface-variant/60 max-w-xs mx-auto mt-2">Invitez vos serveurs à rejoindre BarPilote via leur application mobile.</p>
+            <div class="mt-8 p-6 bg-white rounded-2xl inline-block border-2 border-dashed border-orange-200">
+                <p class="text-sm font-bold text-on-surface">Code d'invitation</p>
+                <p class="text-3xl font-black text-orange-600 tracking-tighter mt-1">{{ bar.code_invitation|default:"---" }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

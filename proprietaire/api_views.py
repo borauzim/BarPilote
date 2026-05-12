@@ -377,8 +377,26 @@ class DashboardViewSet(viewsets.ViewSet):
     def list(self, request):
         from .models import PilotProfile
         profile = PilotProfile.objects.filter(user=request.user).first()
-        if not profile or not profile.bar:
-            return Response({"error": "Aucun bar associé à ce profil."}, status=400)
+        if not profile:
+            return Response({"error": "Aucun profil trouvé."}, status=404)
+        
+        # Si le serveur n'a pas de bar assigné, retourner un dashboard vide avec message
+        if not profile.bar:
+            return Response({
+                "message": "Aucun bar assigné. Veuillez scanner un code QR pour rejoindre un bar.",
+                "role": profile.role,
+                "has_bar": False,
+                "stats": {
+                    "revenue_usd": 0,
+                    "revenue_cdf": 0,
+                    "active_orders": 0,
+                    "avg_wait_time": 0,
+                    "client_count": 0,
+                    "avg_basket": 0,
+                    "best_seller": None
+                },
+                "requires_qr_scan": profile.role == 'SERVEUR'
+            }, status=200)
         
         bar = profile.bar
         today = timezone.now().date()

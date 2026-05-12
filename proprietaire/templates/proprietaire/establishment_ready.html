@@ -1,0 +1,94 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Félicitations - {{ bar.nom }}{% endblock %}
+
+{% block content %}
+<div class="min-h-[85vh] flex flex-col items-center justify-center py-12 px-4">
+    <!-- Success Animation / Icon -->
+    <div class="w-32 h-32 bg-orange-500/10 rounded-full flex items-center justify-center mb-8 relative">
+        <div class="absolute inset-0 bg-orange-500/20 rounded-full animate-ping"></div>
+        <span class="material-symbols-outlined text-6xl text-orange-600 relative z-10">verified</span>
+    </div>
+
+    <!-- Text Content -->
+    <div class="text-center max-w-2xl mb-12">
+        <h1 class="text-4xl md:text-5xl font-black text-on-surface tracking-tight mb-4">
+            Votre établissement est prêt !
+        </h1>
+        <p class="text-xl text-on-surface-variant/80 font-medium leading-relaxed">
+            Félicitations <strong>{{ request.user.first_name|default:request.user.username }}</strong>, l'établissement <span class="text-orange-600">{{ bar.nom }}</span> est maintenant configuré sur BarPilote.
+        </p>
+    </div>
+
+    <!-- Staff Badge Section -->
+    <div class="w-full max-w-lg bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full -mr-16 -mt-16"></div>
+        
+        <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined">group_add</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-on-surface">Invitation du Personnel</h3>
+                    <p class="text-sm text-on-surface-variant">Lien sécurisé pour vos serveurs</p>
+                </div>
+            </div>
+
+            <p class="text-on-surface-variant/80 text-sm mb-8 leading-relaxed">
+                Téléchargez le badge d'invitation ci-dessous. Vos serveurs devront scanner ce code QR unique pour rejoindre votre équipe et commencer à prendre des commandes.
+            </p>
+
+            <div class="flex flex-col gap-3">
+                <a href="{% url 'staff_download_invite' %}" class="w-full bg-orange-600 text-white font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-3 hover:bg-orange-700 hover:shadow-lg active:scale-95 transition-all duration-200">
+                    <span class="material-symbols-outlined">download</span>
+                    Télécharger le Badge Staff (PDF)
+                </a>
+                
+                <a href="{% url 'dashboard_html' %}" class="w-full bg-surface-container-high text-on-surface font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-3 hover:bg-surface-container-highest transition-all duration-200">
+                    Accéder au Tableau de Bord
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
+        <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-orange-600">print</span>
+            <div>
+                <p class="text-sm font-bold text-on-surface">Impression Conseillée</p>
+                <p class="text-xs text-on-surface-variant">Imprimez vos badges en <strong>Format A4</strong> et en <strong>Couleur</strong> pour un rendu premium.</p>
+            </div>
+        </div>
+        <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-orange-600">layers</span>
+            <div>
+                <p class="text-sm font-bold text-on-surface">Protection & Durabilité</p>
+                <p class="text-xs text-on-surface-variant">Nous vous recommandons de <strong>plastifier</strong> vos badges pour les protéger des liquides.</p>
+            </div>
+        </div>
+        <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-orange-600">speed</span>
+            <div>
+                <p class="text-sm font-bold text-on-surface">Mise en place rapide</p>
+                <p class="text-xs text-on-surface-variant">Vos serveurs seront opérationnels en moins de 30 secondes après le scan.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes ping {
+        75%, 100% {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+    .animate-ping {
+        animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+</style>
+{% endblock %}

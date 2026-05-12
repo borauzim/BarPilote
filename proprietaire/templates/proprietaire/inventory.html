@@ -1,0 +1,257 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Inventaire - BarPilote{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header with Search & Actions -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight text-on-surface">Gestion de l'Inventaire</h1>
+            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Suivez vos stocks et mettez à jour vos prix en temps réel.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button class="bg-surface-container-high text-on-surface-variant p-3 rounded-xl hover:bg-white transition-all">
+                <span class="material-symbols-outlined">filter_list</span>
+            </button>
+            <a href="{% url 'catalogue_setup' %}" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
+                <span class="material-symbols-outlined">add</span>
+                <span>Nouveau Produit</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <button class="bg-orange-600 text-white px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest whitespace-nowrap">Tous</button>
+        {% for cat in categories %}
+        <button class="bg-white text-on-surface-variant px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest border border-surface-container-high hover:border-orange-600 transition-all whitespace-nowrap">{{ cat.nom }}</button>
+        {% endfor %}
+    </div>
+
+    <!-- Inventory Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in inventory_items %}
+        <div class="bg-surface-container-lowest p-6 rounded-2xl executive-shadow border-b-4 {% if item.quantite_actuelle <= item.seuil_alerte %}border-orange-600{% else %}border-emerald-500{% endif %} group hover:translate-y-[-4px] transition-all">
+            <div class="flex gap-4">
+                <!-- Product Image -->
+                <div class="w-20 h-20 rounded-xl bg-surface-container-low overflow-hidden relative">
+                    {% if item.produit.photo %}
+                    <img src="{{ item.produit.photo.url }}" class="w-full h-full object-cover" alt="{{ item.produit.nom }}">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-on-surface-variant/20">
+                        <span class="material-symbols-outlined text-4xl">image</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if item.quantite_actuelle <= item.seuil_alerte %}
+                    <div class="absolute inset-0 bg-orange-600/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-orange-600 text-sm font-black">warning</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Product Info -->
+                <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">{{ item.produit.categorie.nom }}</p>
+                    <h3 class="text-lg font-black text-on-surface truncate">{{ item.produit.nom }}</h3>
+                    <p class="text-xs text-on-surface-variant font-medium">{{ item.produit.volume }}</p>
+                </div>
+            </div>
+
+            <!-- Stats & Price -->
+            <div class="mt-6 pt-6 border-t border-surface-container grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Stock Actuel</p>
+                    <p class="text-xl font-black {% if item.quantite_actuelle <= item.seuil_alerte %}text-orange-600{% else %}text-on-surface{% endif %}">
+                        {{ item.quantite_actuelle }} <span class="text-[10px] opacity-40 font-bold">UNITÉS</span>
+                    </p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Prix Vente</p>
+                    <p class="text-xl font-black text-on-surface">
+                        ${{ item.prix_vente_unitaire }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mt-4 h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                <div class="h-full {% if item.quantite_actuelle <= item.seuil_alerte %}bg-orange-600{% else %}bg-emerald-500{% endif %} rounded-full" style="width: {{ item.quantite_actuelle }}%"></div>
+            </div>
+            
+            <!-- Quick Actions Overlay (Appears on Hover) -->
+            <div class="mt-4 flex gap-2">
+                <button onclick="openEditModal('{{ item.id }}', '{{ item.produit.nom }}', '{{ item.prix_vente_unitaire }}', '{{ item.quantite_actuelle }}', '{{ item.seuil_alerte }}', '{{ item.devise }}', '{{ item.strategie_gestion }}', '{{ item.bouteilles_par_casier }}', '{{ item.prix_achat_casier }}')" 
+                        class="flex-1 py-2 bg-surface-container hover:bg-orange-50 hover:text-orange-600 text-on-surface-variant text-[10px] font-bold rounded-lg uppercase tracking-widest transition-all">
+                    Modifier
+                </button>
+                <button class="py-2 px-3 bg-surface-container hover:bg-orange-600 hover:text-white text-on-surface-variant rounded-lg transition-all">
+                    <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-24 text-center">
+            <div class="w-24 h-24 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-4xl text-on-surface-variant/20">inventory_2</span>
+            </div>
+            <h2 class="text-xl font-black text-on-surface">Votre inventaire est vide</h2>
+            <p class="text-on-surface-variant/60 max-w-xs mx-auto mt-2">Commencez par ajouter des produits depuis le catalogue BarPilote.</p>
+            <a href="{% url 'catalogue_setup' %}" class="mt-8 inline-flex citrus-gradient text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest shadow-lg">Ajouter mon premier produit</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] w-full max-w-lg p-8 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="editModalContent">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h2 class="text-2xl font-black tracking-tight" id="modalProductName">Configuration</h2>
+                <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest mt-1">Réglages du produit</p>
+            </div>
+            <button onclick="closeEditModal()" class="text-on-surface-variant/40 hover:text-on-surface transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <input type="hidden" name="item_id" id="modalItemId">
+            
+            <!-- Gestion Mode Selection -->
+            <div class="space-y-1">
+                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Mode d'achat (Approvisionnement)</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="strategie" value="UNITE" id="strat_unite" class="hidden peer" onchange="toggleStrategyFields('UNITE')">
+                        <div class="p-3 text-center rounded-xl border-2 border-surface-container font-bold text-xs peer-checked:border-orange-600 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">À la Bouteille</div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="strategie" value="CASIER" id="strat_casier" class="hidden peer" onchange="toggleStrategyFields('CASIER')">
+                        <div class="p-3 text-center rounded-xl border-2 border-surface-container font-bold text-xs peer-checked:border-orange-600 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">Par Casier</div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Case Details (Visible only if CASIER is selected) -->
+            <div id="casier_fields" class="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix Achat Casier</label>
+                    <div class="relative">
+                        <span id="symbol_achat" class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant">$</span>
+                        <input type="number" step="0.01" name="prix_achat_casier" id="modalPrixAchatCasier" 
+                               class="w-full bg-surface-container-low border-none rounded-xl py-4 pl-14 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Bouteilles / Casier</label>
+                    <input type="number" name="bouteilles_par_casier" id="modalBouteillesParCasier" 
+                           class="w-full bg-surface-container-low border-none rounded-xl py-4 px-6 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix de Vente (Bouteille)</label>
+                    <div class="relative">
+                        <span id="symbol_prix" class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant">$</span>
+                        <input type="number" step="0.01" name="prix_vente" id="modalPrix" required 
+                               class="w-full bg-surface-container-low border-none rounded-xl py-4 pl-14 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Devise</label>
+                    <select name="devise" id="modalDevise" onchange="updateCurrencySymbols(this.value)" class="w-full bg-surface-container-low border-none rounded-xl py-4 px-4 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                        <option value="USD">USD ($)</option>
+                        <option value="CDF">CDF (FC)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 border-t border-surface-container pt-6">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Stock Actuel (Bouteilles)</label>
+                    <input type="number" name="quantite" id="modalQuantite" required 
+                           class="w-full bg-surface-container-low border-none rounded-xl py-4 px-6 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Seuil d'Alerte</label>
+                    <input type="number" name="seuil" id="modalSeuil" required 
+                           class="w-full bg-surface-container-low border-none rounded-xl py-4 px-6 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                </div>
+            </div>
+
+            <div class="pt-6">
+                <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-[0.98] transition-all">
+                    Enregistrer les modifications
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function updateCurrencySymbols(currency) {
+        const symbol = currency === 'CDF' ? 'FC' : '$';
+        document.getElementById('symbol_prix').innerText = symbol;
+        document.getElementById('symbol_achat').innerText = symbol;
+    }
+
+    function toggleStrategyFields(strategy) {
+        const casierFields = document.getElementById('casier_fields');
+        if (strategy === 'CASIER') {
+            casierFields.classList.remove('hidden');
+        } else {
+            casierFields.classList.add('hidden');
+        }
+    }
+
+    function openEditModal(id, name, price, qty, alert, currency, strategy, bpc, pac) {
+        document.getElementById('modalItemId').value = id;
+        document.getElementById('modalProductName').innerText = name;
+        document.getElementById('modalPrix').value = price.replace(',', '.');
+        document.getElementById('modalQuantite').value = qty;
+        document.getElementById('modalSeuil').value = alert;
+        document.getElementById('modalDevise').value = currency;
+        
+        // Update symbols
+        updateCurrencySymbols(currency);
+        
+        // Radio button check
+        if (strategy === 'CASIER') {
+            document.getElementById('strat_casier').checked = true;
+            toggleStrategyFields('CASIER');
+        } else {
+            document.getElementById('strat_unite').checked = true;
+            toggleStrategyFields('UNITE');
+        }
+        
+        document.getElementById('modalBouteillesParCasier').value = bpc;
+        document.getElementById('modalPrixAchatCasier').value = pac.replace(',', '.');
+
+        const modal = document.getElementById('editModal');
+        const content = document.getElementById('editModalContent');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeEditModal() {
+        const modal = document.getElementById('editModal');
+        const content = document.getElementById('editModalContent');
+        content.classList.add('scale-95', 'opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+</script>
+{% endblock %}

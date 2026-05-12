@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Redirection Django</title>
+</head>
+<body>
+    <h1>Test de l'API de redirection Django</h1>
+    <button onclick="testRedirect()">Tester la redirection</button>
+    <button onclick="testDashboard()">Tester le dashboard</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        async function testRedirect() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Test en cours...</p>';
+            
+            try {
+                // Simuler un token (remplacez par un vrai token JWT)
+                const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test';
+                
+                const response = await fetch('http://127.0.0.1:8000/api/proprietaire/auth/redirect/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Résultat de /api/proprietaire/auth/redirect/</h3>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Response:</strong></p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>Erreur</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testDashboard() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Test en cours...</p>';
+            
+            try {
+                // Simuler un token (remplacez par un vrai token JWT)
+                const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test';
+                
+                const response = await fetch('http://127.0.0.1:8000/api/proprietaire/dashboard/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Résultat de /api/proprietaire/dashboard/</h3>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Response:</strong></p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>Erreur</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
