@@ -1,24 +1,123 @@
 {% extends 'proprietaire/base.html' %}
+{% load static %}
 
-{% block title %}Dashboard Serveur - BarPilote{% endblock %}
+{% block title %}Cockpit Serveur - BarPilote{% endblock %}
 
 {% block content %}
-<div class="min-h-[60vh] flex flex-col items-center justify-center text-center">
-    <div class="w-24 h-24 bg-[#0c0d0d] rounded-3xl flex items-center justify-center shadow-xl mb-6">
+<div class="min-h-[80vh] flex flex-col items-center justify-center text-center px-4">
+    <div class="w-24 h-24 bg-[#0c0d0d] rounded-3xl flex items-center justify-center shadow-xl mb-8">
         <span class="material-symbols-outlined text-orange-500 text-5xl">room_service</span>
     </div>
-    <h1 class="text-3xl font-black text-on-surface mb-4">Cockpit Serveur</h1>
-    <p class="text-on-surface-variant max-w-md">
-        Votre espace serveur est en cours de construction. Bientôt, vous pourrez voir vos tables assignées et prendre des commandes ici.
+    <h1 class="text-3xl font-black text-on-surface mb-2">Bonjour, {{ profile.prenom }} !</h1>
+    <p class="text-on-surface-variant max-w-md mb-12">
+        Bienvenue dans votre cockpit. C'est ici que vous gérerez vos commandes et vos tables.
     </p>
+
+    <!-- Quick Actions for Server -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
+        <div class="bg-white p-6 rounded-3xl border border-surface-container-high executive-shadow flex flex-col items-center">
+            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined">table_restaurant</span>
+            </div>
+            <h3 class="font-black text-sm uppercase tracking-widest mb-1">Mes Tables</h3>
+            <p class="text-xs text-on-surface-variant">Bientôt disponible</p>
+        </div>
+
+        <button onclick="openLossModal()" class="bg-white p-6 rounded-3xl border-2 border-red-50 executive-shadow flex flex-col items-center hover:border-red-200 transition-all active:scale-95">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined">inventory_2</span>
+            </div>
+            <h3 class="font-black text-sm uppercase tracking-widest mb-1 text-red-600">Signaler Perte</h3>
+            <p class="text-xs text-red-400 font-medium">Bouteille cassée / Perte</p>
+        </button>
+    </div>
     
-    <div class="mt-8">
+    <div class="mt-16">
         <form method="post" action="{% url 'account_logout' %}">
             {% csrf_token %}
-            <button type="submit" class="px-6 py-2 bg-surface-container-high rounded-full font-semibold hover:bg-surface-container-highest transition-colors">
+            <button type="submit" class="text-on-surface-variant/40 hover:text-error text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">logout</span>
                 Déconnexion
             </button>
         </form>
     </div>
 </div>
+
+<!-- Modal: Record Loss (Same as Finance) -->
+<div id="lossModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-[40px] w-full max-w-lg p-10 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform text-left" id="lossModalContent">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h2 class="text-2xl font-black tracking-tight">Signaler une Perte</h2>
+                <p class="text-sm text-gray-400 mt-1">Signalez une bouteille cassée ou perdue.</p>
+            </div>
+            <button onclick="closeLossModal()" class="text-gray-400 hover:text-gray-900">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form method="post" action="{% url 'record_loss' %}" class="space-y-6">
+            {% csrf_token %}
+            <div class="space-y-1">
+                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Produit concerné</label>
+                <select name="item_id" required class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500">
+                    <option value="" disabled selected>Sélectionnez la boisson</option>
+                    {% for item in inventory_items %}
+                    <option value="{{ item.id }}">{{ item.produit.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Quantité</label>
+                    <input type="number" name="quantite" value="1" min="1" required class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Raison</label>
+                    <select name="raison" class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500">
+                        <option value="CASSE">Casse / Dommage</option>
+                        <option value="VOL">Vol / Disparition</option>
+                        <option value="ERREUR">Erreur de service</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Commentaire (Ex: Table 14)</label>
+                <textarea name="commentaire" placeholder="Expliquez brièvement..." class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500 h-24"></textarea>
+            </div>
+
+            <div class="pt-6">
+                <button type="submit" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-red-700 transition-all active:scale-95">
+                    Envoyer le Signalement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openLossModal() {
+        const modal = document.getElementById('lossModal');
+        const content = document.getElementById('lossModalContent');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeLossModal() {
+        const modal = document.getElementById('lossModal');
+        const content = document.getElementById('lossModalContent');
+        content.classList.add('scale-95', 'opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+</script>
 {% endblock %}

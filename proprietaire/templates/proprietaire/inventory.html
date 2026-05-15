@@ -12,9 +12,10 @@
             <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Suivez vos stocks et mettez à jour vos prix en temps réel.</p>
         </div>
         <div class="flex items-center gap-3">
-            <button class="bg-surface-container-high text-on-surface-variant p-3 rounded-xl hover:bg-white transition-all">
-                <span class="material-symbols-outlined">filter_list</span>
-            </button>
+            <a href="{% url 'mixed_case_arrival' %}" class="bg-surface-container-high text-on-surface-variant px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white transition-all border border-surface-container-high">
+                <span class="material-symbols-outlined text-xl">inventory</span>
+                <span class="hidden sm:inline">Arrivage Mixte</span>
+            </a>
             <a href="{% url 'catalogue_setup' %}" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
                 <span class="material-symbols-outlined">add</span>
                 <span>Nouveau Produit</span>
@@ -22,18 +23,26 @@
         </div>
     </div>
 
+    <!-- Live Search Bar -->
+    <div class="relative group">
+        <input type="text" id="inventorySearch" oninput="applyFilters()" placeholder="Rechercher une boisson (ex: Primus, Heineken, Jack...)" 
+               class="w-full bg-surface-container-lowest border-2 border-surface-container rounded-2xl py-4 pl-14 pr-6 font-bold focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all executive-shadow text-on-surface">
+        <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-on-surface-variant/40 group-focus-within:text-orange-600 transition-colors">search</span>
+    </div>
+
     <!-- Category Tabs -->
     <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        <button class="bg-orange-600 text-white px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest whitespace-nowrap">Tous</button>
+        <button onclick="filterByCategory('all', this)" class="category-btn bg-orange-600 text-white px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest whitespace-nowrap active-cat">Tous</button>
         {% for cat in categories %}
-        <button class="bg-white text-on-surface-variant px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest border border-surface-container-high hover:border-orange-600 transition-all whitespace-nowrap">{{ cat.nom }}</button>
+        <button onclick="filterByCategory('{{ cat.id }}', this)" class="category-btn bg-white text-on-surface-variant px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest border border-surface-container-high hover:border-orange-600 transition-all whitespace-nowrap">{{ cat.nom }}</button>
         {% endfor %}
     </div>
 
     <!-- Inventory Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for item in inventory_items %}
-        <div class="bg-surface-container-lowest p-6 rounded-2xl executive-shadow border-b-4 {% if item.quantite_actuelle <= item.seuil_alerte %}border-orange-600{% else %}border-emerald-500{% endif %} group hover:translate-y-[-4px] transition-all">
+        <div class="inventory-card bg-surface-container-lowest p-6 rounded-2xl executive-shadow border-b-4 {% if item.quantite_actuelle <= item.seuil_alerte %}border-orange-600{% else %}border-emerald-500{% endif %} group hover:translate-y-[-4px] transition-all"
+             data-category-id="{{ item.produit.categorie.id }}">
             <div class="flex gap-4">
                 <!-- Product Image -->
                 <div class="w-20 h-20 rounded-xl bg-surface-container-low overflow-hidden relative">
@@ -64,15 +73,25 @@
             <div class="mt-6 pt-6 border-t border-surface-container grid grid-cols-2 gap-4">
                 <div>
                     <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Stock Actuel</p>
-                    <p class="text-xl font-black {% if item.quantite_actuelle <= item.seuil_alerte %}text-orange-600{% else %}text-on-surface{% endif %}">
-                        {{ item.quantite_actuelle }} <span class="text-[10px] opacity-40 font-bold">UNITÉS</span>
-                    </p>
+                    <div class="flex items-baseline gap-1">
+                        <p class="text-xl font-black {% if item.quantite_actuelle <= item.seuil_alerte %}text-orange-600{% else %}text-on-surface{% endif %}">
+                            {{ item.quantite_actuelle|floatformat:1 }}
+                        </p>
+                        <span class="text-[9px] opacity-40 font-bold uppercase">Bout.</span>
+                    </div>
                 </div>
                 <div class="text-right">
                     <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Prix Vente</p>
-                    <p class="text-xl font-black text-on-surface">
-                        ${{ item.prix_vente_unitaire }}
-                    </p>
+                    <div class="flex flex-col items-end">
+                        <p class="text-xl font-black text-on-surface">
+                            {% if item.devise == 'CDF' %}FC{% else %}${% endif %}{{ item.prix_vente_unitaire|floatformat:2 }}
+                        </p>
+                        {% if item.vente_au_verre %}
+                        <p class="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full mt-1">
+                            Verre: {% if item.devise == 'CDF' %}FC{% else %}${% endif %}{{ item.prix_vente_verre|floatformat:2 }}
+                        </p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -81,9 +100,9 @@
                 <div class="h-full {% if item.quantite_actuelle <= item.seuil_alerte %}bg-orange-600{% else %}bg-emerald-500{% endif %} rounded-full" style="width: {{ item.quantite_actuelle }}%"></div>
             </div>
             
-            <!-- Quick Actions Overlay (Appears on Hover) -->
+            <!-- Quick Actions Overlay -->
             <div class="mt-4 flex gap-2">
-                <button onclick="openEditModal('{{ item.id }}', '{{ item.produit.nom }}', '{{ item.prix_vente_unitaire }}', '{{ item.quantite_actuelle }}', '{{ item.seuil_alerte }}', '{{ item.devise }}', '{{ item.strategie_gestion }}', '{{ item.bouteilles_par_casier }}', '{{ item.prix_achat_casier }}')" 
+                <button onclick="openEditModal('{{ item.id }}', '{{ item.produit.nom|escapejs }}', '{{ item.prix_vente_unitaire }}', '{{ item.quantite_actuelle }}', '{{ item.seuil_alerte }}', '{{ item.devise }}', '{{ item.strategie_gestion }}', '{{ item.bouteilles_par_casier }}', '{{ item.prix_achat_casier }}', '{{ item.vente_au_verre|yesno:'true,false' }}', '{{ item.produit.volume_cl }}', '{{ item.volume_verre_cl }}', '{{ item.prix_vente_verre }}', '{{ item.reduction_bouteille_entiere }}')" 
                         class="flex-1 py-2 bg-surface-container hover:bg-orange-50 hover:text-orange-600 text-on-surface-variant text-[10px] font-bold rounded-lg uppercase tracking-widest transition-all">
                     Modifier
                 </button>
@@ -107,86 +126,129 @@
 
 <!-- Edit Modal -->
 <div id="editModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-[32px] w-full max-w-lg p-8 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="editModalContent">
-        <div class="flex items-center justify-between mb-8">
+    <div class="bg-white rounded-[32px] w-full max-w-lg p-6 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform max-h-[95vh] overflow-y-auto" id="editModalContent">
+        <div class="flex items-center justify-between mb-6">
             <div>
-                <h2 class="text-2xl font-black tracking-tight" id="modalProductName">Configuration</h2>
-                <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest mt-1">Réglages du produit</p>
+                <h2 class="text-xl font-black tracking-tight" id="modalProductName">Configuration</h2>
+                <p class="text-[9px] font-bold text-orange-600 uppercase tracking-widest mt-1">Réglages du produit</p>
             </div>
             <button onclick="closeEditModal()" class="text-on-surface-variant/40 hover:text-on-surface transition-all">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
 
-        <form method="post" class="space-y-6">
+        <form method="post" class="space-y-4">
             {% csrf_token %}
             <input type="hidden" name="item_id" id="modalItemId">
             
             <!-- Gestion Mode Selection -->
             <div class="space-y-1">
-                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Mode d'achat (Approvisionnement)</label>
+                <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Mode d'achat</label>
                 <div class="grid grid-cols-2 gap-2">
                     <label class="cursor-pointer">
                         <input type="radio" name="strategie" value="UNITE" id="strat_unite" class="hidden peer" onchange="toggleStrategyFields('UNITE')">
-                        <div class="p-3 text-center rounded-xl border-2 border-surface-container font-bold text-xs peer-checked:border-orange-600 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">À la Bouteille</div>
+                        <div class="p-2.5 text-center rounded-xl border-2 border-surface-container font-bold text-[10px] uppercase tracking-widest peer-checked:border-orange-600 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">Bouteille</div>
                     </label>
                     <label class="cursor-pointer">
                         <input type="radio" name="strategie" value="CASIER" id="strat_casier" class="hidden peer" onchange="toggleStrategyFields('CASIER')">
-                        <div class="p-3 text-center rounded-xl border-2 border-surface-container font-bold text-xs peer-checked:border-orange-600 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">Par Casier</div>
+                        <div class="p-2.5 text-center rounded-xl border-2 border-surface-container font-bold text-[10px] uppercase tracking-widest peer-checked:border-orange-600 peer-checked:bg-orange-50 peer-checked:text-orange-600 transition-all">Casier</div>
                     </label>
                 </div>
             </div>
 
-            <!-- Case Details (Visible only if CASIER is selected) -->
-            <div id="casier_fields" class="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+            <!-- Case Details -->
+            <div id="casier_fields" class="grid grid-cols-2 gap-3 hidden">
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix Achat Casier</label>
+                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix Achat Casier</label>
                     <div class="relative">
-                        <span id="symbol_achat" class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant">$</span>
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant currency-symbol-text text-xs">$</span>
                         <input type="number" step="0.01" name="prix_achat_casier" id="modalPrixAchatCasier" 
-                               class="w-full bg-surface-container-low border-none rounded-xl py-4 pl-14 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                               class="w-full bg-surface-container-low border-none rounded-xl py-3 pl-12 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
                     </div>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Bouteilles / Casier</label>
+                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Bout. / Casier</label>
                     <input type="number" name="bouteilles_par_casier" id="modalBouteillesParCasier" 
-                           class="w-full bg-surface-container-low border-none rounded-xl py-4 px-6 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                           class="w-full bg-surface-container-low border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <!-- Vente au Verre Section -->
+            <div class="bg-orange-50/50 p-4 rounded-2xl border border-orange-100 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-orange-600 text-lg">wine_bar</span>
+                        <label class="text-[9px] font-black uppercase tracking-widest text-orange-600">Vente au Verre</label>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="vente_au_verre" id="modalVenteAuVerre" class="sr-only peer" onchange="toggleVerreFields(this.checked)">
+                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-600"></div>
+                    </label>
+                </div>
+
+                <div id="verre_fields" class="grid grid-cols-2 gap-3 hidden pt-1">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Vol. Bouteille (cl)</label>
+                        <input type="number" name="volume_cl" id="modalVolumeCl" placeholder="75"
+                               class="w-full bg-white border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all shadow-sm text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Taille Verre (cl)</label>
+                        <input type="number" name="volume_verre_cl" id="modalVolumeVerreCl" placeholder="5"
+                               class="w-full bg-white border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all shadow-sm text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix Verre</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant currency-symbol-text text-xs">FC</span>
+                            <input type="number" step="0.01" name="prix_vente_verre" id="modalPrixVerre" 
+                                   class="w-full bg-white border-none rounded-xl py-3 pl-12 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all shadow-sm text-sm">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Réduction (%)</label>
+                        <div class="relative">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant text-xs">%</span>
+                            <input type="number" step="0.1" name="reduction_bouteille" id="modalReduction" 
+                                   class="w-full bg-white border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all shadow-sm text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix de Vente (Bouteille)</label>
+                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix Vente (Bout.)</label>
                     <div class="relative">
-                        <span id="symbol_prix" class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant">$</span>
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant currency-symbol-text text-xs">$</span>
                         <input type="number" step="0.01" name="prix_vente" id="modalPrix" required 
-                               class="w-full bg-surface-container-low border-none rounded-xl py-4 pl-14 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                               class="w-full bg-surface-container-low border-none rounded-xl py-3 pl-12 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
                     </div>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Devise</label>
-                    <select name="devise" id="modalDevise" onchange="updateCurrencySymbols(this.value)" class="w-full bg-surface-container-low border-none rounded-xl py-4 px-4 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Devise</label>
+                    <select name="devise" id="modalDevise" onchange="updateCurrencySymbols(this.value)" class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 font-black focus:ring-2 focus:ring-orange-500 transition-all text-xs">
                         <option value="USD">USD ($)</option>
                         <option value="CDF">CDF (FC)</option>
                     </select>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 border-t border-surface-container pt-6">
+            <div class="grid grid-cols-2 gap-3 border-t border-surface-container pt-4">
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Stock Actuel (Bouteilles)</label>
-                    <input type="number" name="quantite" id="modalQuantite" required 
-                           class="w-full bg-surface-container-low border-none rounded-xl py-4 px-6 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Stock (Bout.)</label>
+                    <input type="number" step="0.001" name="quantite" id="modalQuantite" required 
+                           class="w-full bg-surface-container-low border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Seuil d'Alerte</label>
+                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Seuil Alerte</label>
                     <input type="number" name="seuil" id="modalSeuil" required 
-                           class="w-full bg-surface-container-low border-none rounded-xl py-4 px-6 font-black focus:ring-2 focus:ring-orange-500 transition-all">
+                           class="w-full bg-surface-container-low border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
                 </div>
             </div>
 
-            <div class="pt-6">
-                <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-[0.98] transition-all">
+            <div class="pt-4 sticky bottom-0 bg-white">
+                <button type="submit" class="w-full citrus-gradient text-white py-4 rounded-xl font-black uppercase tracking-widest executive-shadow active:scale-[0.98] transition-all text-xs">
                     Enregistrer les modifications
                 </button>
             </div>
@@ -195,10 +257,51 @@
 </div>
 
 <script>
+    let currentCategory = 'all';
+
+    function filterByCategory(catId, btn) {
+        currentCategory = catId;
+        // Update tabs styling
+        document.querySelectorAll('.category-btn').forEach(b => {
+            b.classList.remove('bg-orange-600', 'text-white', 'active-cat');
+            b.classList.add('bg-white', 'text-on-surface-variant');
+        });
+        btn.classList.add('bg-orange-600', 'text-white', 'active-cat');
+        btn.classList.remove('bg-white', 'text-on-surface-variant');
+
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const query = document.getElementById('inventorySearch').value.toLowerCase();
+        const cards = document.querySelectorAll('.inventory-card');
+        
+        cards.forEach(card => {
+            const name = card.querySelector('h3').innerText.toLowerCase();
+            const catMatch = (currentCategory === 'all' || card.dataset.categoryId === currentCategory);
+            const nameMatch = name.includes(query);
+            
+            if (catMatch && nameMatch) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    function syncFromCasiers() {
+        const bpcField = document.getElementById('modalBouteillesParCasier');
+        const qtyField = document.getElementById('modalQuantite');
+        const bpc = parseInt(bpcField.value) || 24;
+        // In this version, we don't need a visible nb_casiers field in the modal 
+        // if we use the simple bpc * quantity logic, but we can add it if needed.
+    }
+
     function updateCurrencySymbols(currency) {
         const symbol = currency === 'CDF' ? 'FC' : '$';
-        document.getElementById('symbol_prix').innerText = symbol;
-        document.getElementById('symbol_achat').innerText = symbol;
+        document.querySelectorAll('.currency-symbol-text').forEach(span => {
+            span.innerText = symbol;
+        });
     }
 
     function toggleStrategyFields(strategy) {
@@ -210,28 +313,45 @@
         }
     }
 
-    function openEditModal(id, name, price, qty, alert, currency, strategy, bpc, pac) {
+    function toggleVerreFields(enabled) {
+        const verreFields = document.getElementById('verre_fields');
+        if (enabled) {
+            verreFields.classList.remove('hidden');
+        } else {
+            verreFields.classList.add('hidden');
+        }
+    }
+
+    function openEditModal(id, name, price, qty, alert, currency, strategy, bpc, pac, venteVerre, volCl, volVerreCl, prixVerre, reduction) {
         document.getElementById('modalItemId').value = id;
         document.getElementById('modalProductName').innerText = name;
         document.getElementById('modalPrix').value = price.replace(',', '.');
-        document.getElementById('modalQuantite').value = qty;
+        document.getElementById('modalQuantite').value = qty.replace(',', '.');
         document.getElementById('modalSeuil').value = alert;
         document.getElementById('modalDevise').value = currency;
         
+        // Vente au verre
+        const isVerre = venteVerre === 'true';
+        document.getElementById('modalVenteAuVerre').checked = isVerre;
+        toggleVerreFields(isVerre);
+        document.getElementById('modalVolumeCl').value = volCl;
+        document.getElementById('modalVolumeVerreCl').value = volVerreCl;
+        document.getElementById('modalPrixVerre').value = prixVerre.replace(',', '.');
+        document.getElementById('modalReduction').value = reduction.replace(',', '.');
+
         // Update symbols
         updateCurrencySymbols(currency);
         
-        // Radio button check
+        // Strategy initialization
         if (strategy === 'CASIER') {
             document.getElementById('strat_casier').checked = true;
             toggleStrategyFields('CASIER');
+            document.getElementById('modalBouteillesParCasier').value = bpc;
+            document.getElementById('modalPrixAchatCasier').value = pac.replace(',', '.');
         } else {
             document.getElementById('strat_unite').checked = true;
             toggleStrategyFields('UNITE');
         }
-        
-        document.getElementById('modalBouteillesParCasier').value = bpc;
-        document.getElementById('modalPrixAchatCasier').value = pac.replace(',', '.');
 
         const modal = document.getElementById('editModal');
         const content = document.getElementById('editModalContent');

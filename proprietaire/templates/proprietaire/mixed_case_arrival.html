@@ -1,0 +1,332 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Arrivage Casier Mixte - BarPilote{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8 pb-20">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'inventory_html' %}" class="bg-white p-3 rounded-xl executive-shadow text-gray-400 hover:text-orange-600 transition-all">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div>
+                <h1 class="text-3xl font-black tracking-tight text-on-surface">Arrivage Mixte</h1>
+                <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Répartissez le contenu de vos casiers panachés.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <form method="post" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Step 1: Configuration de l'arrivage -->
+        <div class="bg-white rounded-[40px] p-10 executive-shadow border border-surface-container-high">
+            <div class="flex items-center justify-between mb-10">
+                <h2 class="text-2xl font-black text-on-surface">Configuration de l'arrivage</h2>
+                <div class="flex items-center gap-3">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Devise :</label>
+                    <select name="devise" id="devise_select" onchange="updateCurrencySymbols()" class="bg-surface-container border-none rounded-xl py-2 px-4 font-bold text-xs focus:ring-2 focus:ring-orange-500">
+                        <option value="CDF">CDF (FC)</option>
+                        <option value="USD">USD ($)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <!-- Type Selector -->
+                <div class="space-y-4">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Type de Casier</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="relative cursor-pointer group">
+                            <input type="radio" name="format_type" value="PETIT" checked class="peer hidden" onclick="toggleFormat('PETIT', 24)">
+                            <div class="p-6 rounded-3xl border-2 border-surface-container bg-surface-container/20 text-center peer-checked:border-orange-500 peer-checked:bg-orange-50 transition-all group-hover:bg-surface-container">
+                                <span class="material-symbols-outlined text-3xl mb-2 text-gray-400 peer-checked:text-orange-600">liquor</span>
+                                <p class="font-black text-xs uppercase tracking-widest">Petits Sodas</p>
+                                <p class="text-[10px] font-medium text-gray-400">Standard: 24 Bout.</p>
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer group">
+                            <input type="radio" name="format_type" value="GROS" class="peer hidden" onclick="toggleFormat('GROS', 12)">
+                            <div class="p-6 rounded-3xl border-2 border-surface-container bg-surface-container/20 text-center peer-checked:border-orange-500 peer-checked:bg-orange-50 transition-all group-hover:bg-surface-container">
+                                <span class="material-symbols-outlined text-3xl mb-2 text-gray-400 peer-checked:text-orange-600">liquor</span>
+                                <p class="font-black text-xs uppercase tracking-widest">Gros Sodas</p>
+                                <p class="text-[10px] font-medium text-gray-400">Standard: 12 Bout.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Input Fields (Matching user style) -->
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Prix Achat Casier</label>
+                        <div class="bg-surface-container rounded-3xl p-4 flex items-center gap-3">
+                            <span class="font-black text-on-surface-variant/40 currency-symbol">FC</span>
+                            <input type="number" name="prix_casier" step="0.01" required class="bg-transparent border-none w-full font-black text-xl focus:ring-0 p-0" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Bouteilles / Casier</label>
+                        <div class="bg-surface-container rounded-3xl p-4">
+                            <input type="number" name="taille_casier" id="taille_casier" value="24" min="1" oninput="updateExpected()" class="bg-transparent border-none w-full font-black text-xl focus:ring-0 p-0 text-center">
+                        </div>
+                    </div>
+                    <div class="col-span-2 space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Nombre de Casiers</label>
+                        <div class="bg-surface-container rounded-3xl p-5 flex items-center gap-4">
+                            <span class="material-symbols-outlined text-on-surface-variant/40">inventory_2</span>
+                            <input type="number" name="nb_casiers" id="nb_casiers" value="1" min="0.1" step="0.1" oninput="updateExpected()" class="bg-transparent border-none w-full font-black text-2xl focus:ring-0 p-0" placeholder="Ex: 9.5">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Prix de Vente (Bouteille)</label>
+                        <div class="bg-surface-container rounded-3xl p-4 flex items-center gap-3">
+                            <span class="font-black text-on-surface-variant/40 text-xs currency-symbol">FC</span>
+                            <input type="number" id="global_price" step="0.01" oninput="applyGlobalSettings()" class="bg-transparent border-none w-full font-black text-xl focus:ring-0 p-0" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Seuil d'Alerte</label>
+                        <div class="bg-surface-container rounded-3xl p-4 flex items-center gap-3">
+                            <span class="material-symbols-outlined text-on-surface-variant/40 text-sm">notifications_active</span>
+                            <input type="number" id="global_alert" oninput="applyGlobalSettings()" class="bg-transparent border-none w-full font-black text-xl focus:ring-0 p-0 text-center" placeholder="12">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Répartition & Réglages Produits -->
+        <div class="bg-white rounded-[40px] p-10 executive-shadow border border-surface-container-high">
+            <div class="flex items-center justify-between mb-10">
+                <h2 class="text-2xl font-black text-on-surface">Répartition et Réglages</h2>
+                <div id="counter_box" class="bg-orange-50 border border-orange-200 px-6 py-3 rounded-2xl flex items-center gap-4">
+                    <span class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Total Saisi :</span>
+                    <span id="current_total" class="text-2xl font-black text-orange-600">0</span>
+                    <span class="text-on-surface-variant/40 font-black">/</span>
+                    <span id="expected_total" class="text-xl font-black text-on-surface-variant">24</span>
+                </div>
+            </div>
+
+            <!-- List Section -->
+            <div id="list_container" class="space-y-6">
+                <!-- Les listes sont injectées par format -->
+                <div id="list_petits" class="space-y-6">
+                    {% for item in items_petits %}
+                    <div class="p-8 bg-surface-container/10 rounded-[40px] border border-surface-container hover:border-orange-200 transition-all">
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+                            <!-- Product Info -->
+                            <div class="flex items-center gap-4 col-span-1 lg:col-span-1">
+                                <div class="w-16 h-16 bg-white rounded-2xl executive-shadow flex items-center justify-center overflow-hidden">
+                                    {% if item.produit.photo %}<img src="{{ item.produit.photo.url }}" class="w-full h-full object-cover">{% else %}<span class="material-symbols-outlined text-gray-200 text-3xl">liquor</span>{% endif %}
+                                </div>
+                                <div>
+                                    <p class="font-black text-on-surface text-lg">{{ item.produit.nom }}</p>
+                                    <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{{ item.produit.volume }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Stock Actuel (Display Only) -->
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Stock Actuel</label>
+                                <div class="bg-surface-container/50 rounded-3xl p-4 text-center">
+                                    <span class="font-black text-xl text-on-surface">{{ item.quantite_actuelle }}</span>
+                                    <span class="text-[10px] font-bold text-on-surface-variant/40 uppercase ml-1">Bout.</span>
+                                </div>
+                            </div>
+
+                            <!-- Qty to Add -->
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Ajouter</label>
+                                <div class="bg-white rounded-3xl p-4 border-2 border-surface-container flex items-center shadow-inner">
+                                    <input type="number" name="qty_item_{{ item.id }}" value="0" min="0" oninput="calculateTotal()" class="bg-transparent border-none w-full font-black text-center focus:ring-0 p-0 text-xl text-orange-600">
+                                </div>
+                            </div>
+
+                            <!-- Sale Price -->
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Prix de Vente</label>
+                                <div class="bg-white rounded-3xl p-4 border-2 border-surface-container flex items-center gap-2 shadow-inner">
+                                    <span class="font-black text-on-surface-variant/40 text-xs currency-symbol">FC</span>
+                                    <input type="number" name="price_item_{{ item.id }}" value="{{ item.prix_vente_unitaire|floatformat:2 }}" step="0.01" class="bg-transparent border-none w-full font-black text-center focus:ring-0 p-0 text-xl">
+                                </div>
+                            </div>
+
+                            <!-- Alert Threshold -->
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Seuil Alerte</label>
+                                <div class="bg-white rounded-3xl p-4 border-2 border-surface-container flex items-center shadow-inner">
+                                    <input type="number" name="alert_item_{{ item.id }}" value="{{ item.seuil_alerte }}" min="0" class="bg-transparent border-none w-full font-black text-center focus:ring-0 p-0 text-xl">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div id="list_gros" class="space-y-6 hidden">
+                    {% for item in items_gros %}
+                    <div class="p-8 bg-surface-container/10 rounded-[40px] border border-surface-container hover:border-orange-200 transition-all">
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+                            <div class="flex items-center gap-4 col-span-1 lg:col-span-1">
+                                <div class="w-16 h-16 bg-white rounded-2xl executive-shadow flex items-center justify-center overflow-hidden">
+                                    {% if item.produit.photo %}<img src="{{ item.produit.photo.url }}" class="w-full h-full object-cover">{% else %}<span class="material-symbols-outlined text-gray-200 text-3xl">liquor</span>{% endif %}
+                                </div>
+                                <div>
+                                    <p class="font-black text-on-surface text-lg">{{ item.produit.nom }}</p>
+                                    <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{{ item.produit.volume }}</p>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Stock Actuel</label>
+                                <div class="bg-surface-container/50 rounded-3xl p-4 text-center">
+                                    <span class="font-black text-xl text-on-surface">{{ item.quantite_actuelle }}</span>
+                                    <span class="text-[10px] font-bold text-on-surface-variant/40 uppercase ml-1">Bout.</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Ajouter</label>
+                                <div class="bg-white rounded-3xl p-4 border-2 border-surface-container flex items-center shadow-inner">
+                                    <input type="number" name="qty_item_{{ item.id }}" value="0" min="0" oninput="calculateTotal()" class="bg-transparent border-none w-full font-black text-center focus:ring-0 p-0 text-xl text-orange-600">
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Prix de Vente</label>
+                                <div class="bg-white rounded-3xl p-4 border-2 border-surface-container flex items-center gap-2 shadow-inner">
+                                    <span class="font-black text-on-surface-variant/40 text-xs currency-symbol">FC</span>
+                                    <input type="number" name="price_item_{{ item.id }}" value="{{ item.prix_vente_unitaire|floatformat:2 }}" step="0.01" class="bg-transparent border-none w-full font-black text-center focus:ring-0 p-0 text-xl">
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Seuil Alerte</label>
+                                <div class="bg-white rounded-3xl p-4 border-2 border-surface-container flex items-center shadow-inner">
+                                    <input type="number" name="alert_item_{{ item.id }}" value="{{ item.seuil_alerte }}" min="0" class="bg-transparent border-none w-full font-black text-center focus:ring-0 p-0 text-xl">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if not items_petits and not items_gros %}
+            <div class="py-12 text-center">
+                <p class="text-on-surface-variant/40 italic">Aucun produit configuré avec un format de casier compatible.</p>
+            </div>
+            {% endif %}
+
+            <!-- Submit -->
+            <div class="mt-12 pt-8 border-t border-surface-container">
+                <button type="submit" id="submit_btn" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl opacity-50 cursor-not-allowed transition-all" disabled>
+                    Enregistrer l'Arrivage
+                </button>
+                <p id="error_msg" class="text-center text-red-500 text-[10px] font-black uppercase tracking-widest mt-4">
+                    Le total saisi doit être égal au total attendu (0 / 24)
+                </p>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    function toggleFormat(format, defaultTaille) {
+        const listPetits = document.getElementById('list_petits');
+        const listGros = document.getElementById('list_gros');
+        const tailleInput = document.getElementById('taille_casier');
+        
+        if (format === 'PETIT') {
+            listPetits.classList.remove('hidden');
+            listGros.classList.add('hidden');
+            tailleInput.value = defaultTaille;
+        } else {
+            listPetits.classList.add('hidden');
+            listGros.classList.remove('hidden');
+            tailleInput.value = defaultTaille;
+        }
+        
+        // Reset all inputs when changing format
+        document.querySelectorAll('input[type="number"][name^="qty_item_"]').forEach(input => {
+            input.value = 0;
+        });
+        
+        updateExpected();
+        calculateTotal();
+    }
+
+    function updateExpected() {
+        const nbCasiers = parseInt(document.getElementById('nb_casiers').value) || 0;
+        const tailleCasier = parseInt(document.getElementById('taille_casier').value) || 0;
+        const expected = nbCasiers * tailleCasier;
+        document.getElementById('expected_total').innerText = expected;
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        const expected = parseInt(document.getElementById('expected_total').innerText);
+        let currentTotal = 0;
+        
+        // Only sum visible inputs
+        const currentFormat = document.querySelector('input[name="format_type"]:checked').value;
+        const containerId = currentFormat === 'PETIT' ? 'list_petits' : 'list_gros';
+        const inputs = document.querySelectorAll(`#${containerId} input[type="number"]`);
+        
+        inputs.forEach(input => {
+            currentTotal += parseInt(input.value) || 0;
+        });
+        
+        document.getElementById('current_total').innerText = currentTotal;
+        
+        const btn = document.getElementById('submit_btn');
+        const msg = document.getElementById('error_msg');
+        const counterBox = document.getElementById('counter_box');
+        
+        if (currentTotal === expected && expected > 0) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            msg.classList.add('hidden');
+            counterBox.classList.replace('bg-orange-50', 'bg-emerald-50');
+            counterBox.classList.replace('border-orange-200', 'border-emerald-200');
+            document.getElementById('current_total').classList.replace('text-orange-600', 'text-emerald-600');
+        } else {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            msg.classList.remove('hidden');
+            msg.innerText = `Le total saisi doit être égal au total attendu (${currentTotal} / ${expected})`;
+            counterBox.classList.replace('bg-emerald-50', 'bg-orange-50');
+            counterBox.classList.replace('border-emerald-200', 'border-orange-200');
+            document.getElementById('current_total').classList.replace('text-emerald-600', 'text-orange-600');
+        }
+    }
+    
+    function updateCurrencySymbols() {
+        const devise = document.getElementById('devise_select').value;
+        const symbol = devise === 'CDF' ? 'FC' : '$';
+        document.querySelectorAll('.currency-symbol').forEach(span => {
+            span.innerText = symbol;
+        });
+    }
+
+    function applyGlobalSettings() {
+        const globalPrice = document.getElementById('global_price').value;
+        const globalAlert = document.getElementById('global_alert').value;
+        
+        if (globalPrice) {
+            document.querySelectorAll('input[name^="price_item_"]').forEach(input => {
+                input.value = globalPrice;
+            });
+        }
+        
+        if (globalAlert) {
+            document.querySelectorAll('input[name^="alert_item_"]').forEach(input => {
+                input.value = globalAlert;
+            });
+        }
+    }
+    
+    // Initial call
+    updateExpected();
+</script>
+{% endblock %}

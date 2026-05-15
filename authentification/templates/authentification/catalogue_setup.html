@@ -27,9 +27,15 @@
                     <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{{ bar.nom }}</p>
                 </div>
             </div>
-            <a href="{% url 'dashboard_html' %}" class="bg-gray-50 text-gray-400 p-3 rounded-xl hover:bg-gray-100 transition-all">
-                <span class="material-symbols-outlined">close</span>
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'inventory_html' %}" class="flex items-center gap-2 bg-orange-50 text-orange-600 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-orange-100 transition-all">
+                    <span class="material-symbols-outlined text-xl">inventory_2</span>
+                    <span>Voir mon Stock</span>
+                </a>
+                <a href="{% url 'dashboard_html' %}" class="bg-gray-50 text-gray-400 p-3 rounded-xl hover:bg-gray-100 transition-all">
+                    <span class="material-symbols-outlined">close</span>
+                </a>
+            </div>
         </header>
 
         <!-- Messages Notification -->
@@ -67,7 +73,7 @@
                     {% endif %}
                 </form>
                 
-                <button onclick="openCreateModal()" class="citrus-gradient text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest executive-shadow flex items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all">
+                <button type="button" onclick="openCreateModal()" class="citrus-gradient text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest executive-shadow flex items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all">
                     <span class="material-symbols-outlined">add</span>
                     Produit Manquant
                 </button>
@@ -110,7 +116,7 @@
                             Déjà en stock
                         </div>
                         {% else %}
-                        <form method="post">
+                        <form method="post" action="{% url 'catalogue_setup' %}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="add_to_stock">
                             <input type="hidden" name="product_id" value="{{ product.id }}">
@@ -124,11 +130,16 @@
                 </div>
                 {% empty %}
                 <div class="col-span-full py-20 text-center">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
-                        <span class="material-symbols-outlined text-4xl">inventory</span>
+                    <div class="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6 text-orange-200">
+                        <span class="material-symbols-outlined text-4xl">search_off</span>
                     </div>
-                    <h3 class="text-xl font-black">Aucun produit trouvé</h3>
-                    <p class="text-gray-400 mt-2 max-w-xs mx-auto">Ce produit n'est pas dans notre catalogue. Utilisez le bouton en haut pour le créer !</p>
+                    <h3 class="text-xl font-black text-on-surface">Aucun produit trouvé</h3>
+                    <p class="text-on-surface-variant/60 mt-2 max-w-xs mx-auto mb-8">Ce produit n'est pas encore dans notre catalogue communautaire.</p>
+                    
+                    <button type="button" onclick="openCreateModal()" class="inline-flex items-center gap-3 px-8 py-4 bg-white border-2 border-orange-100 text-orange-600 rounded-2xl font-black uppercase tracking-widest hover:bg-orange-50 transition-all executive-shadow">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        Créer ce produit maintenant
+                    </button>
                 </div>
                 {% endfor %}
             </div>

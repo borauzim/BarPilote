@@ -10,10 +10,16 @@
             <h1 class="text-3xl font-black tracking-tight text-on-surface">Mon Équipe</h1>
             <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Gérez vos serveurs, protocoles et suivez leurs performances.</p>
         </div>
-        <button class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
-            <span class="material-symbols-outlined">person_add</span>
-            <span>Inviter un membre</span>
-        </button>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'staff_download_invite' %}" class="bg-surface-container-high text-on-surface-variant px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all hover:bg-surface-container-highest">
+                <span class="material-symbols-outlined">badge</span>
+                <span>Badge d'Invitation (PDF)</span>
+            </a>
+            <button class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
+                <span class="material-symbols-outlined">person_add</span>
+                <span>Inviter un membre</span>
+            </button>
+        </div>
     </div>
 
     <!-- Staff Grid -->
@@ -57,9 +63,18 @@
         <div class="col-span-full py-24 text-center">
             <h2 class="text-xl font-black text-on-surface">Vous êtes seul pour le moment</h2>
             <p class="text-on-surface-variant/60 max-w-xs mx-auto mt-2">Invitez vos serveurs à rejoindre BarPilote via leur application mobile.</p>
-            <div class="mt-8 p-6 bg-white rounded-2xl inline-block border-2 border-dashed border-orange-200">
-                <p class="text-sm font-bold text-on-surface">Code d'invitation</p>
-                <p class="text-3xl font-black text-orange-600 tracking-tighter mt-1">{{ bar.code_invitation|default:"---" }}</p>
+            
+            <div class="mt-8 flex flex-col items-center gap-6">
+                <div class="p-6 bg-white rounded-2xl inline-block border-2 border-dashed border-orange-200">
+                    <p class="text-sm font-bold text-on-surface">Code d'invitation</p>
+                    <p class="text-3xl font-black text-orange-600 tracking-tighter mt-1">{{ bar.code_invitation|default:"---"|slice:":8" }}</p>
+                </div>
+
+                <a href="{% url 'staff_download_invite' %}" class="flex items-center gap-3 text-orange-600 font-bold hover:gap-4 transition-all group">
+                    <span class="material-symbols-outlined">download</span>
+                    <span>Télécharger le Badge QR (PDF) pour l'imprimer</span>
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
             </div>
         </div>
         {% endfor %}

@@ -99,6 +99,28 @@ class Table(models.Model):
         # On ne peut pas avoir deux "Table 1" dans le même bar
         unique_together = ('bar', 'nom')
 
+class Perte(models.Model):
+    """
+    Modèle pour enregistrer les pertes de stock (casse, péremption, vol, etc.)
+    """
+    RAISON_CHOICES = [
+        ('CASSE', 'Casse / Dommage'),
+        ('PEREMPTION', 'Péremption'),
+        ('VOL', 'Vol / Disparition'),
+        ('OFFERT', 'Offert / Promo'),
+        ('ERREUR', 'Erreur Inventaire'),
+    ]
+    
+    bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='pertes')
+    item = models.ForeignKey('StockItem', on_delete=models.CASCADE, related_name='details_pertes')
+    quantite = models.PositiveIntegerField(default=1)
+    raison = models.CharField(max_length=20, choices=RAISON_CHOICES, default='CASSE')
+    commentaire = models.TextField(blank=True, null=True)
+    date_perte = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Perte: {self.quantite} x {self.item.produit.nom} ({self.raison})"
+
     def __str__(self):
         return f"{self.nom} - {self.bar.nom}"
 
@@ -119,9 +141,16 @@ class MasterProduct(models.Model):
     """
     Catalogue global de produits proposé par BarPilote (Référentiel).
     """
+    FORMAT_CHOICES = [
+        ('PETIT', 'Petit Format (ex: 30cl, 33cl)'),
+        ('GROS', 'Gros Format (ex: 50cl, 65cl, 72cl)'),
+    ]
+
     nom = models.CharField(max_length=255)
     categorie = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='produits')
     volume = models.CharField(max_length=50, blank=True, null=True, help_text="ex: 33cl, 75cl, 1L")
+    volume_cl = models.IntegerField(default=0, help_text="Volume total en cl (ex: 75, 100)")
+    format_casier = models.CharField(max_length=10, choices=FORMAT_CHOICES, default='PETIT', verbose_name="Format du Casier")
     photo = models.ImageField(upload_to='master_products/', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
@@ -148,9 +177,16 @@ class StockItem(models.Model):
     
     # Stratégie de gestion
     strategie_gestion = models.CharField(max_length=10, choices=STRATEGY_CHOICES, default='UNITE')
-    quantite_actuelle = models.IntegerField(default=0, verbose_name="Nombre de bouteilles en stock")
+    quantite_actuelle = models.DecimalField(max_digits=12, decimal_places=3, default=0, verbose_name="Bouteilles en stock")
     seuil_alerte = models.IntegerField(default=12, verbose_name="Alerte stock faible")
     
+    # --- VENTE AU VERRE (Whisky, Vin, etc.) ---
+    vente_au_verre = models.BooleanField(default=False, verbose_name="Activer la vente au verre")
+    volume_verre_cl = models.IntegerField(default=5, help_text="Taille standard du verre en cl (ex: 5, 12, 15)")
+    prix_vente_verre = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    reduction_bouteille_entiere = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Réduction en % si achat bouteille complète")
+    # ------------------------------------------
+
     # Prix & Monnaie
     devise = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='USD')
     
@@ -196,7 +232,7 @@ class StockSupply(models.Model):
     item = models.ForeignKey(StockItem, on_delete=models.CASCADE, related_name='approvisionnements')
     
     # Détails de l'achat
-    casiers_achetes = models.IntegerField(default=1)
+    casiers_achetes = models.DecimalField(max_digits=10, decimal_places=2, default=1)
     bouteilles_par_casier = models.IntegerField(default=24)
     
     # Prix d'achat à cet instant T
@@ -206,13 +242,13 @@ class StockSupply(models.Model):
     date_achat = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        from decimal import Decimal
         # Calcul du nombre total de bouteilles ajoutées
-        total_bouteilles = self.casiers_achetes * self.bouteilles_par_casier
+        total_bouteilles = Decimal(self.casiers_achetes) * Decimal(self.bouteilles_par_casier)
         
         # Mise à jour du stock global sur l'item
         self.item.quantite_actuelle += total_bouteilles
         # Mise à jour des infos de prix de revient sur l'item pour le calcul de marge
-        from decimal import Decimal
         self.item.prix_achat_unitaire = self.prix_achat_casier / Decimal(self.bouteilles_par_casier)
         self.item.save()
         
@@ -226,17 +262,41 @@ class Sale(models.Model):
     Transactions de vente réalisées dans le Bar.
     Alimente le Dashboard en temps réel.
     """
+    UNIT_CHOICES = [
+        ('BOUTEILLE', 'Bouteille'),
+        ('VERRE', 'Verre'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='ventes')
     table = models.ForeignKey(Table, on_delete=models.SET_NULL, null=True, blank=True)
     item = models.ForeignKey(StockItem, on_delete=models.PROTECT)
     
-    quantite = models.IntegerField(default=1)
+    unite_vente = models.CharField(max_length=20, choices=UNIT_CHOICES, default='BOUTEILLE')
+    quantite = models.IntegerField(default=1) # Nb de verres ou Nb de bouteilles
     prix_unitaire_applique = models.DecimalField(max_digits=12, decimal_places=2)
     devise = models.CharField(max_length=3, default='USD')
     
     date_vente = models.DateTimeField(auto_now_add=True)
     
+    def save(self, *args, **kwargs):
+        from decimal import Decimal
+        # Si c'est une nouvelle vente, on déduit du stock
+        if not self.pk:
+            reduction = Decimal(0)
+            if self.unite_vente == 'BOUTEILLE':
+                reduction = Decimal(self.quantite)
+            elif self.unite_vente == 'VERRE':
+                # On calcule la fraction de bouteille : (Nb verres * Vol Verre) / Vol Total Bouteille
+                vol_verre = Decimal(self.item.volume_verre_cl or 5)
+                vol_total = Decimal(self.item.produit.volume_cl or 100)
+                reduction = (Decimal(self.quantite) * vol_verre) / vol_total
+            
+            self.item.quantite_actuelle = max(Decimal(0), self.item.quantite_actuelle - reduction)
+            self.item.save()
+            
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Vente {self.item.produit.nom} x{self.quantite} - {self.date_vente.strftime('%H:%M')}"
 
@@ -298,6 +358,7 @@ class OrderItem(models.Model):
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product_item = models.ForeignKey(StockItem, on_delete=models.PROTECT)
+    unite_vente = models.CharField(max_length=20, choices=Sale.UNIT_CHOICES, default='BOUTEILLE')
     quantite = models.IntegerField(default=1)
     prix_unitaire = models.DecimalField(max_digits=12, decimal_places=2)
     devise = models.CharField(max_length=3, default='USD')

@@ -2,7 +2,8 @@ from django.urls import path
 from .html_views import (
     DashboardView, EstablishmentSetupView, ProfileSetupView,
     InventoryView, FinanceView, TeamView, TablesView, EstablishmentDetailsView, TableSetupView,
-    TableActionView, TableDownloadQRView, EstablishmentReadyView, StaffInvitationPDFView
+    TableActionView, TableDownloadQRView, EstablishmentReadyView, StaffInvitationPDFView,
+    RecordLossView, MixedCaseArrivalView
 )
 
 urlpatterns = [
@@ -19,4 +20,6 @@ urlpatterns = [
     path('tables/action/', TableActionView.as_view(), name='table_action'),
     path('tables/download-qr/', TableDownloadQRView.as_view(), name='table_download_qr'),
     path('staff/download-invite/', StaffInvitationPDFView.as_view(), name='staff_download_invite'),
+    path('finance/record-loss/', RecordLossView.as_view(), name='record_loss'),
+    path('stock/mixed-arrival/', MixedCaseArrivalView.as_view(), name='mixed_case_arrival'),
 ]

@@ -5,65 +5,98 @@
 
 {% block content %}
 <div class="space-y-8">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <!-- Header & Date Filter -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
             <h1 class="text-3xl font-black tracking-tight text-on-surface">Rapport Financier</h1>
-            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Suivez vos revenus, vos transactions et vos performances en temps réel.</p>
+            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Analyse des revenus et des pertes du {{ start_date }} au {{ end_date }}.</p>
         </div>
-        <div class="flex gap-3">
-            <button class="bg-surface-container-high text-on-surface px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-surface-container-highest transition-all">
-                <span class="material-symbols-outlined">calendar_today</span>
-                <span>Ce Mois</span>
-            </button>
-            <button class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
-                <span class="material-symbols-outlined">ios_share</span>
-                <span>Exporter PDF</span>
+        
+        <div class="flex flex-col sm:flex-row items-end gap-3 bg-white p-5 rounded-[24px] executive-shadow border border-surface-container-high">
+            <form method="get" class="flex flex-wrap items-end gap-4">
+                <div class="space-y-1.5 flex-1 min-w-[140px]">
+                    <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px]">calendar_month</span>
+                        Date de début
+                    </label>
+                    <input type="date" name="start_date" value="{{ start_date }}" 
+                           class="w-full bg-white border border-surface-container-highest rounded-xl text-sm font-bold text-on-surface focus:ring-2 focus:ring-orange-500 focus:border-orange-500 cursor-pointer p-3 transition-all hover:border-orange-200">
+                </div>
+                <div class="space-y-1.5 flex-1 min-w-[140px]">
+                    <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px]">event</span>
+                        Date de fin
+                    </label>
+                    <input type="date" name="end_date" value="{{ end_date }}" 
+                           class="w-full bg-white border border-surface-container-highest rounded-xl text-sm font-bold text-on-surface focus:ring-2 focus:ring-orange-500 focus:border-orange-500 cursor-pointer p-3 transition-all hover:border-orange-200">
+                </div>
+                <button type="submit" class="citrus-gradient text-white h-[46px] px-5 rounded-xl executive-shadow hover:scale-105 active:scale-95 transition-all flex items-center justify-center">
+                    <span class="material-symbols-outlined font-bold">search</span>
+                    <span class="ml-2 text-xs font-black uppercase tracking-widest sm:hidden">Filtrer</span>
+                </button>
+            </form>
+            <div class="h-10 w-[1px] bg-surface-container mx-2 hidden sm:block"></div>
+            <button onclick="openLossModal()" class="bg-red-50 text-red-600 px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-red-100 transition-all border border-red-100">
+                <span class="material-symbols-outlined text-sm">inventory_2</span>
+                Signaler une Perte
             </button>
         </div>
     </div>
 
     <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Chiffre d'Affaires -->
         <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16"></div>
             <div class="relative z-10">
-                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mb-6">
+                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-6">
                     <span class="material-symbols-outlined">payments</span>
                 </div>
-                <h3 class="text-on-surface-variant/60 font-bold text-xs uppercase tracking-widest mb-1">Chiffre d'Affaires</h3>
-                <p class="text-3xl font-black text-on-surface">0,00 $</p>
-                <div class="mt-4 flex items-center gap-1 text-green-600 text-[10px] font-black uppercase">
-                    <span class="material-symbols-outlined text-sm">trending_up</span>
-                    <span>+0% vs mois dernier</span>
+                <h3 class="text-on-surface-variant/60 font-bold text-[10px] uppercase tracking-widest mb-1">Chiffre d'Affaires</h3>
+                <div class="space-y-1">
+                    <p class="text-2xl font-black text-on-surface">{{ revenue_usd|floatformat:2 }} $</p>
+                    <p class="text-xs font-bold text-on-surface-variant/40">{{ revenue_cdf|floatformat:0 }} FC</p>
                 </div>
             </div>
         </div>
 
+        <!-- Commandes Totales -->
         <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+            <div class="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full -mr-16 -mt-16"></div>
             <div class="relative z-10">
-                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mb-6">
-                    <span class="material-symbols-outlined">restaurant</span>
+                <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined">shopping_bag</span>
                 </div>
-                <h3 class="text-on-surface-variant/60 font-bold text-xs uppercase tracking-widest mb-1">Commandes Totales</h3>
-                <p class="text-3xl font-black text-on-surface">0</p>
-                <div class="mt-4 flex items-center gap-1 text-on-surface-variant/40 text-[10px] font-black uppercase">
-                    <span>En attente de données</span>
-                </div>
+                <h3 class="text-on-surface-variant/60 font-bold text-[10px] uppercase tracking-widest mb-1">Ventes (Payées)</h3>
+                <p class="text-2xl font-black text-on-surface">{{ total_orders }}</p>
+                <p class="text-[10px] font-bold text-on-surface-variant/40 mt-1 uppercase">Sur la période</p>
             </div>
         </div>
 
+        <!-- Panier Moyen -->
         <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16"></div>
             <div class="relative z-10">
-                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
-                    <span class="material-symbols-outlined">group</span>
+                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined">analytics</span>
                 </div>
-                <h3 class="text-on-surface-variant/60 font-bold text-xs uppercase tracking-widest mb-1">Panier Moyen</h3>
-                <p class="text-3xl font-black text-on-surface">0,00 $</p>
-                <div class="mt-4 flex items-center gap-1 text-on-surface-variant/40 text-[10px] font-black uppercase">
-                    <span>Calculé par commande</span>
+                <h3 class="text-on-surface-variant/60 font-bold text-[10px] uppercase tracking-widest mb-1">Panier Moyen</h3>
+                <p class="text-2xl font-black text-on-surface">{{ avg_basket_usd|floatformat:2 }} $</p>
+                <p class="text-[10px] font-bold text-on-surface-variant/40 mt-1 uppercase">Par commande</p>
+            </div>
+        </div>
+
+        <!-- Pertes Totales -->
+        <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-red-100 bg-red-50/10 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full -mr-16 -mt-16"></div>
+            <div class="relative z-10">
+                <div class="w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined">trending_down</span>
+                </div>
+                <h3 class="text-red-600/60 font-bold text-[10px] uppercase tracking-widest mb-1">Pertes de Stock</h3>
+                <div class="space-y-1">
+                    <p class="text-2xl font-black text-red-600">{{ total_perte_usd|floatformat:2 }} $</p>
+                    <p class="text-xs font-bold text-red-400">{{ total_perte_cdf|floatformat:0 }} FC</p>
                 </div>
             </div>
         </div>
@@ -71,39 +104,145 @@
 
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Transactions List -->
+        <!-- Losses by Drink -->
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high">
                 <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-xl font-black text-on-surface">Dernières Transactions</h2>
-                    <button class="text-orange-600 font-bold text-xs uppercase tracking-widest hover:underline">Tout voir</button>
+                    <h2 class="text-xl font-black text-on-surface">Détail des Pertes par Boisson</h2>
+                    <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Coût d'achat</span>
                 </div>
 
-                <div class="space-y-4">
-                    <!-- Empty State -->
-                    <div class="py-20 text-center">
-                        <div class="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-4 text-on-surface-variant/20">
-                            <span class="material-symbols-outlined text-3xl">receipt_long</span>
-                        </div>
-                        <p class="text-on-surface-variant font-medium">Aucune transaction pour le moment.</p>
-                        <p class="text-on-surface-variant/40 text-xs mt-1">Les ventes s'afficheront ici dès la première commande.</p>
-                    </div>
+                {% if pertes_par_produit %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left border-b border-surface-container">
+                                <th class="pb-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Boisson</th>
+                                <th class="pb-4 text-center text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Quantité Perdue</th>
+                                <th class="pb-4 text-right text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Valeur Perte</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-surface-container">
+                            {% for p in pertes_par_produit %}
+                            <tr class="group hover:bg-surface-container/30 transition-all">
+                                <td class="py-4">
+                                    <p class="font-black text-on-surface">{{ p.nom }}</p>
+                                </td>
+                                <td class="py-4 text-center">
+                                    <span class="bg-surface-container px-3 py-1 rounded-lg font-black text-xs">{{ p.quantite }}</span>
+                                </td>
+                                <td class="py-4 text-right">
+                                    <p class="font-black text-red-600">
+                                        {% if p.devise == 'CDF' %}FC{% else %}${% endif %}{{ p.montant|floatformat:2 }}
+                                    </p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <div class="py-20 text-center">
+                    <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-300">
+                        <span class="material-symbols-outlined text-3xl">verified</span>
+                    </div>
+                    <p class="text-on-surface-variant font-medium">Aucune perte enregistrée sur cette période.</p>
+                    <p class="text-on-surface-variant/40 text-xs mt-1">C'est une excellente nouvelle pour votre marge !</p>
+                </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Right Side: Distribution -->
+        <!-- Right Side: Action & Top Sales -->
         <div class="space-y-6">
             <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high">
-                <h2 class="text-xl font-black text-on-surface mb-8">Top Produits</h2>
+                <h2 class="text-xl font-black text-on-surface mb-8">Performance Ventes</h2>
                 <div class="space-y-6">
-                    <!-- Placeholder for top products -->
                     <div class="flex items-center justify-center py-12">
-                        <p class="text-on-surface-variant/40 text-sm font-medium italic">Pas encore de ventes</p>
+                        <p class="text-on-surface-variant/40 text-sm font-medium italic">Analyse des ventes en cours...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal: Record Loss -->
+<div id="lossModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-[40px] w-full max-w-lg p-10 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="lossModalContent">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h2 class="text-2xl font-black tracking-tight">Signaler une Perte</h2>
+                <p class="text-sm text-gray-400 mt-1">Enregistrez une perte de stock (casse, vol, etc.)</p>
+            </div>
+            <button onclick="closeLossModal()" class="text-gray-400 hover:text-gray-900">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form method="post" action="{% url 'record_loss' %}" class="space-y-6">
+            {% csrf_token %}
+            <div class="space-y-1">
+                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Choisir le Produit</label>
+                <select name="item_id" required class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500">
+                    {% for item in inventory_items %}
+                    <option value="{{ item.id }}">{{ item.produit.nom }} (Actuel: {{ item.quantite_actuelle }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Quantité Perdue</label>
+                    <input type="number" name="quantite" value="1" min="1" required class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Raison</label>
+                    <select name="raison" class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500">
+                        <option value="CASSE">Casse / Dommage</option>
+                        <option value="PEREMPTION">Péremption</option>
+                        <option value="VOL">Vol / Disparition</option>
+                        <option value="OFFERT">Offert / Promo</option>
+                        <option value="ERREUR">Erreur Inventaire</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Commentaire (Optionnel)</label>
+                <textarea name="commentaire" placeholder="Plus de détails..." class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500 h-24"></textarea>
+            </div>
+
+            <div class="pt-6">
+                <button type="submit" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-red-700 transition-all active:scale-95">
+                    Confirmer la Perte
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openLossModal() {
+        const modal = document.getElementById('lossModal');
+        const content = document.getElementById('lossModalContent');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeLossModal() {
+        const modal = document.getElementById('lossModal');
+        const content = document.getElementById('lossModalContent');
+        content.classList.add('scale-95', 'opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+</script>
 {% endblock %}

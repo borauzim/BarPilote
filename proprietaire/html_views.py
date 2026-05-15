@@ -191,19 +191,32 @@ class InventoryView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         from django.contrib import messages
+        from decimal import Decimal
         item_id = request.POST.get('item_id')
-        item = StockItem.objects.get(id=item_id)
+        item = StockItem.objects.select_related('produit').get(id=item_id)
         
-        # Mise à jour des champs
-        item.prix_vente_unitaire = request.POST.get('prix_vente', 0)
-        item.quantite_actuelle = request.POST.get('quantite', 0)
-        item.seuil_alerte = request.POST.get('seuil', 12)
+        # Mise à jour des champs avec conversion Decimal
+        item.prix_vente_unitaire = Decimal(request.POST.get('prix_vente', 0) or 0)
+        item.quantite_actuelle = Decimal(request.POST.get('quantite', 0) or 0)
+        item.seuil_alerte = int(request.POST.get('seuil', 12) or 12)
         item.devise = request.POST.get('devise', 'USD')
         
+        # --- Vente au verre ---
+        item.vente_au_verre = request.POST.get('vente_au_verre') == 'on'
+        item.volume_verre_cl = int(request.POST.get('volume_verre_cl', 5) or 5)
+        item.prix_vente_verre = Decimal(request.POST.get('prix_vente_verre', 0) or 0)
+        item.reduction_bouteille_entiere = Decimal(request.POST.get('reduction_bouteille', 0) or 0)
+        
+        # Mise à jour du volume sur le produit master
+        if request.POST.get('volume_cl'):
+            item.produit.volume_cl = int(request.POST.get('volume_cl'))
+            item.produit.save()
+        # ----------------------
+
         # Gestion Casier vs Unité
         item.strategie_gestion = request.POST.get('strategie', 'UNITE')
-        item.bouteilles_par_casier = request.POST.get('bouteilles_par_casier', 24)
-        item.prix_achat_casier = request.POST.get('prix_achat_casier', 0)
+        item.bouteilles_par_casier = int(request.POST.get('bouteilles_par_casier', 24) or 24)
+        item.prix_achat_casier = Decimal(request.POST.get('prix_achat_casier', 0) or 0)
         
         item.save()
         messages.success(request, f"Configuration de {item.produit.nom} mise à jour !")
@@ -214,8 +227,116 @@ class FinanceView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Re-using dashboard logic for now, could be more specific later
+        profile = PilotProfile.objects.get(user=self.request.user)
+        bar = profile.bar
+        
+        if not bar:
+            return context
+            
+        # 1. Gestion des Dates (Filtre)
+        start_date_str = self.request.GET.get('start_date')
+        end_date_str = self.request.GET.get('end_date')
+        
+        if start_date_str and end_date_str:
+            start_date = timezone.datetime.strptime(start_date_str, '%Y-%m-%d').replace(tzinfo=timezone.get_current_timezone())
+            end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d').replace(tzinfo=timezone.get_current_timezone(), hour=23, minute=59, second=59)
+        else:
+            # Par défaut : 30 derniers jours
+            end_date = timezone.now()
+            start_date = end_date - timedelta(days=30)
+            
+        context['start_date'] = start_date.strftime('%Y-%m-%d')
+        context['end_date'] = end_date.strftime('%Y-%m-%d')
+        
+        # 2. Calculs Financiers (Ventes)
+        orders = Order.objects.filter(bar=bar, statut='PAID', date_creation__range=(start_date, end_date))
+        
+        revenue_data = orders.aggregate(
+            total_usd=Sum('total_usd'),
+            total_cdf=Sum('total_cdf'),
+            count=Count('id')
+        )
+        
+        context['revenue_usd'] = revenue_data['total_usd'] or 0
+        context['revenue_cdf'] = revenue_data['total_cdf'] or 0
+        context['total_orders'] = revenue_data['count'] or 0
+        
+        # Panier moyen (en USD pour l'exemple)
+        if context['total_orders'] > 0:
+            context['avg_basket_usd'] = context['revenue_usd'] / context['total_orders']
+        else:
+            context['avg_basket_usd'] = 0
+            
+        # 3. Calculs des Pertes (Perte sèche)
+        from .models import Perte
+        pertes = Perte.objects.filter(bar=bar, date_perte__range=(start_date, end_date))
+        
+        # On calcule la perte en se basant sur le prix d'achat unitaire au moment de l'inventaire
+        # Note: Dans un système parfait, on stockerait le prix au moment de la perte.
+        total_perte_usd = 0
+        total_perte_cdf = 0
+        
+        pertes_par_produit = []
+        
+        # Agrégation des pertes par produit
+        items_perdus = pertes.values('item__produit__nom', 'item__devise', 'item__prix_achat_unitaire').annotate(
+            total_qty=Sum('quantite')
+        ).order_by('-total_qty')
+        
+        for p in items_perdus:
+            montant = p['total_qty'] * (p['item__prix_achat_unitaire'] or 0)
+            if p['item__devise'] == 'CDF':
+                total_perte_cdf += montant
+            else:
+                total_perte_usd += montant
+                
+            pertes_par_produit.append({
+                'nom': p['item__produit__nom'],
+                'quantite': p['total_qty'],
+                'montant': montant,
+                'devise': p['item__devise']
+            })
+            
+        context['total_perte_usd'] = total_perte_usd
+        context['total_perte_cdf'] = total_perte_cdf
+        context['pertes_par_produit'] = pertes_par_produit
+        
+        # Pour le modal d'enregistrement de perte
+        context['inventory_items'] = StockItem.objects.filter(bar=bar).select_related('produit')
+        
         return context
+
+class RecordLossView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        from django.contrib import messages
+        from .models import Perte, StockItem
+        
+        item_id = request.POST.get('item_id')
+        quantite = int(request.POST.get('quantite', 1))
+        raison = request.POST.get('raison', 'CASSE')
+        commentaire = request.POST.get('commentaire', '')
+        
+        profile = PilotProfile.objects.get(user=request.user)
+        item = StockItem.objects.get(id=item_id, bar=profile.bar)
+        
+        # Enregistrer la perte
+        Perte.objects.create(
+            bar=profile.bar,
+            item=item,
+            quantite=quantite,
+            raison=raison,
+            commentaire=commentaire
+        )
+        
+        # Déduire du stock
+        item.quantite_actuelle = max(0, item.quantite_actuelle - quantite)
+        item.save()
+        
+        messages.success(request, f"Perte de {quantite} x {item.produit.nom} enregistrée. Stock mis à jour.")
+        
+        if profile.role == 'SERVEUR':
+            return redirect('serveur_dashboard')
+        return redirect('finance_html')
 
 class TeamView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/team.html'
@@ -547,3 +668,92 @@ class StaffInvitationPDFView(LoginRequiredMixin, View):
         response = HttpResponse(byte_data.read(), content_type='application/zip')
         response['Content-Disposition'] = 'attachment; filename="Badges_QR_Tables.zip"'
         return response
+
+class MixedCaseArrivalView(LoginRequiredMixin, TemplateView):
+    template_name = 'proprietaire/mixed_case_arrival.html'
+
+    def get_context_data(self, **kwargs):
+        from django.db.models import Q
+        context = super().get_context_data(**kwargs)
+        profile = PilotProfile.objects.get(user=self.request.user)
+        bar = profile.bar
+        if bar:
+            # On ne liste que les SODAS (Soft Drinks / Sucreries) pour les casiers mixtes
+            soda_filter = Q(produit__categorie__nom__icontains='Soft') | \
+                          Q(produit__categorie__nom__icontains='Soda') | \
+                          Q(produit__categorie__nom__icontains='Sucrerie')
+            
+            context['items_petits'] = StockItem.objects.filter(
+                soda_filter,
+                bar=bar, 
+                produit__format_casier='PETIT'
+            ).select_related('produit')
+            
+            context['items_gros'] = StockItem.objects.filter(
+                soda_filter,
+                bar=bar, 
+                produit__format_casier='GROS'
+            ).select_related('produit')
+            
+            context['bar'] = bar
+        return context
+
+    def post(self, request, *args, **kwargs):
+        from django.contrib import messages
+        from decimal import Decimal
+        profile = PilotProfile.objects.get(user=request.user)
+        bar = profile.bar
+        
+        format_type = request.POST.get('format_type') # PETIT or GROS
+        devise = request.POST.get('devise', 'CDF')
+        prix_casier = Decimal(request.POST.get('prix_casier', 0) or 0)
+        nb_casiers = Decimal(request.POST.get('nb_casiers', 1) or 1)
+        taille_casier = int(request.POST.get('taille_casier', 24) or 24)
+        
+        total_bouteilles_attendues = int(nb_casiers * Decimal(taille_casier))
+        
+        # Récupération des répartitions et réglages
+        items_updates = []
+        total_bouteilles_saisies = 0
+        
+        for key, value in request.POST.items():
+            if key.startswith('qty_item_'):
+                item_id = key.replace('qty_item_', '')
+                qty = int(value or 0)
+                if qty > 0:
+                    # On récupère aussi le prix de vente et le seuil pour cet item
+                    prix_vente = Decimal(request.POST.get(f'price_item_{item_id}', 0) or 0)
+                    seuil = int(request.POST.get(f'alert_item_{item_id}', 10) or 10)
+                    
+                    items_updates.append({
+                        'id': item_id, 
+                        'qty': qty,
+                        'prix_vente': prix_vente,
+                        'seuil': seuil
+                    })
+                    total_bouteilles_saisies += qty
+        
+        if total_bouteilles_saisies != total_bouteilles_attendues:
+            messages.error(request, f"Erreur : Vous avez saisi {total_bouteilles_saisies} bouteilles au lieu de {total_bouteilles_attendues} ({nb_casiers} casiers de {taille_casier}).")
+            return self.get(request, *args, **kwargs)
+            
+        # Calcul du prix unitaire moyen pour cet arrivage
+        if taille_casier > 0:
+            prix_unitaire = prix_casier / Decimal(taille_casier)
+        else:
+            prix_unitaire = 0
+        
+        for update in items_updates:
+            item = StockItem.objects.get(id=update['id'], bar=bar)
+            item.quantite_actuelle += update['qty']
+            
+            # Mise à jour complète
+            item.devise = devise
+            item.prix_achat_casier = prix_casier
+            item.prix_achat_unitaire = prix_unitaire
+            item.prix_vente_unitaire = update['prix_vente']
+            item.seuil_alerte = update['seuil']
+            item.save()
+            
+        messages.success(request, f"Arrivage de {nb_casiers} casiers enregistré ! {total_bouteilles_saisies} bouteilles mises à jour.")
+        return redirect('inventory_html')
