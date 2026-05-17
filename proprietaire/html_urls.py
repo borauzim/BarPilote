@@ -3,7 +3,8 @@ from .html_views import (
     DashboardView, EstablishmentSetupView, ProfileSetupView,
     InventoryView, FinanceView, TeamView, TablesView, EstablishmentDetailsView, TableSetupView,
     TableActionView, TableDownloadQRView, EstablishmentReadyView, StaffInvitationPDFView,
-    RecordLossView, MixedCaseArrivalView
+    RecordLossView, MixedCaseArrivalView, ToggleCurrencyView, FactureActionView, TakeOrderView,
+    LiveOrdersAPIView, UpdateOrderStatusView, DownloadFacturePDFView, DownloadAllFacturesView, ClientHistoryAPIView, ClientManagementView
 )
 
 urlpatterns = [
@@ -21,5 +22,14 @@ urlpatterns = [
     path('tables/download-qr/', TableDownloadQRView.as_view(), name='table_download_qr'),
     path('staff/download-invite/', StaffInvitationPDFView.as_view(), name='staff_download_invite'),
     path('finance/record-loss/', RecordLossView.as_view(), name='record_loss'),
+    path('finance/facture-action/', FactureActionView.as_view(), name='facture_action'),
+    path('finance/facture/<uuid:facture_id>/pdf/', DownloadFacturePDFView.as_view(), name='download_facture_pdf'),
+    path('finance/facture/all/pdf/', DownloadAllFacturesView.as_view(), name='download_all_factures'),
     path('stock/mixed-arrival/', MixedCaseArrivalView.as_view(), name='mixed_case_arrival'),
+    path('toggle-currency/', ToggleCurrencyView.as_view(), name='toggle_currency'),
+    path('take-order/', TakeOrderView.as_view(), name='take_order'),
+    path('api/live-orders/', LiveOrdersAPIView.as_view(), name='api_live_orders'),
+    path('api/update-order-status/', UpdateOrderStatusView.as_view(), name='api_update_order_status'),
+    path('api/client-history/', ClientHistoryAPIView.as_view(), name='api_client_history'),
+    path('clients/', ClientManagementView.as_view(), name='clients_html'),
 ]

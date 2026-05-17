@@ -1,5 +1,6 @@
 {% extends 'proprietaire/base.html' %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Inventaire - BarPilote{% endblock %}
 
@@ -84,11 +85,11 @@
                     <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Prix Vente</p>
                     <div class="flex flex-col items-end">
                         <p class="text-xl font-black text-on-surface">
-                            {% if item.devise == 'CDF' %}FC{% else %}${% endif %}{{ item.prix_vente_unitaire|floatformat:2 }}
+                            {% if item.devise == 'CDF' %}{% display_price None item.prix_vente_unitaire %}{% else %}{% display_price item.prix_vente_unitaire %}{% endif %}
                         </p>
                         {% if item.vente_au_verre %}
                         <p class="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full mt-1">
-                            Verre: {% if item.devise == 'CDF' %}FC{% else %}${% endif %}{{ item.prix_vente_verre|floatformat:2 }}
+                            Verre: {% if item.devise == 'CDF' %}{% display_price None item.prix_vente_verre %}{% else %}{% display_price item.prix_vente_verre %}{% endif %}
                         </p>
                         {% endif %}
                     </div>
@@ -102,7 +103,7 @@
             
             <!-- Quick Actions Overlay -->
             <div class="mt-4 flex gap-2">
-                <button onclick="openEditModal('{{ item.id }}', '{{ item.produit.nom|escapejs }}', '{{ item.prix_vente_unitaire }}', '{{ item.quantite_actuelle }}', '{{ item.seuil_alerte }}', '{{ item.devise }}', '{{ item.strategie_gestion }}', '{{ item.bouteilles_par_casier }}', '{{ item.prix_achat_casier }}', '{{ item.vente_au_verre|yesno:'true,false' }}', '{{ item.produit.volume_cl }}', '{{ item.volume_verre_cl }}', '{{ item.prix_vente_verre }}', '{{ item.reduction_bouteille_entiere }}')" 
+                <button onclick="openEditModal('{{ item.id }}', '{{ item.produit.nom|escapejs }}', '{{ item.prix_vente_unitaire }}', '{{ item.quantite_actuelle }}', '{{ item.seuil_alerte }}', '{{ item.devise }}', '{{ item.strategie_gestion }}', '{{ item.bouteilles_par_casier }}', '{{ item.prix_achat_casier }}', '{{ item.vente_au_verre|yesno:'true,false' }}', '{{ item.produit.volume_cl }}', '{{ item.volume_verre_cl }}', '{{ item.prix_vente_verre }}', '{{ item.reduction_bouteille_entiere }}', '{{ item.prix_achat_unitaire }}')" 
                         class="flex-1 py-2 bg-surface-container hover:bg-orange-50 hover:text-orange-600 text-on-surface-variant text-[10px] font-bold rounded-lg uppercase tracking-widest transition-all">
                     Modifier
                 </button>
@@ -140,6 +141,7 @@
         <form method="post" class="space-y-4">
             {% csrf_token %}
             <input type="hidden" name="item_id" id="modalItemId">
+            <input type="hidden" id="modalOriginalQty">
             
             <!-- Gestion Mode Selection -->
             <div class="space-y-1">
@@ -156,20 +158,37 @@
                 </div>
             </div>
 
+            <!-- Unit Details -->
+            <div id="unite_fields" class="space-y-1 hidden">
+                <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix Achat Bouteille</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant currency-symbol-text text-xs">$</span>
+                    <input type="number" step="0.01" name="prix_achat_unitaire" id="modalPrixAchatUnitaire" 
+                           class="w-full bg-surface-container-low border-none rounded-xl py-3 pl-12 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
+                </div>
+            </div>
+
             <!-- Case Details -->
-            <div id="casier_fields" class="grid grid-cols-2 gap-3 hidden">
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix Achat Casier</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant currency-symbol-text text-xs">$</span>
-                        <input type="number" step="0.01" name="prix_achat_casier" id="modalPrixAchatCasier" 
-                               class="w-full bg-surface-container-low border-none rounded-xl py-3 pl-12 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
+            <div id="casier_fields" class="grid grid-cols-1 gap-3 hidden">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Prix Achat Casier</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant currency-symbol-text text-xs">$</span>
+                            <input type="number" step="0.01" name="prix_achat_casier" id="modalPrixAchatCasier" 
+                                   class="w-full bg-surface-container-low border-none rounded-xl py-3 pl-12 pr-4 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Bout. / Casier</label>
+                        <input type="number" name="bouteilles_par_casier" id="modalBouteillesParCasier" oninput="syncFromCasiers()"
+                               class="w-full bg-surface-container-low border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
                     </div>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Bout. / Casier</label>
-                    <input type="number" name="bouteilles_par_casier" id="modalBouteillesParCasier" 
-                           class="w-full bg-surface-container-low border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
+                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Nombre de Casiers (Équivalent)</label>
+                    <input type="number" step="0.1" id="modalNbCasiers" oninput="syncFromCasiers()"
+                           class="w-full bg-orange-50 border-2 border-orange-100 rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm text-orange-600" placeholder="Ex: 10">
                 </div>
             </div>
 
@@ -236,15 +255,21 @@
 
             <div class="grid grid-cols-2 gap-3 border-t border-surface-container pt-4">
                 <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Stock (Bout.)</label>
-                    <input type="number" step="0.001" name="quantite" id="modalQuantite" required 
-                           class="w-full bg-surface-container-low border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
+                    <label class="text-[9px] font-black uppercase tracking-widest text-orange-600 ml-1">Nb Bouteilles Achetées (+)</label>
+                    <input type="number" step="0.001" name="qty_to_add" id="modalQtyToAdd" placeholder="Ex: 6" oninput="updateTotalStock()"
+                           class="w-full bg-orange-50 border-2 border-orange-100 rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm text-orange-600">
                 </div>
                 <div class="space-y-1">
                     <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Seuil Alerte</label>
                     <input type="number" name="seuil" id="modalSeuil" required 
                            class="w-full bg-surface-container-low border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
                 </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 ml-1">Stock Actuel Total (Bout.)</label>
+                <input type="number" step="0.001" name="quantite" id="modalQuantite" required oninput="syncToCasiers()"
+                       class="w-full bg-surface-container-low border-none rounded-xl py-3 px-5 font-black focus:ring-2 focus:ring-orange-500 transition-all text-sm">
             </div>
 
             <div class="pt-4 sticky bottom-0 bg-white">
@@ -290,11 +315,27 @@
     }
 
     function syncFromCasiers() {
+        const nbCasiersField = document.getElementById('modalNbCasiers');
         const bpcField = document.getElementById('modalBouteillesParCasier');
         const qtyField = document.getElementById('modalQuantite');
+        
+        const nbCasiers = parseFloat(nbCasiersField.value) || 0;
         const bpc = parseInt(bpcField.value) || 24;
-        // In this version, we don't need a visible nb_casiers field in the modal 
-        // if we use the simple bpc * quantity logic, but we can add it if needed.
+        
+        qtyField.value = (nbCasiers * bpc).toFixed(1).replace('.0', '');
+    }
+
+    function syncToCasiers() {
+        const qtyField = document.getElementById('modalQuantite');
+        const bpcField = document.getElementById('modalBouteillesParCasier');
+        const nbCasiersField = document.getElementById('modalNbCasiers');
+        
+        const qty = parseFloat(qtyField.value) || 0;
+        const bpc = parseInt(bpcField.value) || 24;
+        
+        if (bpc > 0) {
+            nbCasiersField.value = (qty / bpc).toFixed(1).replace('.0', '');
+        }
     }
 
     function updateCurrencySymbols(currency) {
@@ -306,10 +347,13 @@
 
     function toggleStrategyFields(strategy) {
         const casierFields = document.getElementById('casier_fields');
+        const uniteFields = document.getElementById('unite_fields');
         if (strategy === 'CASIER') {
             casierFields.classList.remove('hidden');
+            uniteFields.classList.add('hidden');
         } else {
             casierFields.classList.add('hidden');
+            uniteFields.classList.remove('hidden');
         }
     }
 
@@ -322,13 +366,24 @@
         }
     }
 
-    function openEditModal(id, name, price, qty, alert, currency, strategy, bpc, pac, venteVerre, volCl, volVerreCl, prixVerre, reduction) {
+    function updateTotalStock() {
+        const originalQty = parseFloat(document.getElementById('modalOriginalQty').value) || 0;
+        const qtyToAdd = parseFloat(document.getElementById('modalQtyToAdd').value) || 0;
+        const totalField = document.getElementById('modalQuantite');
+        
+        totalField.value = (originalQty + qtyToAdd).toFixed(1).replace('.0', '');
+        syncToCasiers();
+    }
+
+    function openEditModal(id, name, price, qty, alert, currency, strategy, bpc, pac, venteVerre, volCl, volVerreCl, prixVerre, reduction, prixAchatUnitaire) {
         document.getElementById('modalItemId').value = id;
         document.getElementById('modalProductName').innerText = name;
         document.getElementById('modalPrix').value = price.replace(',', '.');
         document.getElementById('modalQuantite').value = qty.replace(',', '.');
+        document.getElementById('modalOriginalQty').value = qty.replace(',', '.');
         document.getElementById('modalSeuil').value = alert;
         document.getElementById('modalDevise').value = currency;
+        document.getElementById('modalQtyToAdd').value = ''; // Reset "Ajouter"
         
         // Vente au verre
         const isVerre = venteVerre === 'true';
@@ -351,10 +406,14 @@
         } else {
             document.getElementById('strat_unite').checked = true;
             toggleStrategyFields('UNITE');
+            document.getElementById('modalPrixAchatUnitaire').value = prixAchatUnitaire.replace(',', '.');
         }
 
         const modal = document.getElementById('editModal');
         const content = document.getElementById('editModalContent');
+        // Initialize case count display
+        syncToCasiers();
+        
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         setTimeout(() => {

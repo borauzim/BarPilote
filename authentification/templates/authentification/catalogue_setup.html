@@ -228,9 +228,9 @@
         function openCreateModal() {
             const modal = document.getElementById('createModal');
             const content = document.getElementById('createModalContent');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            modal.style.display = 'flex';
             setTimeout(() => {
+                modal.classList.remove('hidden');
                 content.classList.remove('scale-95', 'opacity-0');
                 content.classList.add('scale-100', 'opacity-100');
             }, 10);
@@ -243,7 +243,7 @@
             content.classList.remove('scale-100', 'opacity-100');
             setTimeout(() => {
                 modal.classList.add('hidden');
-                modal.classList.remove('flex');
+                modal.style.display = 'none';
             }, 300);
         }
     </script>

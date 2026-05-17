@@ -1,5 +1,6 @@
 {% extends 'proprietaire/base.html' %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Finances - BarPilote{% endblock %}
 
@@ -43,6 +44,33 @@
         </div>
     </div>
 
+    <!-- Taux de Change Config -->
+    <div class="bg-white rounded-[32px] p-6 executive-shadow border border-orange-100 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined">currency_exchange</span>
+            </div>
+            <div>
+                <h3 class="text-sm font-black text-on-surface uppercase tracking-widest">Taux de Change Actuel</h3>
+                <p class="text-xs text-on-surface-variant/60 font-medium">Utilisé pour toutes les conversions automatiques.</p>
+            </div>
+        </div>
+        
+        <form method="post" class="flex items-center gap-3 w-full md:w-auto">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_rate">
+            <div class="flex items-center bg-surface-container rounded-2xl px-5 py-3 border border-surface-container-high focus-within:ring-2 focus-within:ring-orange-500 transition-all">
+                <span class="text-sm font-black text-on-surface-variant/40 mr-3">1 $ =</span>
+                <input type="number" name="taux" value="{{ bar.taux_change_usd_to_cdf|floatformat:0 }}" required 
+                       class="bg-transparent border-none p-0 w-24 font-black text-lg text-orange-600 focus:ring-0">
+                <span class="text-sm font-black text-on-surface-variant/40 ml-3">FC</span>
+            </div>
+            <button type="submit" class="bg-on-surface text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg active:scale-95">
+                Mettre à jour
+            </button>
+        </form>
+    </div>
+
     <!-- Stats Overview -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Chiffre d'Affaires -->
@@ -54,8 +82,8 @@
                 </div>
                 <h3 class="text-on-surface-variant/60 font-bold text-[10px] uppercase tracking-widest mb-1">Chiffre d'Affaires</h3>
                 <div class="space-y-1">
-                    <p class="text-2xl font-black text-on-surface">{{ revenue_usd|floatformat:2 }} $</p>
-                    <p class="text-xs font-bold text-on-surface-variant/40">{{ revenue_cdf|floatformat:0 }} FC</p>
+                    <p class="text-2xl font-black text-on-surface">{% display_price revenue_usd revenue_cdf %}</p>
+                    <p class="text-xs font-bold text-on-surface-variant/40">Total sur la période</p>
                 </div>
             </div>
         </div>
@@ -81,7 +109,7 @@
                     <span class="material-symbols-outlined">analytics</span>
                 </div>
                 <h3 class="text-on-surface-variant/60 font-bold text-[10px] uppercase tracking-widest mb-1">Panier Moyen</h3>
-                <p class="text-2xl font-black text-on-surface">{{ avg_basket_usd|floatformat:2 }} $</p>
+                <p class="text-2xl font-black text-on-surface">{% display_price avg_basket_usd None %}</p>
                 <p class="text-[10px] font-bold text-on-surface-variant/40 mt-1 uppercase">Par commande</p>
             </div>
         </div>
@@ -95,8 +123,8 @@
                 </div>
                 <h3 class="text-red-600/60 font-bold text-[10px] uppercase tracking-widest mb-1">Pertes de Stock</h3>
                 <div class="space-y-1">
-                    <p class="text-2xl font-black text-red-600">{{ total_perte_usd|floatformat:2 }} $</p>
-                    <p class="text-xs font-bold text-red-400">{{ total_perte_cdf|floatformat:0 }} FC</p>
+                    <p class="text-2xl font-black text-red-600">{% display_price total_perte_usd total_perte_cdf %}</p>
+                    <p class="text-xs font-bold text-red-400">Total pertes calculées</p>
                 </div>
             </div>
         </div>
@@ -153,7 +181,7 @@
             </div>
         </div>
 
-        <!-- Right Side: Action & Top Sales -->
+        <!-- Right Side: Performance -->
         <div class="space-y-6">
             <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high">
                 <h2 class="text-xl font-black text-on-surface mb-8">Performance Ventes</h2>
@@ -165,6 +193,121 @@
             </div>
         </div>
     </div>
+
+    <!-- Journal des Factures & Dettes -->
+    <div class="bg-white rounded-[40px] executive-shadow border border-surface-container-high overflow-hidden mt-8">
+        <div class="p-8 border-b border-surface-container-high flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest">
+            <div>
+                <h3 class="text-xl font-black text-on-surface tracking-tight">Journal des Factures & Dettes</h3>
+                <p class="text-xs text-on-surface-variant/60 font-medium">Suivi des paiements clients et fournisseurs.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-sm">search</span>
+                    <input type="text" id="factureSearch" placeholder="Rechercher par nom..." class="pl-10 pr-6 py-2.5 w-full sm:w-48 bg-surface-container border-none rounded-xl text-xs font-bold text-on-surface focus:ring-2 focus:ring-orange-500 transition-all placeholder:text-on-surface-variant/40">
+                </div>
+                <a href="{% url 'download_all_factures' %}" class="bg-orange-50 text-orange-600 border border-orange-200 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-95 flex items-center justify-center gap-2" title="Télécharger toutes les factures compilées dans un seul fichier PDF">
+                    <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+                    Tout Télécharger (PDF)
+                </a>
+                <button onclick="openFactureModal()" class="bg-on-surface text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">add</span>
+                    Nouvelle Facture
+                </button>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low/50">
+                        <th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">N° Facture</th>
+                        <th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Client / Fournisseur</th>
+                        <th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Type</th>
+                        <th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Montant</th>
+                        <th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Statut</th>
+                        <th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-high">
+                    {% for f in factures %}
+                    <tr class="hover:bg-surface-container-lowest/50 transition-colors facture-row" data-client="{{ f.client_fournisseur|lower }}">
+                        <td class="px-8 py-5 font-black text-xs text-on-surface-variant">{{ f.numero }}</td>
+                        <td class="px-8 py-5">
+                            <p class="font-bold text-on-surface text-sm">{{ f.client_fournisseur }}</p>
+                            <p class="text-[10px] text-on-surface-variant/40 uppercase font-bold">{{ f.date_emission|date:"d M Y • H:i" }}</p>
+                        </td>
+                        <td class="px-8 py-5">
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border
+                                       {% if f.type_facture == 'CLIENT' %}bg-blue-50 text-blue-600 border-blue-100{% else %}bg-purple-50 text-purple-600 border-purple-100{% endif %}">
+                                {{ f.get_type_facture_display }}
+                            </span>
+                        </td>
+                        <td class="px-8 py-5 font-black text-on-surface">
+                            {% display_price f.montant_usd f.montant_cdf %}
+                        </td>
+                        <td class="px-8 py-5">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full {% if f.statut == 'PAYEE' %}bg-emerald-500{% else %}bg-red-500 animate-pulse{% endif %}"></div>
+                                <span class="text-[10px] font-black uppercase tracking-widest {% if f.statut == 'PAYEE' %}text-emerald-600{% else %}text-red-600{% endif %}">
+                                    {{ f.get_statut_display }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-8 py-5 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <button onclick="showFactureDetails(this)" 
+                                        data-numero="{{ f.numero }}"
+                                        data-client="{{ f.client_fournisseur }}"
+                                        data-items="{% for order in f.orders.all %}{% for item in order.items.all %}{{ item.quantite }}x {{ item.product_item.produit.nom }}@{{ item.prix_unitaire }}@{{ item.devise }}|{% endfor %}{% endfor %}"
+                                        data-total-usd="{{ f.montant_usd }}"
+                                        data-total-cdf="{{ f.montant_cdf }}"
+                                        class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all flex items-center justify-center" 
+                                        title="Voir les détails">
+                                    <span class="material-symbols-outlined text-sm">visibility</span>
+                                </button>
+                                
+                                {% if f.type_facture == 'CLIENT' %}
+                                <a href="{% url 'download_facture_pdf' f.id %}" class="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all flex items-center justify-center" title="Télécharger le PDF">
+                                    <span class="material-symbols-outlined text-sm">download</span>
+                                </a>
+                                {% endif %}
+
+                                {% if f.statut == 'IMPAYEE' %}
+                                <form method="post" action="{% url 'facture_action' %}" class="inline-block">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="pay">
+                                    <input type="hidden" name="facture_id" value="{{ f.id }}">
+                                    <button type="submit" class="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-all flex items-center justify-center" title="Marquer comme payée">
+                                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <form method="post" action="{% url 'facture_action' %}" onsubmit="return confirm('Supprimer cette facture ?')" class="inline-block">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="facture_id" value="{{ f.id }}">
+                                    <button type="submit" class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all flex items-center justify-center" title="Supprimer">
+                                        <span class="material-symbols-outlined text-sm">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-8 py-20 text-center">
+                            <div class="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-4 text-on-surface-variant/20">
+                                <span class="material-symbols-outlined text-4xl">description</span>
+                            </div>
+                            <p class="text-on-surface-variant/40 font-black uppercase text-xs tracking-widest">Aucune facture enregistrée pour cette période</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <!-- Modal: Record Loss -->
@@ -172,19 +315,19 @@
     <div class="bg-white rounded-[40px] w-full max-w-lg p-10 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="lossModalContent">
         <div class="flex items-center justify-between mb-8">
             <div>
-                <h2 class="text-2xl font-black tracking-tight">Signaler une Perte</h2>
-                <p class="text-sm text-gray-400 mt-1">Enregistrez une perte de stock (casse, vol, etc.)</p>
+                <h2 class="text-2xl font-black tracking-tight text-on-surface">Signaler une Perte</h2>
+                <p class="text-sm text-on-surface-variant/60 mt-1">Enregistrez une perte de stock (casse, vol, etc.)</p>
             </div>
-            <button onclick="closeLossModal()" class="text-gray-400 hover:text-gray-900">
+            <button onclick="closeLossModal()" class="text-on-surface-variant hover:text-on-surface transition-colors">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
 
         <form method="post" action="{% url 'record_loss' %}" class="space-y-6">
             {% csrf_token %}
-            <div class="space-y-1">
-                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Choisir le Produit</label>
-                <select name="item_id" required class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500">
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Choisir le Produit</label>
+                <select name="item_id" required class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-red-500">
                     {% for item in inventory_items %}
                     <option value="{{ item.id }}">{{ item.produit.nom }} (Actuel: {{ item.quantite_actuelle }})</option>
                     {% endfor %}
@@ -192,25 +335,24 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Quantité Perdue</label>
-                    <input type="number" name="quantite" value="1" min="1" required class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Quantité Perdue</label>
+                    <input type="number" name="quantite" value="1" min="1" required class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-red-500">
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Raison</label>
-                    <select name="raison" class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Raison</label>
+                    <select name="raison" class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-red-500">
                         <option value="CASSE">Casse / Dommage</option>
                         <option value="PEREMPTION">Péremption</option>
                         <option value="VOL">Vol / Disparition</option>
                         <option value="OFFERT">Offert / Promo</option>
-                        <option value="ERREUR">Erreur Inventaire</option>
                     </select>
                 </div>
             </div>
 
-            <div class="space-y-1">
-                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Commentaire (Optionnel)</label>
-                <textarea name="commentaire" placeholder="Plus de détails..." class="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 font-bold focus:ring-2 focus:ring-red-500 h-24"></textarea>
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 ml-1">Commentaire (Optionnel)</label>
+                <textarea name="commentaire" placeholder="Plus de détails..." class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-red-500 h-24"></textarea>
             </div>
 
             <div class="pt-6">
@@ -222,7 +364,206 @@
     </div>
 </div>
 
+<!-- Modal Nouvelle Facture -->
+<div id="factureModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="factureModalContent">
+        <h3 class="text-2xl font-black text-on-surface mb-2">Nouvelle Facture</h3>
+        <p class="text-on-surface-variant text-sm mb-8">Enregistrez une dette client ou une dépense.</p>
+        
+        <form method="post" action="{% url 'facture_action' %}" class="space-y-6">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            
+            <div class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Type de Facture</label>
+                    <select name="type_facture" class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 text-on-surface font-bold focus:ring-2 focus:ring-orange-500 transition-all">
+                        <option value="CLIENT">Dette Client</option>
+                        <option value="FOURNISSEUR">Dépense Fournisseur</option>
+                    </select>
+                </div>
+                
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Client / Fournisseur</label>
+                    <div class="relative">
+                        <input type="text" name="client" id="factureClientInput" required placeholder="Ex: Jean Mukendi"
+                               autocomplete="off"
+                               class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 text-on-surface font-bold focus:ring-2 focus:ring-orange-500 transition-all">
+                        <div id="clientAutocompleteStatus" class="hidden mt-1.5 ml-2 flex items-center gap-1.5 text-[10px] font-black text-emerald-600">
+                            <span class="material-symbols-outlined text-xs">check_circle</span>
+                            <span id="clientAutocompleteMsg"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5" id="facturePhoneField">
+                    <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Numéro de Téléphone</label>
+                    <input type="text" name="telephone_client" id="facturePhoneInput" placeholder="Ex: +243 81 234 5678"
+                           class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 text-on-surface font-bold focus:ring-2 focus:ring-orange-500 transition-all">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Montant ($)</label>
+                        <input type="number" step="0.01" name="montant_usd" placeholder="0.00"
+                               class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 text-on-surface font-bold focus:ring-2 focus:ring-orange-500 transition-all">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Montant (FC)</label>
+                        <input type="number" name="montant_cdf" placeholder="0"
+                               class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 text-on-surface font-bold focus:ring-2 focus:ring-orange-500 transition-all">
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeFactureModal()" class="flex-1 py-4 font-bold text-on-surface-variant hover:bg-surface-container rounded-2xl transition-all">Annuler</button>
+                    <button type="submit" class="flex-1 citrus-gradient text-white py-4 font-bold rounded-2xl executive-shadow transition-all">Enregistrer</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Détails Facture -->
+<div id="factureDetailsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div id="factureDetailsModalContent" class="bg-surface-container-lowest w-full max-w-lg rounded-[32px] p-8 border border-surface-container executive-shadow transform scale-95 opacity-0 transition-all duration-300">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h3 id="factureDetailsTitle" class="text-xl font-black text-on-surface tracking-tight">Détails de la Facture</h3>
+                <p id="factureDetailsClient" class="text-xs text-on-surface-variant/60 font-medium mt-1">Client...</p>
+            </div>
+            <button onclick="closeFactureDetailsModal()" class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+
+        <div class="max-h-[300px] overflow-y-auto pr-2" id="factureDetailsItems">
+            <!-- Items injected by JS -->
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-surface-container space-y-3">
+            <div class="flex justify-between items-center text-sm font-bold text-on-surface-variant">
+                <span>Total USD</span>
+                <span id="factureDetailsTotalUsd" class="font-black text-on-surface text-base">0.00 $</span>
+            </div>
+            <div class="flex justify-between items-center text-sm font-bold text-on-surface-variant">
+                <span>Total CDF</span>
+                <span id="factureDetailsTotalCdf" class="font-black text-on-surface text-base">0 FC</span>
+            </div>
+        </div>
+
+        <div class="flex pt-6">
+            <button type="button" onclick="closeFactureDetailsModal()" class="flex-1 py-4 font-bold text-white bg-on-surface hover:bg-on-surface-variant rounded-2xl transition-all">Fermer</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    function showFactureDetails(button) {
+        const numero = button.getAttribute('data-numero');
+        const client = button.getAttribute('data-client');
+        const itemsRaw = button.getAttribute('data-items');
+        const totalUsd = button.getAttribute('data-total-usd');
+        const totalCdf = button.getAttribute('data-total-cdf');
+        
+        const modal = document.getElementById('factureDetailsModal');
+        const title = document.getElementById('factureDetailsTitle');
+        const clientEl = document.getElementById('factureDetailsClient');
+        const container = document.getElementById('factureDetailsItems');
+        const usdEl = document.getElementById('factureDetailsTotalUsd');
+        const cdfEl = document.getElementById('factureDetailsTotalCdf');
+        
+        title.innerText = `Détails de la Facture ${numero}`;
+        clientEl.innerText = client;
+        
+        let html = '';
+        if (!itemsRaw || itemsRaw.trim() === '') {
+            html = '<p class="text-on-surface-variant/60 text-xs italic text-center py-8">Aucun détail d\'article disponible pour cette facture.</p>';
+        } else {
+            const items = itemsRaw.split('|').filter(i => i.trim() !== '');
+            const aggregated = {};
+            
+            items.forEach(itemStr => {
+                const parts = itemStr.split('@');
+                if (parts.length >= 3) {
+                    let desc = parts[0].trim();
+                    let qty = 1;
+                    const qtyMatch = desc.match(/^(\d+)x\s+(.*)$/);
+                    if (qtyMatch) {
+                        qty = parseInt(qtyMatch[1]);
+                        desc = qtyMatch[2];
+                    }
+                    const price = parseFloat(parts[1]);
+                    const currency = parts[2].trim();
+                    
+                    const key = `${desc}_${price}_${currency}`;
+                    if (aggregated[key]) {
+                        aggregated[key].qty += qty;
+                    } else {
+                        aggregated[key] = { desc, price, currency, qty };
+                    }
+                }
+            });
+            
+            Object.values(aggregated).forEach(item => {
+                const priceDisplay = item.currency === 'USD' ? `${item.price.toFixed(2)} $` : `${item.price.toLocaleString()} FC`;
+                const totalDisplay = item.currency === 'USD' ? `${(item.price * item.qty).toFixed(2)} $` : `${(item.price * item.qty).toLocaleString()} FC`;
+                html += `
+                <div class="flex justify-between items-center py-3 border-b border-surface-container last:border-0 text-sm">
+                    <span class="font-bold text-on-surface"><span class="text-on-surface-variant mr-1.5 font-black">${item.qty}x</span>${item.desc}</span>
+                    <div class="text-right">
+                        <span class="text-on-surface-variant/60 block text-[10px] font-bold">${priceDisplay} / u</span>
+                        <span class="font-black text-on-surface">${totalDisplay}</span>
+                    </div>
+                </div>`;
+            });
+        }
+        
+        container.innerHTML = html;
+        usdEl.innerText = parseFloat(totalUsd).toFixed(2) + ' $';
+        cdfEl.innerText = parseInt(totalCdf).toLocaleString() + ' FC';
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            document.getElementById('factureDetailsModalContent').classList.remove('scale-95', 'opacity-0');
+            document.getElementById('factureDetailsModalContent').classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeFactureDetailsModal() {
+        const modal = document.getElementById('factureDetailsModal');
+        const content = document.getElementById('factureDetailsModalContent');
+        content.classList.add('scale-95', 'opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+
+    function openFactureModal() {
+        const modal = document.getElementById('factureModal');
+        const content = document.getElementById('factureModalContent');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeFactureModal() {
+        const modal = document.getElementById('factureModal');
+        const content = document.getElementById('factureModalContent');
+        content.classList.add('scale-95', 'opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+
     function openLossModal() {
         const modal = document.getElementById('lossModal');
         const content = document.getElementById('lossModalContent');
@@ -243,6 +584,68 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }, 300);
+    }
+
+    // Real-time search for factures by client/supplier name
+    document.getElementById('factureSearch')?.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        document.querySelectorAll('.facture-row').forEach(row => {
+            const client = row.getAttribute('data-client') || '';
+            if (client.includes(query)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Autocomplete : préremplir le numéro de téléphone si le client est reconnu dans le CRM
+    let clientLookupTimer = null;
+    const clientInput = document.getElementById('factureClientInput');
+    const phoneInput = document.getElementById('facturePhoneInput');
+    const statusBadge = document.getElementById('clientAutocompleteStatus');
+    const statusMsg = document.getElementById('clientAutocompleteMsg');
+
+    if (clientInput) {
+        clientInput.addEventListener('input', function() {
+            clearTimeout(clientLookupTimer);
+            const name = this.value.trim();
+
+            // Réinitialiser si vide
+            if (name.length < 2) {
+                statusBadge.classList.add('hidden');
+                return;
+            }
+
+            // Debounce : attendre 400ms après la dernière frappe
+            clientLookupTimer = setTimeout(() => {
+                fetch(`/proprietaire/api/client-history/?name=${encodeURIComponent(name)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.client_found && data.client_telephone) {
+                            // Client trouvé : préremplir le téléphone
+                            phoneInput.value = data.client_telephone;
+                            phoneInput.style.borderColor = '#10b981';
+                            statusMsg.textContent = `Client reconnu — Tél. ${data.client_telephone} rempli automatiquement`;
+                            statusBadge.classList.remove('hidden');
+                        } else if (data.client_found) {
+                            statusMsg.textContent = `Client reconnu dans le CRM`;
+                            statusBadge.classList.remove('hidden');
+                        } else {
+                            statusBadge.classList.add('hidden');
+                            phoneInput.style.borderColor = '';
+                        }
+                    })
+                    .catch(() => { statusBadge.classList.add('hidden'); });
+            }, 400);
+        });
+
+        // Réinitialiser le style du téléphone si l'utilisateur le modifie manuellement
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                this.style.borderColor = '';
+            });
+        }
     }
 </script>
 {% endblock %}

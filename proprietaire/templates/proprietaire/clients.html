@@ -1,0 +1,272 @@
+{% extends 'proprietaire/base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Clients & Dettes - BarPilote{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight text-on-surface">Gestion des Clients & Dettes</h1>
+            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Gérez la liste de confiance, vérifiez l'historique d'achat et whitelistez manuellement vos clients éligibles aux dettes.</p>
+        </div>
+        <div>
+            <button onclick="openAddClientModal()" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
+                <span class="material-symbols-outlined">person_add</span>
+                <span>Nouveau Client de Confiance</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex items-center gap-5">
+            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined">group</span>
+            </div>
+            <div>
+                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Total Clients Listés</p>
+                <p class="text-2xl font-black text-on-surface">{{ clients|length }}</p>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex items-center gap-5">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined">verified_user</span>
+            </div>
+            <div>
+                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Whitelistés Manuels</p>
+                <p class="text-2xl font-black text-emerald-600" id="statWhitelistedCount">
+                    {% regroup clients by dette_autorisee as whitelist_groups %}
+                    {% for group in whitelist_groups %}
+                        {% if group.grouper == True %}{{ group.list|length }}{% endif %}
+                    {% empty %}
+                        0
+                    {% endfor %}
+                </p>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex items-center gap-5">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined">payments</span>
+            </div>
+            <div>
+                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Dépense cumulée moyenne</p>
+                <p class="text-2xl font-black text-on-surface">CDF 100K+</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients List Table -->
+    <div class="bg-surface-container-lowest rounded-3xl border border-surface-container/50 executive-shadow overflow-hidden">
+        <div class="p-6 border-b border-surface-container flex items-center justify-between">
+            <h3 class="font-black text-lg text-on-surface">Répertoire des Clients Whitelistés</h3>
+            <span class="text-[10px] font-black uppercase text-on-surface-variant/40 bg-surface-container px-3 py-1.5 rounded-full tracking-widest">Confiance & Crédit</span>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low border-b border-surface-container text-[10px] font-black uppercase tracking-wider text-on-surface-variant/70">
+                        <th class="py-5 px-6">Client</th>
+                        <th class="py-5 px-6">Téléphone</th>
+                        <th class="py-5 px-6">Total Dépensé (CDF)</th>
+                        <th class="py-5 px-6">Statut d'éligibilité</th>
+                        <th class="py-5 px-6 text-center">Autoriser la dette</th>
+                        <th class="py-5 px-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container">
+                    {% for client in clients %}
+                    <tr class="hover:bg-surface-container-low/30 transition-colors">
+                        <td class="py-5 px-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-black text-sm">
+                                    {{ client.nom|slice:":2"|upper }}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-on-surface text-sm">{{ client.nom }}</p>
+                                    <p class="text-[9px] text-on-surface-variant/40 font-medium">Enregistré dans le système</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-5 px-6 font-bold text-on-surface-variant text-sm">
+                            {{ client.telephone }}
+                        </td>
+                        <td class="py-5 px-6 font-black text-on-surface text-sm">
+                            {{ client.total_spent_cdf|floatformat:0 }} FC
+                        </td>
+                        <td class="py-5 px-6">
+                            <div id="badge-{{ client.id }}">
+                                {% if client.dette_autorisee %}
+                                    <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-emerald-100">
+                                        <span class="material-symbols-outlined text-xs">verified</span> Whiteliste active
+                                    </span>
+                                {% elif client.eligible %}
+                                    <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-blue-100">
+                                        <span class="material-symbols-outlined text-xs">star</span> Automatique (>=100k)
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center gap-1 bg-zinc-100 text-zinc-500 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-zinc-200">
+                                        <span class="material-symbols-outlined text-xs">lock</span> Non éligible
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-5 px-6 text-center">
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" {% if client.dette_autorisee %}checked{% endif %} 
+                                       onchange="toggleDebtPermission('{{ client.id }}')" 
+                                       class="sr-only peer">
+                                <div class="w-11 h-6 bg-surface-container peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                        </td>
+                        <td class="py-5 px-6 text-right">
+                            <form method="POST" action="{% url 'clients_html' %}" onsubmit="return confirm('Voulez-vous vraiment retirer ce client ?');" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="name" value="{{ client.nom }}">
+                                <input type="hidden" name="client_id" value="{{ client.id }}">
+                                <button type="submit" class="w-8 h-8 rounded-lg bg-red-50 text-error hover:bg-red-100 flex items-center justify-center transition-colors">
+                                    <span class="material-symbols-outlined text-base">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-16 text-center text-on-surface-variant/40 font-bold text-sm">
+                            <span class="material-symbols-outlined text-4xl block mb-2 text-zinc-300">group_off</span>
+                            Aucun client enregistré pour le moment.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Client -->
+<div id="addClientModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-[40px] w-full max-w-md shadow-2xl scale-95 opacity-0 transition-all duration-300 transform flex flex-col overflow-hidden" id="addClientModalContent">
+        <!-- Header -->
+        <div class="p-8 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest shrink-0">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
+                    <span class="material-symbols-outlined">person_add</span>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-black text-on-surface tracking-tight">Ajouter un Client</h3>
+                    <p class="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest mt-1">Autorisation de crédit</p>
+                </div>
+            </div>
+            <button onclick="closeAddClientModal()" class="w-10 h-10 rounded-xl bg-white border border-surface-container flex items-center justify-center text-on-surface-variant hover:text-red-600 hover:border-red-100 hover:bg-red-50 transition-all">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="{% url 'clients_html' %}" class="p-8 space-y-6">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add">
+
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Nom Complet</label>
+                <input type="text" name="nom" required placeholder="Ex: Jean Dupont" class="w-full bg-surface-container-lowest border border-surface-container rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-orange-500 transition-all">
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Numéro de Téléphone (Recommandé)</label>
+                <input type="tel" name="telephone" placeholder="Ex: +2438888888" class="w-full bg-surface-container-lowest border border-surface-container rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-orange-500 transition-all">
+            </div>
+
+            <div class="flex items-center gap-3 p-4 bg-surface-container/30 rounded-2xl border border-surface-container/50">
+                <input type="checkbox" name="dette_autorisee" id="dette_autorisee" class="w-5 h-5 text-emerald-600 border-surface-container rounded-lg focus:ring-emerald-500">
+                <label for="dette_autorisee" class="text-xs font-bold text-on-surface cursor-pointer select-none">
+                    Whitelister immédiatement ce client pour les dettes
+                </label>
+            </div>
+
+            <div class="flex gap-4 pt-4">
+                <button type="button" onclick="closeAddClientModal()" class="w-1/2 bg-white border border-surface-container text-on-surface-variant py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-surface-container-low transition-all">
+                    Annuler
+                </button>
+                <button type="submit" class="w-1/2 citrus-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:opacity-90 active:scale-95 transition-all">
+                    Confirmer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAddClientModal() {
+        const modal = document.getElementById('addClientModal');
+        const content = document.getElementById('addClientModalContent');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeAddClientModal() {
+        const modal = document.getElementById('addClientModal');
+        const content = document.getElementById('addClientModalContent');
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function toggleDebtPermission(clientId) {
+        const formData = new FormData();
+        formData.append('action', 'toggle_debt');
+        formData.append('client_id', clientId);
+
+        fetch("{% url 'clients_html' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Instantly update badge UI
+                const badge = document.getElementById(`badge-${clientId}`);
+                const statCount = document.getElementById('statWhitelistedCount');
+                let count = parseInt(statCount.innerText);
+
+                if (data.dette_autorisee) {
+                    badge.innerHTML = `
+                        <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-emerald-100 animate-pulse">
+                            <span class="material-symbols-outlined text-xs">verified</span> Whiteliste active
+                        </span>
+                    `;
+                    statCount.innerText = count + 1;
+                } else {
+                    // Re-evaluate eligibility manually or prompt reload
+                    badge.innerHTML = `
+                        <span class="inline-flex items-center gap-1 bg-zinc-100 text-zinc-500 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-zinc-200">
+                            <span class="material-symbols-outlined text-xs">lock</span> Non éligible
+                        </span>
+                    `;
+                    statCount.innerText = Math.max(0, count - 1);
+                }
+            } else {
+                alert("Erreur lors de la modification de l'autorisation.");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erreur de connexion.");
+        });
+    }
+</script>
+{% endblock %}

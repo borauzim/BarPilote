@@ -268,10 +268,10 @@
         const expected = parseInt(document.getElementById('expected_total').innerText);
         let currentTotal = 0;
         
-        // Only sum visible inputs
+        // Only sum "Ajouter" inputs for the visible format
         const currentFormat = document.querySelector('input[name="format_type"]:checked').value;
         const containerId = currentFormat === 'PETIT' ? 'list_petits' : 'list_gros';
-        const inputs = document.querySelectorAll(`#${containerId} input[type="number"]`);
+        const inputs = document.querySelectorAll(`#${containerId} input[name^="qty_item_"]`);
         
         inputs.forEach(input => {
             currentTotal += parseInt(input.value) || 0;

@@ -4,75 +4,136 @@
 {% block title %}Tables & QR Codes - BarPilote{% endblock %}
 
 {% block content %}
+{% load currency_tags %}
 <div class="space-y-8">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-            <h1 class="text-3xl font-black tracking-tight text-on-surface">Gestion des Tables</h1>
-            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Imprimez vos QR codes et gérez vos emplacements.</p>
+            <h1 class="text-3xl font-black tracking-tight text-on-surface">Plan de Salle</h1>
+            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Gérez l'occupation de vos tables en temps réel.</p>
         </div>
         <div class="flex gap-3">
             <button onclick="openAddTablesModal()" class="bg-surface-container-high text-on-surface px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-surface-container-highest transition-all">
                 <span class="material-symbols-outlined">add_circle</span>
-                <span>Ajouter des Tables</span>
+                <span class="hidden sm:inline">Ajouter des Tables</span>
             </button>
             <button onclick="downloadAllQRs()" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
                 <span class="material-symbols-outlined">download_for_offline</span>
-                <span>Tout Télécharger</span>
+                <span class="hidden sm:inline">Tout Télécharger</span>
             </button>
         </div>
     </div>
-    
-    <!-- Printing Advice Banner -->
-    <div class="bg-orange-50 border border-orange-200 rounded-2xl p-5 flex items-center gap-5">
-        <div class="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg">
-            <span class="material-symbols-outlined">warning</span>
-        </div>
-        <div>
-            <p class="text-sm text-orange-900 font-bold mb-1">Conseil de l'Équipe BarPilote</p>
-            <p class="text-sm text-orange-800 leading-relaxed">
-                Pour un résultat optimal, nous vous conseillons d'imprimer vos badges en <strong>Format A4</strong> et en <strong>Couleur</strong>. 
-                N'oubliez pas de les <strong>plastifier</strong> : ils seront protégés des boissons et dureront beaucoup plus longtemps !
-            </p>
-        </div>
+
+    <!-- Status Filters -->
+    <div class="flex flex-wrap items-center gap-3 bg-surface-container-low p-2 rounded-2xl w-fit">
+        <button onclick="filterTables('all')" class="filter-btn active px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all" id="btn-all">
+            Toutes ({{ tables.count }})
+        </button>
+        <button onclick="filterTables('occupied')" class="filter-btn px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-orange-600 hover:bg-orange-50" id="btn-occupied">
+            Occupées ({{ occupied_count }})
+        </button>
+        <button onclick="filterTables('free')" class="filter-btn px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-emerald-600 hover:bg-emerald-50" id="btn-free">
+            Libres ({{ free_count }})
+        </button>
     </div>
 
+    <style>
+        .filter-btn.active {
+            background: white;
+            color: #FF5E00;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .table-card.hidden {
+            display: none;
+        }
+    </style>
+    
     <!-- Table Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="tablesGrid">
         {% for table in tables %}
-        <div class="bg-surface-container-lowest rounded-[24px] p-6 executive-shadow border border-surface-container-high group hover:border-orange-500/30 transition-all duration-300">
-            <div class="flex justify-between items-start mb-6">
-                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
-                    <span class="material-symbols-outlined text-2xl">qr_code_2</span>
+        <div class="table-card bg-white rounded-[32px] p-8 executive-shadow border transition-all duration-500 relative overflow-hidden group 
+                    {% if table.is_occupied %}border-orange-500/30 ring-4 ring-orange-500/5 status-occupied{% else %}border-surface-container-high status-free{% endif %}"
+             data-status="{% if table.is_occupied %}occupied{% else %}free{% endif %}">
+            
+            {% if table.is_occupied %}
+            <div class="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full -mr-12 -mt-12"></div>
+            {% endif %}
+
+            <div class="flex justify-between items-start mb-8 relative z-10">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center transition-colors 
+                            {% if table.is_occupied %}bg-orange-600 text-white shadow-lg shadow-orange-500/30{% else %}bg-surface-container text-on-surface-variant{% endif %}">
+                    <span class="material-symbols-outlined text-2xl">{% if table.is_occupied %}person_pin_circle{% else %}table_restaurant{% endif %}</span>
                 </div>
                 <div class="flex gap-1">
-                    <button onclick="openRenameModal('{{ table.id }}', '{{ table.nom }}')" class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                    <button onclick="openRenameModal('{{ table.id }}', '{{ table.nom }}')" class="w-10 h-10 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors" title="Renommer">
                         <span class="material-symbols-outlined text-lg">edit</span>
                     </button>
-                    <a href="{% url 'table_download_qr' %}?table_id={{ table.id }}" class="w-8 h-8 rounded-lg flex items-center justify-center text-orange-600 hover:bg-orange-50 transition-colors">
-                        <span class="material-symbols-outlined text-lg">download</span>
+                    <a href="{% url 'table_download_qr' %}?table_id={{ table.id }}" class="w-10 h-10 rounded-xl flex items-center justify-center text-orange-600 hover:bg-orange-50 transition-colors" title="Télécharger QR">
+                        <span class="material-symbols-outlined text-lg">qr_code_2</span>
                     </a>
+                    <form method="post" action="{% url 'table_action' %}" onsubmit="return confirm('Supprimer définitivement la {{ table.nom }} ?')" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="table_id" value="{{ table.id }}">
+                        <button type="submit" class="w-10 h-10 rounded-xl flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors" title="Supprimer">
+                            <span class="material-symbols-outlined text-lg">delete</span>
+                        </button>
+                    </form>
                 </div>
             </div>
             
-            <h3 class="text-xl font-black text-on-surface mb-1">{{ table.nom }}</h3>
-            <p class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Zone Active</p>
+            <div class="relative z-10">
+                <h3 class="text-2xl font-black text-on-surface tracking-tight mb-1">{{ table.nom }}</h3>
+                {% if table.is_occupied %}
+                    <div class="mt-4 p-4 rounded-2xl bg-orange-50/50 border border-orange-100/50 group-hover:bg-orange-50 transition-colors">
+                        <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse"></span>
+                            Total Actuel
+                        </p>
+                        <p class="text-2xl font-black text-on-surface mt-1">
+                            {% display_price table.order_info.total_usd table.order_info.total_cdf %}
+                        </p>
+                        <div class="mt-2 flex items-center gap-2">
+                            <span class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Statut : {{ table.order_info.statut }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="mt-4 p-4 rounded-2xl bg-emerald-50/30 border border-emerald-100/30">
+                        <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1">
+                            Disponible
+                        </p>
+                        <p class="text-2xl font-black text-on-surface-variant/10 mt-1">Prête</p>
+                    </div>
+                {% endif %}
+            </div>
             
-            <div class="mt-6 pt-6 border-t border-surface-container-high flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span class="text-[10px] font-bold text-green-600 uppercase tracking-widest">Connecté</span>
+            <div class="mt-8 pt-8 border-t border-surface-container-high flex items-center justify-between relative z-10">
+                <div class="flex gap-2 w-full">
+                    <a href="{% url 'dashboard_html' %}" class="flex-1 flex items-center justify-center gap-2 bg-orange-50 text-orange-600 font-black text-[10px] uppercase tracking-widest hover:bg-orange-100 px-4 py-3 rounded-xl transition-all border border-orange-100">
+                        <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                        Service
+                    </a>
+                    {% if table.is_occupied %}
+                        <form method="post" action="{% url 'table_action' %}" onsubmit="return confirm('Voulez-vous vraiment libérer cette table ?')" class="flex-1">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="liberate">
+                            <input type="hidden" name="table_id" value="{{ table.id }}">
+                            <button type="submit" class="w-full flex items-center justify-center gap-2 text-on-surface-variant font-black text-[10px] uppercase tracking-widest hover:bg-surface-container px-4 py-3 rounded-xl transition-all">
+                                <span class="material-symbols-outlined text-sm">logout</span>
+                                Libérer
+                            </button>
+                        </form>
+                    {% endif %}
                 </div>
-                <span class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Badge A6</span>
             </div>
         </div>
         {% empty %}
-        <div class="col-span-full py-20 text-center">
-            <div class="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-6 text-on-surface-variant/30">
-                <span class="material-symbols-outlined text-4xl">grid_off</span>
+        <div class="col-span-full py-24 text-center">
+            <div class="w-24 h-24 bg-surface-container rounded-[32px] flex items-center justify-center mx-auto mb-8 text-on-surface-variant/20">
+                <span class="material-symbols-outlined text-5xl">grid_off</span>
             </div>
-            <h3 class="text-xl font-bold text-on-surface">Aucune table configurée</h3>
-            <p class="text-on-surface-variant mt-2">Commencez par ajouter des tables à votre établissement.</p>
+            <h3 class="text-2xl font-black text-on-surface tracking-tight">Aucune table</h3>
+            <p class="text-on-surface-variant/60 font-medium mt-2">Commencez par ajouter des tables à votre plan de salle.</p>
         </div>
         {% endfor %}
     </div>
@@ -135,6 +196,32 @@
 </div>
 
 <script>
+    function filterTables(status) {
+        const cards = document.querySelectorAll('.table-card');
+        const buttons = document.querySelectorAll('.filter-btn');
+        
+        // Update buttons
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.id === `btn-${status}`) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Filter cards
+        cards.forEach(card => {
+            if (status === 'all') {
+                card.classList.remove('hidden');
+            } else {
+                if (card.dataset.status === status) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            }
+        });
+    }
+
     function openRenameModal(id, name) {
         document.getElementById('rename_table_id').value = id;
         document.getElementById('rename_table_name').value = name;

@@ -1,11 +1,11 @@
 from django.views.generic import TemplateView, View
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 import os
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum, Q, Count, F
 from django.utils import timezone
 from datetime import timedelta
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, JsonResponse
 from django.conf import settings
 import qrcode
 import io
@@ -15,7 +15,8 @@ from reportlab.lib.pagesizes import A6
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
-from .models import PilotProfile, Order, Table, Bar, StockItem, OrderItem, Category
+import uuid
+from .models import PilotProfile, Order, Table, Bar, StockItem, OrderItem, Category, Facture, Client
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/dashboard.html'
@@ -45,7 +46,56 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 context['total_revenue_usd'] = revenue_data['total_usd'] or 0
                 context['total_revenue_cdf'] = revenue_data['total_cdf'] or 0
                 
-                # Active Tables (tables with pending/preparing orders)
+                # Yesterday's Revenue & Dynamic Growth calculation
+                from datetime import timedelta
+                from decimal import Decimal
+                yesterday = today - timedelta(days=1)
+                
+                revenue_yesterday = Order.objects.filter(
+                    bar=bar, 
+                    statut='PAID',
+                    date_creation__date=yesterday
+                ).aggregate(
+                    total_usd=Sum('total_usd'),
+                    total_cdf=Sum('total_cdf')
+                )
+                total_yesterday_usd = Decimal(revenue_yesterday['total_usd'] or 0)
+                total_yesterday_cdf = Decimal(revenue_yesterday['total_cdf'] or 0)
+                
+                # Conversion to base USD to compute real growth
+                rate = Decimal(bar.taux_change_usd_to_cdf or 2800)
+                today_total_usd = Decimal(context['total_revenue_usd']) + (Decimal(context['total_revenue_cdf']) / rate)
+                yesterday_total_usd = total_yesterday_usd + (total_yesterday_cdf / rate)
+                
+                if yesterday_total_usd > 0:
+                    growth = ((today_total_usd - yesterday_total_usd) / yesterday_total_usd) * 100
+                elif today_total_usd > 0:
+                    growth = 100.0
+                else:
+                    growth = 0.0
+                context['revenue_growth_percent'] = float(growth)
+                
+                # Last paid order details for dynamic cashing timer
+                last_paid_order = Order.objects.filter(
+                    bar=bar,
+                    statut='PAID'
+                ).order_by('-date_maj').first()
+                
+                if last_paid_order:
+                    context['last_paid_timestamp'] = int(last_paid_order.date_maj.timestamp())
+                    diff = timezone.now() - last_paid_order.date_maj
+                    diff_seconds = int(diff.total_seconds())
+                    if diff_seconds < 60:
+                        context['last_paid_time_str'] = "à l'instant"
+                    elif diff_seconds < 3600:
+                        context['last_paid_time_str'] = f"il y a {diff_seconds // 60} min"
+                    else:
+                        context['last_paid_time_str'] = f"il y a {diff_seconds // 3600} h"
+                else:
+                    context['last_paid_timestamp'] = ""
+                    context['last_paid_time_str'] = "aucun aujourd'hui"
+                
+                # Active Tables
                 active_tables_ids = Order.objects.filter(
                     bar=bar, 
                     statut__in=['PENDING', 'PREPARING']
@@ -61,8 +111,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                     statut__in=['PENDING', 'PREPARING']
                 ).count()
                 
-                # Recent Transactions (last 10 orders)
+                # Recent Transactions
                 context['recent_orders'] = Order.objects.filter(bar=bar).order_by('-date_creation')[:10]
+                
+                # Data for Service Mode (Taking Orders)
+                context['tables'] = Table.objects.filter(bar=bar).order_by('nom')
+                context['categories'] = Category.objects.all().order_by('nom')
+                context['inventory_items'] = StockItem.objects.filter(bar=bar).select_related('produit', 'produit__categorie')
                 
                 # Critical Stock
                 critical_items = StockItem.objects.filter(
@@ -83,6 +138,54 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             pass
             
         return context
+
+class TakeOrderView(LoginRequiredMixin, View):
+    """Permet au propriétaire de prendre une commande directement."""
+    def post(self, request):
+        table_id = request.POST.get('table_id')
+        items_raw = request.POST.getlist('items[]') # Format attendu: stockitem_id:qty:unite
+        
+        if not table_id:
+            return redirect('dashboard_html')
+            
+        profile = PilotProfile.objects.get(user=request.user)
+        table = get_object_or_404(Table, id=table_id, bar=profile.bar)
+        
+        # Trouver ou créer la commande active pour cette table
+        order = Order.objects.filter(table=table, statut__in=['PENDING', 'PREPARING']).first()
+        if not order:
+            order = Order.objects.create(
+                bar=profile.bar,
+                table=table,
+                serveur=profile, # Le proprio est le serveur ici
+                statut='PENDING'
+            )
+            
+        # Ajouter les items
+        for item_str in items_raw:
+            try:
+                sid, qty, unite = item_str.split(':')
+                stock_item = StockItem.objects.get(id=sid, bar=profile.bar)
+                qty = int(qty)
+                
+                if qty <= 0: continue
+                
+                # Prix
+                price = stock_item.prix_vente_unitaire if unite == 'BOUTEILLE' else stock_item.prix_vente_verre
+                
+                OrderItem.objects.create(
+                    order=order,
+                    product_item=stock_item,
+                    unite_vente=unite,
+                    quantite=qty,
+                    prix_unitaire=price,
+                    devise=stock_item.devise
+                )
+            except Exception as e:
+                print(f"Error adding item to order: {e}")
+                
+        order.recalculate_totals()
+        return redirect('dashboard_html')
 
 class EstablishmentSetupView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/establishment_setup.html'
@@ -218,6 +321,14 @@ class InventoryView(LoginRequiredMixin, TemplateView):
         item.bouteilles_par_casier = int(request.POST.get('bouteilles_par_casier', 24) or 24)
         item.prix_achat_casier = Decimal(request.POST.get('prix_achat_casier', 0) or 0)
         
+        if item.strategie_gestion == 'UNITE':
+            item.prix_achat_unitaire = Decimal(request.POST.get('prix_achat_unitaire', 0) or 0)
+
+        # Arrivage rapide : On ajoute la quantité saisie au stock actuel
+        qty_to_add = Decimal(request.POST.get('qty_to_add', 0) or 0)
+        if qty_to_add > 0:
+            item.quantite_actuelle += qty_to_add
+        
         item.save()
         messages.success(request, f"Configuration de {item.produit.nom} mise à jour !")
         return redirect('inventory_html')
@@ -225,10 +336,27 @@ class InventoryView(LoginRequiredMixin, TemplateView):
 class FinanceView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/finance.html'
     
+    def post(self, request, *args, **kwargs):
+        from decimal import Decimal
+        from django.contrib import messages
+        profile = PilotProfile.objects.get(user=request.user)
+        bar = profile.bar
+        
+        action = request.POST.get('action')
+        if action == 'update_rate':
+            rate = request.POST.get('taux')
+            if rate:
+                bar.taux_change_usd_to_cdf = Decimal(rate)
+                bar.save()
+                messages.success(request, f"Taux de change mis à jour : 1$ = {rate} FC")
+        
+        return redirect('finance_html')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         profile = PilotProfile.objects.get(user=self.request.user)
         bar = profile.bar
+        context['bar'] = bar
         
         if not bar:
             return context
@@ -300,11 +428,76 @@ class FinanceView(LoginRequiredMixin, TemplateView):
         context['total_perte_usd'] = total_perte_usd
         context['total_perte_cdf'] = total_perte_cdf
         context['pertes_par_produit'] = pertes_par_produit
+            
+        # 4. Gestion des Factures (Dettes et Dépenses)
+        from .models import Facture
+        from django.db.models import Q
+        
+        # On inclut toutes les factures de la période, PLUS toutes les factures IMPAYÉES historiques (pour pouvoir les chercher et les encaisser)
+        factures = Facture.objects.filter(bar=bar).filter(
+            Q(date_emission__range=(start_date, end_date)) | Q(statut='IMPAYEE')
+        ).order_by('-date_emission').distinct()
+        context['factures'] = factures
+        
+        # Les factures clients IMPAYÉES créées dans la période sont considérées comme de la perte pour cette période
+        unpaid_client_invoices_period = Facture.objects.filter(
+            bar=bar,
+            type_facture='CLIENT',
+            statut='IMPAYEE',
+            date_emission__range=(start_date, end_date)
+        )
+        unpaid_usd = unpaid_client_invoices_period.aggregate(Sum('montant_usd'))['montant_usd__sum'] or 0
+        unpaid_cdf = unpaid_client_invoices_period.aggregate(Sum('montant_cdf'))['montant_cdf__sum'] or 0
+        
+        context['total_perte_usd'] += unpaid_usd
+        context['total_perte_cdf'] += unpaid_cdf
         
         # Pour le modal d'enregistrement de perte
         context['inventory_items'] = StockItem.objects.filter(bar=bar).select_related('produit')
         
         return context
+
+class FactureActionView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        from django.contrib import messages
+        from .models import Facture, PilotProfile
+        import uuid
+        
+        action = request.POST.get('action')
+        profile = PilotProfile.objects.get(user=request.user)
+        
+        if action == 'create':
+            client = request.POST.get('client')
+            montant_usd = request.POST.get('montant_usd', 0)
+            montant_cdf = request.POST.get('montant_cdf', 0)
+            type_f = request.POST.get('type_facture', 'CLIENT')
+            
+            Facture.objects.create(
+                bar=profile.bar,
+                numero=f"FAC-{uuid.uuid4().hex[:6].upper()}",
+                client_fournisseur=client,
+                montant_usd=montant_usd or 0,
+                montant_cdf=montant_cdf or 0,
+                type_facture=type_f,
+                statut='IMPAYEE'
+            )
+            messages.success(request, "Facture enregistrée.")
+            
+        elif action == 'pay':
+            facture_id = request.POST.get('facture_id')
+            facture = Facture.objects.get(id=facture_id, bar=profile.bar)
+            facture.statut = 'PAYEE'
+            facture.date_paiement = timezone.now()
+            facture.save()
+            messages.success(request, f"Facture {facture.numero} marquée comme payée.")
+            
+        elif action == 'delete':
+            facture_id = request.POST.get('facture_id')
+            facture = Facture.objects.get(id=facture_id, bar=profile.bar)
+            facture.delete()
+            messages.success(request, "Facture supprimée.")
+
+        return redirect('finance_html')
 
 class RecordLossView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
@@ -354,8 +547,44 @@ class TablesView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         profile = PilotProfile.objects.get(user=self.request.user)
-        if profile.bar:
-            context['tables'] = Table.objects.filter(bar=profile.bar).order_by('nom')
+        bar = profile.bar
+        if bar:
+            # Récupérer toutes les tables
+            tables = Table.objects.filter(bar=bar).order_by('nom')
+            
+            # Identifier les tables occupées (commandes non payées/annulées)
+            active_orders = Order.objects.filter(
+                bar=bar,
+                statut__in=['PENDING', 'PREPARING', 'SERVED']
+            ).select_related('table')
+            
+            occupied_tables = {}
+            for order in active_orders:
+                # On garde la commande la plus récente si plusieurs (cas rare)
+                occupied_tables[order.table_id] = {
+                    'order_id': order.id,
+                    'total_usd': order.total_usd,
+                    'total_cdf': order.total_cdf,
+                    'statut': order.get_statut_display(),
+                    'heure': order.date_creation
+                }
+            
+            # Enrichir les objets tables pour le template
+            for table in tables:
+                table.is_occupied = str(table.id) in [str(k) for k in occupied_tables.keys()]
+                if table.is_occupied:
+                    # On fait attention à la correspondance des IDs UUID
+                    info = occupied_tables.get(table.id)
+                    if not info: # fallback check
+                         for k, v in occupied_tables.items():
+                             if str(k) == str(table.id):
+                                 info = v
+                                 break
+                    table.order_info = info
+            
+            context['tables'] = tables
+            context['occupied_count'] = len(occupied_tables)
+            context['free_count'] = tables.count() - len(occupied_tables)
         return context
 
 class EstablishmentReadyView(LoginRequiredMixin, TemplateView):
@@ -369,16 +598,44 @@ class EstablishmentReadyView(LoginRequiredMixin, TemplateView):
 
 class TableActionView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
+        from django.contrib import messages
+        from .models import Order
         action = request.POST.get('action')
         table_id = request.POST.get('table_id')
+        profile = PilotProfile.objects.get(user=request.user)
         
         if action == 'rename' and table_id:
             new_name = request.POST.get('name')
             if new_name:
-                table = Table.objects.get(id=table_id, bar__proprietaires__user=request.user)
+                table = Table.objects.get(id=table_id, bar=profile.bar)
                 table.nom = new_name
                 table.save()
+                messages.success(request, f"Table renommée en {new_name}.")
         
+        elif action == 'liberate' and table_id:
+            # On passe toutes les commandes actives de cette table à PAID
+            updated = Order.objects.filter(
+                bar=profile.bar,
+                table_id=table_id,
+                statut__in=['PENDING', 'PREPARING', 'SERVED']
+            ).update(statut='PAID', date_maj=timezone.now())
+            messages.success(request, f"La table a été libérée. {updated} commande(s) clôturée(s).")
+
+        elif action == 'delete' and table_id:
+            # Vérifier si la table est occupée avant de supprimer
+            has_active_orders = Order.objects.filter(
+                bar=profile.bar,
+                table_id=table_id,
+                statut__in=['PENDING', 'PREPARING', 'SERVED']
+            ).exists()
+            
+            if has_active_orders:
+                messages.error(request, "Impossible de supprimer une table occupée. Libérez-la d'abord.")
+            else:
+                table = Table.objects.get(id=table_id, bar=profile.bar)
+                table.delete()
+                messages.success(request, "La table a été supprimée avec succès.")
+
         elif action == 'add':
             count = request.POST.get('count', 0)
             try:
@@ -757,3 +1014,465 @@ class MixedCaseArrivalView(LoginRequiredMixin, TemplateView):
             
         messages.success(request, f"Arrivage de {nb_casiers} casiers enregistré ! {total_bouteilles_saisies} bouteilles mises à jour.")
         return redirect('inventory_html')
+
+class ToggleCurrencyView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        profile = PilotProfile.objects.get(user=request.user)
+        if profile.preferred_currency == 'USD':
+            profile.preferred_currency = 'CDF'
+        else:
+            profile.preferred_currency = 'USD'
+        profile.save()
+        return redirect(request.META.get('HTTP_REFERER', '/proprietaire/dashboard/'))
+
+class LiveOrdersAPIView(LoginRequiredMixin, View):
+    """API pour récupérer les commandes actives (En attente / En préparation) pour le dashboard propriétaire"""
+    def get(self, request, *args, **kwargs):
+        try:
+            profile = PilotProfile.objects.get(user=request.user)
+            bar = profile.bar
+            if not bar:
+                return JsonResponse({'orders': []})
+                
+            active_orders = Order.objects.filter(
+                bar=bar, 
+                statut__in=['PENDING', 'PREPARING', 'SERVED']
+            ).order_by('date_creation')
+            
+            orders_data = []
+            for order in active_orders:
+                items_data = []
+                for item in order.items.all():
+                    items_data.append({
+                        'name': item.product_item.produit.nom,
+                        'qty': item.quantite,
+                        'price': float(item.prix_unitaire),
+                        'unit': item.unite_vente,
+                        'devise': item.devise
+                    })
+
+                orders_data.append({
+                    'id': str(order.id),
+                    'table_nom': order.table.nom,
+                    'statut': order.statut,
+                    'items_count': order.items.count(),
+                    'total_usd': float(order.total_usd),
+                    'total_cdf': float(order.total_cdf),
+                    'timestamp': order.date_creation.timestamp(),
+                    'date_creation': order.date_creation.isoformat(),
+                    'date_service': order.date_service.isoformat() if order.date_service else None,
+                    'delivery_duration': int((order.date_service - order.date_creation).total_seconds()) if order.date_service else None,
+                    'items': items_data
+                })
+                
+            # Last paid order details for dynamic cashing timer
+            last_paid_order = Order.objects.filter(
+                bar=bar,
+                statut='PAID'
+            ).order_by('-date_maj').first()
+            last_paid_timestamp = int(last_paid_order.date_maj.timestamp()) if last_paid_order else None
+            
+            return JsonResponse({
+                'orders': orders_data,
+                'last_paid_timestamp': last_paid_timestamp
+            })
+        except PilotProfile.DoesNotExist:
+            return JsonResponse({'error': 'Profile not found'}, status=404)
+
+class UpdateOrderStatusView(LoginRequiredMixin, View):
+    """API pour mettre à jour le statut d'une commande via AJAX"""
+    def post(self, request, *args, **kwargs):
+        try:
+            profile = PilotProfile.objects.get(user=request.user)
+            order_ids_raw = request.POST.get('order_id')
+            new_status = request.POST.get('status')
+            
+            client_name = request.POST.get('client_name')
+            client_phone = request.POST.get('client_phone')
+            
+            if not order_ids_raw or not new_status:
+                return JsonResponse({'error': 'Missing parameters'}, status=400)
+                
+            order_ids = [oid.strip() for oid in order_ids_raw.split(',') if oid.strip()]
+            
+            orders = Order.objects.filter(id__in=order_ids, bar=profile.bar)
+            
+            for order in orders:
+                order.statut = new_status
+                if new_status == 'SERVED':
+                    order.date_service = timezone.now()
+                if client_name:
+                    order.client_name = client_name
+                if client_phone:
+                    order.client_phone = client_phone
+                order.save()
+            
+            # Auto-generate Facture if PAID
+            if new_status == 'PAID' and orders.exists():
+                deferred = request.POST.get('deferred') == 'true'
+                guarantor = request.POST.get('guarantor', '').strip()
+                
+                total_usd = sum(order.total_usd for order in orders)
+                total_cdf = sum(order.total_cdf for order in orders)
+                table_nom = orders.first().table.nom if orders.first().table else "Comptoir"
+                
+                # Format du nom du client
+                if client_name and client_phone:
+                    client_nom_complet = f"{client_name} ({client_phone})"
+                elif client_name:
+                    client_nom_complet = client_name
+                elif client_phone:
+                    client_nom_complet = f"Client {client_phone}"
+                else:
+                    client_nom_complet = f"Client - {table_nom}"
+                
+                # Générer un numéro de facture unique court (ex: FAC-260517-A1B2)
+                short_uuid = str(uuid.uuid4())[:4].upper()
+                date_str = timezone.now().strftime("%y%m%d")
+                numero_facture = f"FAC-{date_str}-{short_uuid}"
+                
+                facture_status = 'IMPAYEE' if deferred else 'PAYEE'
+                
+                notes_lines = [f"Paiement différé (Dette) de {orders.count()} commande(s) pour la {table_nom}" if deferred else f"Paiement de {orders.count()} commande(s) pour la {table_nom}"]
+                if deferred and guarantor:
+                    guarantor_label = "Propriétaire" if guarantor == 'proprietaire' else "Serveur"
+                    notes_lines.append(f"Garant: {guarantor_label}")
+                
+                facture = Facture.objects.create(
+                    bar=profile.bar,
+                    numero=numero_facture,
+                    client_fournisseur=client_nom_complet,
+                    montant_usd=total_usd,
+                    montant_cdf=total_cdf,
+                    type_facture='CLIENT',
+                    statut=facture_status,
+                    notes="\n".join(notes_lines)
+                )
+                facture.orders.set(orders)
+            
+            return JsonResponse({'success': True, 'new_status': new_status})
+        except PilotProfile.DoesNotExist:
+            return JsonResponse({'error': 'Profile not found'}, status=404)
+
+def draw_facture_page(c, facture, profile):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.lib.colors import HexColor
+    
+    width, height = A4 # 595.27 x 841.89
+    
+    # Palette de couleurs élégante (Bleu marine professionnel)
+    color_primary = HexColor("#1E3A8A")
+    color_secondary = HexColor("#3B82F6")
+    color_dark = HexColor("#1F2937")
+    color_light = HexColor("#F3F4F6")
+    color_gray = HexColor("#6B7280")
+    
+    # 1. En-tête (Logo & Infos Bar)
+    c.setFillColor(color_primary)
+    c.rect(0, height - 40*mm, width, 40*mm, stroke=0, fill=1)
+    
+    c.setFillColor(HexColor("#FFFFFF"))
+    c.setFont("Helvetica-Bold", 24)
+    c.drawString(20*mm, height - 25*mm, profile.bar.nom.upper())
+    
+    c.setFont("Helvetica", 10)
+    c.drawString(20*mm, height - 32*mm, f"Tél: {profile.telephone or 'N/A'} | Email: {profile.user.email or 'N/A'}")
+    
+    c.setFont("Helvetica-Bold", 20)
+    c.drawRightString(width - 20*mm, height - 25*mm, "FACTURE")
+    
+    c.setFont("Helvetica-Bold", 10)
+    c.drawRightString(width - 20*mm, height - 32*mm, f"N° : {facture.numero}")
+    
+    # 2. Infos Client & Facture (Double colonnes)
+    y = height - 60*mm
+    c.setFillColor(color_dark)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(20*mm, y, "FACTURÉ À :")
+    c.drawRightString(width - 20*mm, y, "DÉTAILS DE FACTURATION :")
+    
+    y -= 6*mm
+    c.setFont("Helvetica", 10)
+    c.setFillColor(color_dark)
+    c.drawString(20*mm, y, facture.client_fournisseur)
+    c.drawRightString(width - 20*mm, y, f"Date d'émission : {facture.date_emission.strftime('%d/%m/%Y %H:%M')}")
+    
+    y -= 5*mm
+    c.drawString(20*mm, y, "Client BarPilote")
+    c.drawRightString(width - 20*mm, y, f"Statut : {facture.get_statut_display().upper()}")
+    
+    # 3. Ligne de séparation
+    y -= 10*mm
+    c.setStrokeColor(color_light)
+    c.setLineWidth(1)
+    c.line(20*mm, y, width - 20*mm, y)
+    
+    # 4. Table des articles
+    y -= 10*mm
+    c.setFillColor(color_primary)
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(20*mm, y, "Description du produit")
+    c.drawRightString(width - 80*mm, y, "Quantité")
+    c.drawRightString(width - 50*mm, y, "Prix Unitaire")
+    c.drawRightString(width - 20*mm, y, "Total")
+    
+    # Ligne d'en-tête de table
+    y -= 3*mm
+    c.setStrokeColor(color_primary)
+    c.setLineWidth(1.5)
+    c.line(20*mm, y, width - 20*mm, y)
+    
+    # Récupération et agrégation des items de la facture
+    items = {}
+    for order in facture.orders.all():
+        for order_item in order.items.all():
+            name = order_item.product_item.produit.nom
+            qty = order_item.quantite
+            price = float(order_item.prix_unitaire)
+            devise = order_item.devise
+            key = (name, price, devise)
+            if key in items:
+                items[key] += qty
+            else:
+                items[key] = qty
+                
+    # Affichage des lignes
+    y -= 6*mm
+    c.setFillColor(color_dark)
+    c.setFont("Helvetica", 10)
+    c.setStrokeColor(HexColor("#E5E7EB"))
+    c.setLineWidth(0.5)
+    
+    for (name, price, devise), qty in items.items():
+        total_item = price * qty
+        price_display = f"{price:.2f} $" if devise == 'USD' else f"{price:,.0f} FC"
+        total_display = f"{total_item:.2f} $" if devise == 'USD' else f"{total_item:,.0f} FC"
+        
+        c.drawString(20*mm, y, name)
+        c.drawRightString(width - 80*mm, y, str(qty))
+        c.drawRightString(width - 50*mm, y, price_display)
+        c.drawRightString(width - 20*mm, y, total_display)
+        
+        y -= 4*mm
+        c.line(20*mm, y, width - 20*mm, y)
+        y -= 4*mm
+        
+        # Gestion bas de page basique
+        if y < 40*mm:
+            c.showPage()
+            y = height - 20*mm
+            c.setFillColor(color_dark)
+            c.setFont("Helvetica", 10)
+            
+    # 5. Totaux (Encadré à droite)
+    y -= 10*mm
+    c.setFillColor(color_light)
+    c.rect(width - 90*mm, y - 25*mm, 70*mm, 25*mm, stroke=0, fill=1)
+    
+    c.setFillColor(color_dark)
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(width - 85*mm, y - 7*mm, "TOTAL USD :")
+    c.drawRightString(width - 25*mm, y - 7*mm, f"{facture.montant_usd:.2f} $")
+    
+    c.drawString(width - 85*mm, y - 17*mm, "TOTAL CDF :")
+    c.drawRightString(width - 25*mm, y - 17*mm, f"{facture.montant_cdf:,.0f} FC")
+    
+    # 6. Conditions & Merci (Pied de page)
+    c.setFillColor(color_gray)
+    c.setFont("Helvetica-Oblique", 9)
+    c.drawCentredString(width/2, 25*mm, "Merci pour votre confiance ! À bientôt chez nous.")
+    
+    c.setFont("Helvetica", 8)
+    c.drawCentredString(width/2, 18*mm, f"Facture émise électroniquement par le système de gestion BarPilote.")
+    
+    c.showPage()
+
+class DownloadFacturePDFView(LoginRequiredMixin, View):
+    def get(self, request, facture_id, *args, **kwargs):
+        from reportlab.lib.pagesizes import A4
+        from reportlab.pdfgen import canvas
+        
+        profile = get_object_or_404(PilotProfile, user=request.user)
+        facture = get_object_or_404(Facture, id=facture_id, bar=profile.bar)
+        
+        response = HttpResponse(content_type='application/pdf')
+        
+        # Nom du fichier : date_emission_nom_du_client.pdf
+        date_str = facture.date_emission.strftime("%Y%m%d")
+        client_clean = "".join(c if c.isalnum() else "_" for c in facture.client_fournisseur).strip("_")
+        client_clean = client_clean[:30]
+        filename = f"Facture_{date_str}_{client_clean}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+        draw_facture_page(c, facture, profile)
+        c.save()
+        
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        return response
+
+class DownloadAllFacturesView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        from reportlab.lib.pagesizes import A4
+        from reportlab.pdfgen import canvas
+        
+        profile = get_object_or_404(PilotProfile, user=request.user)
+        factures = Facture.objects.filter(bar=profile.bar).order_by('-date_emission')
+        
+        if not factures.exists():
+            from django.contrib import messages
+            messages.warning(request, "Aucune facture à télécharger.")
+            return redirect('finance_html')
+            
+        response = HttpResponse(content_type='application/pdf')
+        
+        bar_name_clean = "".join(c if c.isalnum() else "_" for c in profile.bar.nom).strip("_")
+        response['Content-Disposition'] = f'attachment; filename="Factures_Completes_{bar_name_clean}.pdf"'
+        
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+        
+        # Dessiner chaque facture l'une après l'autre
+        for facture in factures:
+            draw_facture_page(c, facture, profile)
+            
+        c.save()
+        
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        return response
+
+class ClientHistoryAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        from django.db.models import Q, Sum
+        phone = request.GET.get('phone', '').strip()
+        name = request.GET.get('name', '').strip()
+        profile = get_object_or_404(PilotProfile, user=request.user)
+        bar = profile.bar
+        
+        if not phone and not name:
+            return JsonResponse({'total_spent_cdf': 0, 'eligible': False})
+            
+        # Check if client exists and is explicitly whitelisted
+        client_query = Q(bar=bar)
+        client_sub = Q()
+        if phone:
+            client_sub |= Q(telephone__contains=phone)
+        if name:
+            client_sub |= Q(nom__icontains=name)
+            
+        client = Client.objects.filter(client_query & client_sub).first()
+        is_manually_authorized = client.dette_autorisee if client else False
+            
+        query = Q(bar=bar, type_facture='CLIENT', statut='PAYEE')
+        sub_query = Q()
+        if phone:
+            sub_query |= Q(client_fournisseur__contains=phone)
+        if name:
+            sub_query |= Q(client_fournisseur__icontains=name)
+            
+        factures = Facture.objects.filter(query & sub_query)
+        
+        total_usd = factures.aggregate(Sum('montant_usd'))['montant_usd__sum'] or 0
+        total_cdf = factures.aggregate(Sum('montant_cdf'))['montant_cdf__sum'] or 0
+        
+        rate = bar.taux_change_usd_to_cdf or 2800
+        total_spent_cdf = float(total_cdf) + float(total_usd) * float(rate)
+        
+        # Eligible if manually authorized OR spent >= 100,000 FC
+        eligible = is_manually_authorized or (total_spent_cdf >= 100000)
+        
+        return JsonResponse({
+            'total_spent_cdf': total_spent_cdf,
+            'eligible': eligible,
+            'is_manually_authorized': is_manually_authorized,
+            'currency_rate': float(rate),
+            'client_found': client is not None,
+            'client_nom': client.nom if client else '',
+            'client_telephone': client.telephone if client else '',
+        })
+
+class ClientManagementView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        profile = get_object_or_404(PilotProfile, user=request.user)
+        bar = profile.bar
+        clients = Client.objects.filter(bar=bar)
+        
+        # Build list of clients with their real total spent and credit status
+        clients_data = []
+        rate = bar.taux_change_usd_to_cdf or 2800
+        
+        for c in clients:
+            # Query paid factures matching this client's name or phone
+            query = Q(bar=bar, type_facture='CLIENT', statut='PAYEE')
+            sub_query = Q()
+            if c.telephone:
+                sub_query |= Q(client_fournisseur__contains=c.telephone)
+            sub_query |= Q(client_fournisseur__icontains=c.nom)
+            
+            factures = Facture.objects.filter(query & sub_query)
+            
+            total_usd = sum(f.montant_usd for f in factures)
+            total_cdf = sum(f.montant_cdf for f in factures)
+            total_spent_cdf = float(total_cdf) + float(total_usd) * float(rate)
+            
+            eligible = c.dette_autorisee or (total_spent_cdf >= 100000)
+            
+            clients_data.append({
+                'id': c.id,
+                'nom': c.nom,
+                'telephone': c.telephone or 'Non renseigné',
+                'dette_autorisee': c.dette_autorisee,
+                'total_spent_cdf': total_spent_cdf,
+                'eligible': eligible,
+            })
+            
+        context = {
+            'profile': profile,
+            'bar': bar,
+            'clients': clients_data,
+            'pref_currency': request.session.get('pref_currency', 'USD'),
+        }
+        return render(request, 'proprietaire/clients.html', context)
+        
+    def post(self, request, *args, **kwargs):
+        profile = get_object_or_404(PilotProfile, user=request.user)
+        bar = profile.bar
+        
+        action = request.POST.get('action')
+        
+        if action == 'add':
+            nom = request.POST.get('nom', '').strip()
+            telephone = request.POST.get('telephone', '').strip()
+            dette_autorisee = request.POST.get('dette_autorisee') == 'on'
+            
+            if not nom:
+                return redirect('clients_html')
+                
+            Client.objects.create(
+                bar=bar,
+                nom=nom,
+                telephone=telephone if telephone else None,
+                dette_autorisee=dette_autorisee
+            )
+            return redirect('clients_html')
+            
+        elif action == 'toggle_debt':
+            client_id = request.POST.get('client_id')
+            client = get_object_or_404(Client, id=client_id, bar=bar)
+            client.dette_autorisee = not client.dette_autorisee
+            client.save()
+            return JsonResponse({'success': True, 'dette_autorisee': client.dette_autorisee})
+            
+        elif action == 'delete':
+            client_id = request.POST.get('client_id')
+            client = get_object_or_404(Client, id=client_id, bar=bar)
+            client.delete()
+            return redirect('clients_html')
+            
+        return redirect('clients_html')

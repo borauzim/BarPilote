@@ -1,160 +1,283 @@
 {% extends 'proprietaire/base.html' %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Tableau de Bord - BarPilote{% endblock %}
 
 {% block content %}
-    <!-- Live Revenue Section (The Digital Sommelier Hero) -->
-    <section class="bg-surface-container-lowest rounded-xl p-8 executive-shadow flex flex-col md:flex-row md:items-end justify-between gap-6 overflow-hidden relative">
-        <div class="relative z-10">
-            <p class="text-[0.6875rem] font-bold uppercase tracking-wider text-on-surface-variant mb-2">REVENU DU JOUR</p>
-            <div class="flex flex-col gap-2">
-                <div class="flex items-baseline gap-4">
-                    <h1 class="text-[2.75rem] md:text-5xl font-black tracking-tight leading-none text-on-surface">{{ total_revenue_usd|default:"0.00" }} <span class="text-2xl font-bold opacity-40">USD</span></h1>
-                    <div class="flex items-center text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold">
-                        <span class="material-symbols-outlined text-sm mr-1">trending_up</span>+12%
-                    </div>
-                </div>
-                {% if total_revenue_cdf > 0 %}
-                <p class="text-xl font-bold text-on-surface-variant opacity-60">{{ total_revenue_cdf|default:"0" }} <span class="text-sm">CDF</span></p>
-                {% endif %}
+    <!-- ⏳ Subscription Timeline -->
+    {% with days=bar.jours_restants %}
+    <div class="mb-8 bg-white rounded-[24px] p-4 executive-shadow border border-surface-container-high flex flex-col md:flex-row items-center gap-6">
+        <div class="flex items-center gap-4 shrink-0">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center 
+                        {% if days <= 2 %}bg-red-50 text-red-600 animate-pulse
+                        {% elif days <= 7 %}bg-orange-50 text-orange-600
+                        {% else %}bg-blue-50 text-blue-600{% endif %}">
+                <span class="material-symbols-outlined text-2xl">history</span>
             </div>
-            <p class="mt-6 text-on-surface-variant/40 font-medium text-[10px] uppercase tracking-widest">Dernière mise à jour à {% now "H:i" %}</p>
-        </div>
-        <!-- Asymmetric Momentum Visual -->
-        <div class="hidden md:block w-48 h-24 opacity-10">
-            <svg class="w-full h-full" viewBox="0 0 100 40">
-                <path d="M0 35 Q 20 30, 40 38 T 80 10 T 100 5" fill="none" stroke="#FF5E00" stroke-linecap="round" stroke-width="4"></path>
-            </svg>
-        </div>
-        <div class="absolute top-0 right-0 w-48 h-48 citrus-gradient opacity-[0.02] rounded-full -mr-24 -mt-24"></div>
-    </section>
-
-    <!-- Bento Grid: Stats & Stock -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Stats Column -->
-        <div class="lg:col-span-2 space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Active Tables -->
-                <div class="bg-surface-container-lowest p-8 rounded-xl executive-shadow group hover:translate-y-[-4px] transition-all">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="p-3 rounded-2xl bg-orange-50 text-orange-600">
-                            <span class="material-symbols-outlined">table_restaurant</span>
-                        </div>
-                    </div>
-                    <h3 class="text-sm font-bold tracking-wide text-on-surface-variant mb-1 uppercase">TABLES ACTIVES</h3>
-                    <p class="text-4xl font-black text-on-surface tracking-tight">{{ tables_actives|default:"0" }}</p>
-                    <div class="mt-6 h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
-                        <div class="h-full bg-orange-600 rounded-full transition-all duration-1000" style="width: {{ tables_capacity_percent|default:0 }}%;"></div>
-                    </div>
-                    <p class="mt-3 text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">{{ tables_capacity_percent|default:0 }}% DE CAPACITÉ</p>
-                </div>
-
-                <!-- Orders in Flight -->
-                <div class="bg-surface-container-lowest p-8 rounded-xl executive-shadow group hover:translate-y-[-4px] transition-all">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="p-3 rounded-2xl bg-orange-50 text-orange-600">
-                            <span class="material-symbols-outlined">liquor</span>
-                        </div>
-                    </div>
-                    <h3 class="text-sm font-bold tracking-wide text-on-surface-variant mb-1 uppercase">COMMANDES EN COURS</h3>
-                    <p class="text-4xl font-black text-on-surface tracking-tight">{{ active_orders|default:"0" }}</p>
-                    <div class="flex gap-1.5 mt-6">
-                        {% for i in "12345" %}
-                        <div class="h-1.5 flex-1 {% if forloop.counter <= active_orders %}bg-orange-600{% else %}bg-surface-container-highest{% endif %} rounded-full transition-colors"></div>
-                        {% endfor %}
-                    </div>
-                    <p class="mt-3 text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">PRÉP. MOYENNE : 4:20M</p>
-                </div>
+            <div>
+                <p class="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">État de l'Abonnement</p>
+                <h4 class="font-black text-on-surface">
+                    {% if days <= 0 %}Période d'essai terminée{% else %}{{ days }} Jours restants{% endif %}
+                </h4>
             </div>
+        </div>
+        
+        <div class="flex-1 w-full space-y-2">
+            <div class="flex justify-between text-[9px] font-black uppercase tracking-tighter">
+                <span class="text-on-surface-variant/40">Début Essai</span>
+                <span class="{% if days <= 7 %}text-orange-600{% else %}text-blue-600{% endif %}">Renouvellement requis</span>
+            </div>
+            <div class="h-3 w-full bg-surface-container rounded-full p-0.5 overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-1000 
+                            {% if days <= 2 %}bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]
+                            {% elif days <= 7 %}bg-orange-500
+                            {% else %}citrus-gradient{% endif %}" 
+                     style="width: {{ days|add:0|mul:3.33 }}%"></div>
+            </div>
+        </div>
 
-            <!-- Recent Transactions Table -->
-            <div class="bg-surface-container-lowest p-8 rounded-xl executive-shadow">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-xl font-black tracking-tight text-on-surface">Journal en direct</h2>
-                    <button class="text-orange-600 text-xs font-bold uppercase tracking-widest hover:opacity-70">Tout voir</button>
+        <div class="shrink-0 flex flex-col items-center gap-2">
+            <div class="text-center">
+                <p class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase mb-2">Offre de Lancement • -10% Annuel</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-black text-on-surface">{{ bar.prix_mensuel_estime|floatformat:2 }}$</span>
+                    <span class="text-[10px] font-bold text-on-surface-variant/40">/ mois</span>
                 </div>
-                <div class="space-y-1">
-                    <!-- Row Header -->
-                    <div class="grid grid-cols-4 px-4 py-3 text-[10px] font-black text-on-surface-variant/40 tracking-widest uppercase">
-                        <div class="col-span-2">DÉTAILS COMMANDE</div>
-                        <div>STATUT</div>
-                        <div class="text-right">TOTAL</div>
-                    </div>
-                    
-                    {% for order in recent_orders %}
-                    <div class="grid grid-cols-4 px-4 py-4 rounded-xl hover:bg-surface-container transition-all items-center group cursor-pointer border-b border-surface-container-low last:border-0">
-                        <div class="col-span-2 flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-orange-600 group-hover:bg-white transition-colors">
-                                <span class="material-symbols-outlined">receipt_long</span>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold text-on-surface">{{ order.table.nom }}</p>
-                                <p class="text-[10px] text-on-surface-variant/60 uppercase font-bold tracking-tighter">{{ order.date_creation|timesince }} • {{ order.items.count }} ARTICLES</p>
-                            </div>
-                        </div>
-                        <div>
-                            {% if order.statut == 'PAID' %}
-                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 uppercase">RÉGLÉ</span>
-                            {% elif order.statut == 'SERVED' %}
-                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-100 text-blue-700 uppercase">SERVI</span>
-                            {% elif order.statut == 'PREPARING' %}
-                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-orange-100 text-orange-700 uppercase">PRÉP.</span>
+                <p class="text-[9px] text-on-surface-variant/60 font-medium">Facturé {{ bar.prix_mensuel_estime|mul:12|mul:0.9|floatformat:0 }}$ annuellement</p>
+            </div>
+            <button class="w-full px-6 py-3 bg-on-surface text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95 shadow-lg shadow-on-surface/10">
+                S'abonner maintenant
+            </button>
+        </div>
+    </div>
+    {% endwith %}
+
+    <!-- 💎 Executive Revenue Hero -->
+    <section class="relative overflow-hidden rounded-[40px] p-10 executive-shadow border border-white/20 bg-white group">
+        <!-- Dynamic Mesh Background -->
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[120px] -mr-48 -mt-48 transition-all duration-1000 group-hover:bg-orange-500/20"></div>
+        <div class="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[100px] -ml-24 -mb-24"></div>
+        
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">Performance en Direct</p>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-on-surface-variant/60 uppercase mb-1">Revenu du Jour</h2>
+                    <div class="flex items-end gap-4">
+                        <h1 class="text-6xl md:text-7xl font-black tracking-tighter text-on-surface leading-none">
+                            {% display_price total_revenue_usd total_revenue_cdf %}
+                        </h1>
+                        <div class="mb-2">
+                            {% if revenue_growth_percent >= 0 %}
+                            <span class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-black shadow-sm border border-emerald-100">
+                                <span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                +{{ revenue_growth_percent|floatformat:1 }}%
+                            </span>
                             {% else %}
-                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-zinc-100 text-zinc-600 uppercase">ATTENTE</span>
+                            <span class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 text-red-600 text-[11px] font-black shadow-sm border border-red-100">
+                                <span class="material-symbols-outlined text-[14px]">trending_down</span>
+                                {{ revenue_growth_percent|floatformat:1 }}%
+                            </span>
                             {% endif %}
                         </div>
-                        <div class="text-right">
-                            <p class="text-sm font-black text-on-surface">{% if order.total_usd > 0 %}${{ order.total_usd }}{% else %}{{ order.total_cdf }} FC{% endif %}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6 pt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-orange-600 text-sm">schedule</span>
+                        <p id="lastCashingText" class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest live-last-cashing" data-start="{{ last_paid_timestamp|default:'' }}">
+                            Dernier encaissement : {{ last_paid_time_str|default:"aucun" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Momentum Graph Visual -->
+            <div class="relative w-full md:w-64 h-32 flex items-end gap-1 px-4">
+                {% for i in "123456789012" %}
+                <div class="flex-1 bg-orange-100 rounded-t-lg transition-all duration-700 hover:bg-orange-500 cursor-help" style="height: {{ forloop.counter|add:20 }}%; opacity: {{ forloop.counter|add:30 }}%"></div>
+                {% endfor %}
+                <div class="absolute inset-0 bg-gradient-to-t from-white to-transparent h-12 bottom-0"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 📊 Bento Stats Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        <!-- Main Stats Column -->
+        <div class="lg:col-span-2 space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- 🪑 Active Tables Card -->
+                <div class="bg-white p-8 rounded-[32px] executive-shadow border border-surface-container-high relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-center mb-8">
+                            <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shadow-inner">
+                                <span class="material-symbols-outlined">table_bar</span>
+                            </div>
+                            <span class="text-[10px] font-black text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest">+2 VIP</span>
+                        </div>
+                        <h3 class="text-[10px] font-black tracking-[0.2em] text-on-surface-variant/40 mb-2 uppercase">Occupation Actuelle</h3>
+                        <div class="flex items-baseline gap-2">
+                            <p class="text-5xl font-black text-on-surface tracking-tighter">{{ tables_actives|default:"0" }}</p>
+                            <p class="text-lg font-bold text-on-surface-variant/20">/ {{ context.tables_total|default:"12" }}</p>
+                        </div>
+                        <div class="mt-8">
+                            <div class="flex justify-between text-[10px] font-black uppercase mb-2">
+                                <span class="text-on-surface-variant/40">Capacité Bar</span>
+                                <span class="text-orange-600">{{ tables_capacity_percent|default:0 }}%</span>
+                            </div>
+                            <div class="h-2 w-full bg-surface-container rounded-full p-0.5">
+                                <div class="h-full bg-orange-600 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(255,94,0,0.3)]" style="width: {{ tables_capacity_percent|default:0 }}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🍹 Active Orders Card -->
+                <div class="bg-white p-8 rounded-[32px] executive-shadow border border-surface-container-high relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-center mb-8">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
+                                <span class="material-symbols-outlined">auto_awesome</span>
+                            </div>
+                            <span class="text-[10px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest">En Préparation</span>
+                        </div>
+                        <h3 class="text-[10px] font-black tracking-[0.2em] text-on-surface-variant/40 mb-2 uppercase">Commandes Actives</h3>
+                        <p class="text-5xl font-black text-on-surface tracking-tighter">{{ active_orders|default:"0" }}</p>
+                        <div class="flex gap-2 mt-8">
+                            {% for i in "123456" %}
+                            <div class="h-3 flex-1 {% if forloop.counter <= active_orders %}bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.4)]{% else %}bg-surface-container{% endif %} rounded-full transition-all duration-500"></div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 📝 Premium Transactions Ledger -->
+            <!-- 📝 Premium Transactions Ledger -->
+            <div class="bg-white rounded-[40px] p-10 executive-shadow border border-surface-container-high">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black tracking-tight text-on-surface">Journal de Bord</h2>
+                        <p class="text-xs text-on-surface-variant/40 font-bold uppercase tracking-widest mt-1">Flux de commandes en temps réel</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <!-- Toggle Button -->
+                        <div class="flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-2xl border border-surface-container">
+                            <span class="text-xs font-black text-on-surface uppercase tracking-widest">Réception Auto</span>
+                            <button id="receptionToggle" onclick="toggleReceptionMode()" class="w-12 h-6 bg-surface-container-highest rounded-full relative transition-colors duration-300 focus:outline-none">
+                                <div id="receptionThumb" class="w-4 h-4 bg-white rounded-full absolute top-1 left-1 shadow-sm transition-transform duration-300"></div>
+                            </button>
+                        </div>
+                        <button class="bg-surface-container hover:bg-on-surface hover:text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">Voir Historique</button>
+                    </div>
+                </div>
+
+                <div id="liveOrdersContainer" class="space-y-4">
+                    {% for order in recent_orders %}
+                    <div class="flex items-center justify-between p-5 rounded-[24px] hover:bg-surface-container-lowest hover:executive-shadow transition-all group border border-transparent hover:border-surface-container">
+                        <div class="flex items-center gap-5">
+                            <div class="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-orange-600 group-hover:text-white transition-all duration-500">
+                                <span class="material-symbols-outlined text-2xl">local_bar</span>
+                            </div>
+                            <div>
+                                <h4 class="font-black text-lg text-on-surface tracking-tight">{{ order.table.nom }}</h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-tighter">{{ order.date_creation|timesince }} ago</span>
+                                    <span class="w-1 h-1 rounded-full bg-surface-container-highest"></span>
+                                    <span class="text-[10px] font-bold text-orange-600 uppercase">{{ order.items.count }} Produits</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-8">
+                            <div class="hidden sm:flex items-center gap-2">
+                                {% if order.statut == 'PENDING' %}
+                                <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>
+                                <button onclick="updateOrderStatus('{{ order.id }}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter</button>
+                                {% elif order.statut == 'PREPARING' %}
+                                <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>
+                                <button onclick="updateOrderStatus('{{ order.id }}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>
+                                {% elif order.statut == 'SERVED' %}
+                                <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Servi</span>
+                                <button onclick="openPaymentModal('{{ order.id }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'f' }}, {{ order.total_cdf|stringformat:'f' }})" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>
+                                {% elif order.statut == 'PAID' %}
+                                <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-600 uppercase tracking-widest border border-emerald-100">Réglé</span>
+                                {% else %}
+                                <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-surface-container text-on-surface-variant uppercase tracking-widest">{{ order.get_statut_display }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-black text-on-surface">{% display_price order.total_usd order.total_cdf %}</p>
+                            </div>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="py-12 text-center">
-                        <p class="text-sm text-on-surface-variant font-medium">Aucune commande aujourd'hui.</p>
+                    <div class="py-20 text-center" id="emptyOrdersMsg">
+                        <div class="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-6 text-on-surface-variant/20">
+                            <span class="material-symbols-outlined text-4xl">inbox</span>
+                        </div>
+                        <p class="text-on-surface-variant/60 font-black uppercase text-xs tracking-widest">Aucune activité pour le moment</p>
                     </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar Column -->
-        <div class="space-y-6">
-            <!-- Critical Stock Card -->
-            <div class="bg-surface-container-lowest p-6 rounded-xl executive-shadow">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-sm font-bold text-on-surface uppercase tracking-widest">Stock Critique</h3>
-                    <span class="material-symbols-outlined text-orange-600">warning</span>
-                </div>
-                <div class="space-y-6">
-                    {% for stock in critical_stocks %}
-                    <div class="space-y-2">
-                        <div class="flex justify-between text-[11px] font-bold">
-                            <span class="text-on-surface-variant">{{ stock.item.produit.nom }}</span>
-                            <span class="text-orange-600">{{ stock.item.quantite_actuelle }} restants</span>
-                        </div>
-                        <div class="h-1 bg-surface-container-highest rounded-full overflow-hidden">
-                            <div class="h-full bg-orange-600 rounded-full" style="width: {{ stock.percent }}%"></div>
+        <!-- 🛡️ Control Sidebar -->
+        <div class="space-y-8">
+            <!-- Alert Stock Section -->
+            <div class="bg-white p-8 rounded-[40px] executive-shadow border border-red-50 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full -mr-12 -mt-12"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-xs font-black text-on-surface uppercase tracking-widest">Alerte Stocks</h3>
+                        <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center animate-bounce">
+                            <span class="material-symbols-outlined text-sm">notifications_active</span>
                         </div>
                     </div>
-                    {% empty %}
-                    <div class="py-4 text-center">
-                        <p class="text-xs text-emerald-600 font-bold">Stock optimal ✅</p>
+                    
+                    <div class="space-y-8">
+                        {% for stock in critical_stocks %}
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-sm font-black text-on-surface">{{ stock.item.produit.nom }}</p>
+                                    <p class="text-[10px] font-bold text-on-surface-variant/40 uppercase">Seuil atteint</p>
+                                </div>
+                                <span class="text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-md">{{ stock.item.quantite_actuelle }} restants</span>
+                            </div>
+                            <div class="h-2 w-full bg-surface-container rounded-full p-0.5">
+                                <div class="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.3)]" style="width: {{ stock.percent }}%"></div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="py-10 text-center">
+                            <p class="text-sm text-emerald-600 font-black uppercase tracking-widest">Tout est Ok ✅</p>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+
+                    <a href="{% url 'inventory_html' %}" class="block w-full mt-10 py-4 bg-on-surface text-white text-[10px] font-black rounded-2xl uppercase tracking-widest text-center shadow-xl hover:bg-orange-600 transition-all active:scale-95">
+                        Ouvrir l'Inventaire
+                    </a>
                 </div>
-                <button class="w-full mt-8 py-3 bg-surface-container text-on-surface-variant text-[11px] font-bold rounded-xl uppercase tracking-widest hover:bg-surface-container-high transition-colors">
-                    Gérer l'inventaire
-                </button>
             </div>
 
-            <!-- Executive Tip -->
-            <div class="bg-orange-600 text-white rounded-xl p-8 shadow-xl relative overflow-hidden">
+            <!-- 🎙️ AI Insights / Tips -->
+            <div class="citrus-gradient rounded-[40px] p-10 shadow-2xl relative overflow-hidden group">
+                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full transition-all duration-700 group-hover:scale-150"></div>
                 <div class="relative z-10">
-                    <h5 class="font-black text-lg mb-2 uppercase tracking-tighter">Conseil Pilote</h5>
-                    <p class="text-white/80 text-xs leading-relaxed font-medium">Le pic d'activité est attendu dans 45 min. Vérifiez que l'équipe Terrasse est prête.</p>
-                </div>
-                <div class="absolute -right-8 -bottom-8 opacity-20">
-                    <span class="material-symbols-outlined text-8xl">analytics</span>
+                    <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-white">psychology</span>
+                    </div>
+                    <h5 class="text-white font-black text-xl mb-3 tracking-tight">Conseil Pilote</h5>
+                    <p class="text-white/80 text-sm leading-relaxed font-medium italic">
+                        "L'heure de pointe approche ! Vos stocks VIP sont à 80%. Pensez à vérifier la réserve."
+                    </p>
                 </div>
             </div>
         </div>
@@ -162,8 +285,1090 @@
 {% endblock %}
 
 {% block extra_body %}
-    <!-- Floating Action Button -->
-    <button class="fixed bottom-24 right-6 md:bottom-12 md:right-12 citrus-gradient text-white w-16 h-16 rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-all z-40">
-        <span class="material-symbols-outlined text-3xl">add</span>
+    <!-- ➕ Floating Premium Action -->
+    <button onclick="openServiceModal()" class="fixed bottom-32 right-8 md:bottom-32 md:right-12 citrus-gradient text-white w-16 h-16 rounded-[24px] flex items-center justify-center shadow-[0_20px_50px_rgba(255,94,0,0.3)] hover:rotate-90 transition-all duration-500 z-40 active:scale-90 group">
+        <span class="material-symbols-outlined text-3xl font-bold">add</span>
+        <!-- Tooltip -->
+        <div class="absolute right-24 bg-on-surface text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 pointer-events-none whitespace-nowrap">
+            Aider le Service
+        </div>
     </button>
+
+    <!-- 💰 Modal: Payment & Client Details -->
+    <div id="paymentModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[40px] w-full max-w-lg max-h-[90vh] shadow-2xl scale-95 opacity-0 transition-all duration-300 transform flex flex-col overflow-hidden" id="paymentModalContent">
+            <!-- Header -->
+            <div class="p-8 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest shrink-0">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black text-on-surface tracking-tight">Encaissement</h3>
+                        <p class="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest mt-1">Finalisation de la commande</p>
+                    </div>
+                </div>
+                <button onclick="closePaymentModal()" class="w-10 h-10 rounded-xl bg-white border border-surface-container flex items-center justify-center text-on-surface-variant hover:text-red-600 hover:border-red-100 hover:bg-red-50 transition-all">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-8 overflow-y-auto custom-scrollbar">
+                <!-- Order Summary -->
+                <div class="bg-surface-container-lowest rounded-2xl p-5 border border-surface-container mb-6">
+                    <h4 class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-4">Récapitulatif</h4>
+                    <div id="paymentOrderItems" class="space-y-3 mb-4">
+                        <!-- Items injected here by JS -->
+                    </div>
+                    <div class="pt-4 border-t border-dashed border-surface-container flex justify-between items-end">
+                        <span class="text-xs font-black uppercase text-on-surface-variant">Total</span>
+                        <span id="paymentOrderTotal" class="text-2xl font-black text-emerald-600">0.00 $</span>
+                    </div>
+                </div>
+
+                <!-- Client Form -->
+                <div class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Nom du client (Optionnel)</label>
+                        <input type="text" id="paymentClientName" placeholder="Ex: Jean Dupont" class="w-full bg-surface-container-lowest border border-surface-container rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-emerald-500 transition-all">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Téléphone (Optionnel)</label>
+                        <input type="tel" id="paymentClientPhone" placeholder="Ex: +243..." class="w-full bg-surface-container-lowest border border-surface-container rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-emerald-500 transition-all">
+                    </div>
+                </div>
+
+                <!-- Dette Eligibility & Garant -->
+                <div class="mt-6 bg-surface-container/30 rounded-2xl p-5 border border-surface-container/50 space-y-4">
+                    <h4 class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Vérification de Crédit Client (Dette)</h4>
+                    
+                    <!-- Eligibility Alert Box -->
+                    <div id="creditEligibilityStatus" class="p-4 rounded-xl text-xs font-bold bg-surface-container-low text-on-surface-variant/70 border border-surface-container flex items-center gap-3">
+                        <span class="material-symbols-outlined text-base">info</span>
+                        <span>Saisissez le nom ou le téléphone pour vérifier l'historique d'achat.</span>
+                    </div>
+
+                    <!-- Guarantor choice -->
+                    <div class="space-y-3 pt-2">
+                        <p class="text-[9px] font-black uppercase text-on-surface-variant/40 ml-1">Ou désigner un garant exécutif :</p>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl border border-surface-container cursor-pointer select-none hover:bg-surface-container/60 transition-all">
+                                <input type="radio" name="paymentGuarantor" value="proprietaire" class="w-4 h-4 text-emerald-600 border-surface-container focus:ring-emerald-500" onchange="checkDeferredEligibility()">
+                                <div class="text-left">
+                                    <span class="text-[10px] font-black text-on-surface block">Propriétaire</span>
+                                    <span class="text-[8px] text-on-surface-variant/50 font-medium">Se porte garant</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl border border-surface-container cursor-pointer select-none hover:bg-surface-container/60 transition-all">
+                                <input type="radio" name="paymentGuarantor" value="serveur" class="w-4 h-4 text-emerald-600 border-surface-container focus:ring-emerald-500" onchange="checkDeferredEligibility()">
+                                <div class="text-left">
+                                    <span class="text-[10px] font-black text-on-surface block">Serveur</span>
+                                    <span class="text-[8px] text-on-surface-variant/50 font-medium">Se porte garant</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-6 border-t border-surface-container bg-surface-container-lowest shrink-0">
+                <input type="hidden" id="paymentOrderId">
+                <div class="flex gap-4">
+                    <button id="payLaterBtn" onclick="submitDeferredPayment()" disabled class="w-1/3 bg-surface-container text-on-surface-variant/40 border border-surface-container/80 py-5 rounded-2xl font-black uppercase tracking-widest cursor-not-allowed opacity-60 transition-all flex items-center justify-center gap-1.5" title="Éligibilité insuffisante">
+                        <span class="material-symbols-outlined text-sm">lock</span> Enregistrer en Dette
+                    </button>
+                    <button onclick="submitPayment()" class="w-2/3 bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-emerald-700 active:scale-95 transition-all">
+                        Valider le Paiement
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🍽️ Modal: Direct Service (Take Order) -->
+    <div id="serviceModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[40px] w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl scale-95 opacity-0 transition-all duration-300 transform overflow-hidden" id="serviceModalContent">
+            <!-- Header -->
+            <div class="p-8 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest shrink-0">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
+                        <span class="material-symbols-outlined">restaurant_menu</span>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black text-on-surface tracking-tight">Mode Service Direct</h2>
+                        <p class="text-xs text-on-surface-variant/40 font-black uppercase tracking-widest">Prendre une commande pour aider l'équipe</p>
+                    </div>
+                </div>
+                <button onclick="closeServiceModal()" class="w-10 h-10 rounded-xl hover:bg-surface-container flex items-center justify-center transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Left: Product Selection -->
+                <div class="flex-1 flex flex-col border-r border-surface-container overflow-hidden">
+                    <!-- Categories Tabs -->
+                    <div class="px-8 py-4 flex gap-2 overflow-x-auto no-scrollbar shrink-0 border-b border-surface-container bg-surface-container-lowest">
+                        <button onclick="filterServiceProducts('all')" class="service-cat-btn active px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap">Tout</button>
+                        {% for cat in categories %}
+                        <button onclick="filterServiceProducts('cat-{{ cat.id }}')" class="service-cat-btn px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap">
+                            {{ cat.nom }}
+                        </button>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="serviceProductsGrid">
+                            {% for item in inventory_items %}
+                            <div class="service-product-card bg-surface-container-lowest p-4 rounded-3xl border border-surface-container hover:border-orange-500/30 transition-all group" data-category="cat-{{ item.produit.categorie.id }}">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h4 class="font-black text-on-surface tracking-tight">{{ item.produit.nom }}</h4>
+                                        <p class="text-[10px] font-bold text-on-surface-variant/40 uppercase">{{ item.produit.volume_cl }}cl • Stock: {{ item.quantite_actuelle|floatformat:0 }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-black text-orange-600 text-sm">
+                                            {% if item.devise == 'CDF' %}
+                                                {% display_price None item.prix_vente_unitaire %}
+                                            {% else %}
+                                                {% display_price item.prix_vente_unitaire None %}
+                                            {% endif %}
+                                        </p>
+                                        {% if item.vente_au_verre %}
+                                        <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase">
+                                            Verre: 
+                                            {% if item.devise == 'CDF' %}
+                                                {% display_price None item.prix_vente_verre %}
+                                            {% else %}
+                                                {% display_price item.prix_vente_verre None %}
+                                            {% endif %}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex gap-2">
+                                    <button onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom }}', {{ item.prix_vente_unitaire|stringformat:'.2f' }}, 'BOUTEILLE', '{{ item.devise }}')" 
+                                            class="flex-1 py-2 bg-on-surface text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95">
+                                        + Bouteille
+                                    </button>
+                                    {% if item.vente_au_verre %}
+                                    <button onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom }}', {{ item.prix_vente_verre|stringformat:'.2f' }}, 'VERRE', '{{ item.devise }}')"
+                                            class="flex-1 py-2 bg-orange-50 text-orange-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-95 border border-orange-100">
+                                        + Verre
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Order Summary -->
+                <div class="w-80 flex flex-col bg-surface-container-lowest overflow-hidden">
+                    <form action="{% url 'take_order' %}" method="post" id="takeOrderForm" class="flex flex-col h-full">
+                        {% csrf_token %}
+                        <div class="p-6 space-y-6 flex-1 flex flex-col overflow-hidden">
+                            <div class="space-y-1.5 shrink-0">
+                                <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Sélectionner la Table</label>
+                                <select name="table_id" required class="w-full bg-white border border-surface-container rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-orange-500 transition-all">
+                                    <option value="">-- Choisir Table --</option>
+                                    {% for table in tables %}
+                                    <option value="{{ table.id }}">{{ table.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="flex-1 flex flex-col overflow-hidden">
+                                <h3 class="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-4">Articles Sélectionnés</h3>
+                                <div id="selectedItems" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+                                    <!-- Items added here -->
+                                    <p id="emptyOrderMsg" class="text-xs text-center py-10 text-on-surface-variant/40 italic">Aucun article sélectionné</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="p-6 mt-auto border-t border-surface-container space-y-4">
+                            <div class="flex justify-between items-end">
+                                <p class="text-[10px] font-black text-on-surface-variant/40 uppercase">Total Estimé</p>
+                                <h2 class="text-2xl font-black text-orange-600" id="orderTotalDisplay">0.00 $</h2>
+                            </div>
+                            <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                                Confirmer la Commande
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🤖 Pilot Advisor Floating Widget -->
+    <div id="aiChatWidget" class="fixed bottom-8 right-8 md:bottom-12 md:right-12 z-50 flex flex-col items-end gap-4">
+        <!-- Chat Window (Hidden by default) -->
+        <div id="chatWindow" class="hidden w-[350px] md:w-[400px] h-[550px] bg-white rounded-[32px] shadow-2xl border border-surface-container-high overflow-hidden flex flex-col transition-all duration-300 translate-y-4 opacity-0">
+            <!-- Header -->
+            <div class="citrus-gradient p-6 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                        <span class="material-symbols-outlined">psychology</span>
+                    </div>
+                    <div>
+                        <h4 class="font-black text-sm uppercase tracking-widest">Pilot Advisor</h4>
+                        <p class="text-[10px] text-white/70 font-medium">Intelligence BarPilote</p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="hover:bg-white/10 p-2 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
+            
+            <!-- Messages Area -->
+            <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-surface-container-lowest custom-scrollbar">
+                <!-- Welcome Message -->
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-sm">smart_toy</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-surface-container-high text-sm text-on-surface leading-relaxed shadow-sm">
+                        Bonjour <strong>{{ profile.prenom }}</strong> ! 👋 Je suis votre conseiller stratégique. <br><br>
+                        Basé sur vos ventes d'aujourd'hui ({% display_price total_revenue_usd total_revenue_cdf %}), j'ai quelques conseils pour vous.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Suggestions -->
+            <div class="px-6 py-4 flex gap-2 overflow-x-auto no-scrollbar border-t border-surface-container-high bg-white">
+                <button onclick="askAI('Conseils stock')" class="whitespace-nowrap px-4 py-2 rounded-full bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all border border-orange-100">📦 Stocks</button>
+                <button onclick="askAI('Booster ventes')" class="whitespace-nowrap px-4 py-2 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all border border-blue-100">📈 Revenus</button>
+                <button onclick="askAI('Performance équipe')" class="whitespace-nowrap px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-100">👥 Staff</button>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 bg-white border-t border-surface-container-high">
+                <div class="relative flex items-center">
+                    <input type="text" id="aiInput" placeholder="Posez une question..." 
+                           class="w-full bg-surface-container-low border-none rounded-2xl py-4 pl-6 pr-12 text-sm font-medium focus:ring-2 focus:ring-orange-500 transition-all">
+                    <button onclick="sendMessage()" class="absolute right-2 w-10 h-10 citrus-gradient text-white rounded-xl flex items-center justify-center active:scale-95 transition-all">
+                        <span class="material-symbols-outlined text-sm">send</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toggle Button -->
+        <button onclick="toggleChat()" class="w-16 h-16 bg-on-surface text-white rounded-[24px] flex items-center justify-center shadow-2xl active:scale-95 transition-all group relative border-2 border-white">
+            <div class="absolute inset-0 bg-white/20 rounded-[24px] animate-ping opacity-75 group-hover:hidden"></div>
+            <span class="material-symbols-outlined text-3xl">psychology</span>
+            <!-- Notification Badge -->
+            <div class="absolute -top-1 -right-1 w-5 h-5 bg-orange-600 border-2 border-white rounded-full flex items-center justify-center text-[10px] font-black">1</div>
+        </button>
+    </div>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .service-cat-btn.active { background: #FF5E00; color: white; box-shadow: 0 4px 15px rgba(255,94,0,0.3); }
+        .service-cat-btn:not(.active) { background: white; color: #64748B; border: 1px solid #F1F5F9; }
+    </style>
+
+    <script>
+        // --- Duration Formatting Helper ---
+        function formatDuration(seconds) {
+            if (seconds < 0) seconds = 0;
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            if (m > 0) {
+                return `${m}m ${s}s`;
+            }
+            return `${s}s`;
+        }
+
+        // --- Reception Mode Logic ---
+        let receptionModeActive = false;
+        let liveOrderInterval = null;
+
+        function toggleReceptionMode() {
+            receptionModeActive = !receptionModeActive;
+            const thumb = document.getElementById('receptionThumb');
+            const toggle = document.getElementById('receptionToggle');
+            
+            if (receptionModeActive) {
+                thumb.classList.add('translate-x-6');
+                toggle.classList.remove('bg-surface-container-highest');
+                toggle.classList.add('bg-orange-600');
+                // Start polling every 10 seconds
+                fetchLiveOrders(); // immediate fetch
+                liveOrderInterval = setInterval(fetchLiveOrders, 10000);
+            } else {
+                thumb.classList.remove('translate-x-6');
+                toggle.classList.add('bg-surface-container-highest');
+                toggle.classList.remove('bg-orange-600');
+                if (liveOrderInterval) clearInterval(liveOrderInterval);
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            fetch('/proprietaire/api/update-order-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `order_id=${orderId}&status=${newStatus}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    // Instantly refetch or just reload page for simplicity if reception mode isn't on
+                    if (receptionModeActive) fetchLiveOrders();
+                    else window.location.reload();
+                }
+            });
+        }
+
+        function fetchLiveOrders() {
+            fetch('/proprietaire/api/live-orders/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.orders) {
+                    renderLiveOrders(data.orders);
+                }
+                if (data.last_paid_timestamp !== undefined) {
+                    const lastCashingEl = document.querySelector('.live-last-cashing');
+                    if (lastCashingEl) {
+                        lastCashingEl.setAttribute('data-start', data.last_paid_timestamp || '');
+                        if (!data.last_paid_timestamp) {
+                            lastCashingEl.textContent = "Dernier encaissement : aucun aujourd'hui";
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderLiveOrders(orders) {
+            const container = document.getElementById('liveOrdersContainer');
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="py-20 text-center" id="emptyOrdersMsg">
+                        <div class="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-6 text-on-surface-variant/20">
+                            <span class="material-symbols-outlined text-4xl">inbox</span>
+                        </div>
+                        <p class="text-on-surface-variant/60 font-black uppercase text-xs tracking-widest">Aucune activité pour le moment</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            
+            // 1. Group orders by table
+            const groupedOrders = {};
+            orders.forEach(o => {
+                if (!groupedOrders[o.table_nom]) {
+                    groupedOrders[o.table_nom] = {
+                        table_nom: o.table_nom,
+                        orders: [],
+                        total_usd: 0,
+                        total_cdf: 0,
+                        items: {}, // key: item.name, value: item object
+                        timestamp: o.timestamp
+                    };
+                }
+                const group = groupedOrders[o.table_nom];
+                group.orders.push(o);
+                group.total_usd += o.total_usd;
+                group.total_cdf += o.total_cdf;
+                if (o.timestamp > group.timestamp) {
+                    group.timestamp = o.timestamp; // Most recent activity
+                }
+                
+                // Merge items
+                if (o.items) {
+                    o.items.forEach(item => {
+                        if (group.items[item.name]) {
+                            group.items[item.name].qty += item.qty;
+                        } else {
+                            group.items[item.name] = { ...item };
+                        }
+                    });
+                }
+            });
+
+            // 2. Render each group
+            Object.values(groupedOrders).sort((a, b) => b.timestamp - a.timestamp).forEach(group => {
+                let statusBadge = '';
+                let actionBtn = '';
+                
+                const hasPending = group.orders.some(o => o.statut === 'PENDING');
+                const hasPreparing = group.orders.some(o => o.statut === 'PREPARING');
+                
+                if (hasPending) {
+                    statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>';
+                    const pendingIds = group.orders.filter(o => o.statut === 'PENDING').map(o => o.id).join(',');
+                    actionBtn = `<button onclick="updateOrderStatus('${pendingIds}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter tournée</button>`;
+                } else if (hasPreparing) {
+                    statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>';
+                    const preparingIds = group.orders.filter(o => o.statut === 'PREPARING').map(o => o.id).join(',');
+                    actionBtn = `<button onclick="updateOrderStatus('${preparingIds}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>`;
+                } else {
+                    statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Servi</span>';
+                    const allIds = group.orders.map(o => o.id).join(',');
+                    const itemsArr = Object.values(group.items);
+                    const itemsJson = encodeURIComponent(JSON.stringify(itemsArr));
+                    actionBtn = `<button onclick="openPaymentModal('${allIds}', '${itemsJson}', ${group.total_usd}, ${group.total_cdf})" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>`;
+                }
+
+                // Chronometer Logic
+                let chronoHtml = '';
+                const activeUnservedOrders = group.orders.filter(o => o.statut === 'PENDING' || o.statut === 'PREPARING');
+                if (activeUnservedOrders.length > 0) {
+                    // Find the oldest active unserved order
+                    let oldestTime = Infinity;
+                    activeUnservedOrders.forEach(o => {
+                        const t = new Date(o.date_creation).getTime();
+                        if (t < oldestTime) oldestTime = t;
+                    });
+                    
+                    if (oldestTime !== Infinity) {
+                        const elapsed = Math.max(0, Math.floor(Date.now() - oldestTime) / 1000);
+                        const formatted = formatDuration(Math.floor(elapsed));
+                        chronoHtml = `
+                            <span class="flex items-center gap-1 bg-red-50 text-red-600 px-3 py-1.5 rounded-full text-[10px] font-black uppercase border border-red-100 tracking-wider animate-pulse live-chrono" data-start="${oldestTime}">
+                                <span class="material-symbols-outlined text-[12px] animate-spin">hourglass_empty</span>
+                                ⏱️ ${formatted}
+                            </span>`;
+                    }
+                } else {
+                    // All served, show final delivery duration
+                    let maxDuration = 0;
+                    group.orders.forEach(o => {
+                        if (o.delivery_duration && o.delivery_duration > maxDuration) {
+                            maxDuration = o.delivery_duration;
+                        }
+                    });
+                    
+                    if (maxDuration > 0) {
+                        chronoHtml = `
+                            <span class="flex items-center gap-1 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full text-[10px] font-black uppercase border border-emerald-100 tracking-wider">
+                                <span class="material-symbols-outlined text-[12px]">check_circle</span>
+                                Livré en ${formatDuration(maxDuration)}
+                            </span>`;
+                    } else {
+                        chronoHtml = `
+                            <span class="flex items-center gap-1 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full text-[10px] font-black uppercase border border-emerald-100 tracking-wider">
+                                <span class="material-symbols-outlined text-[12px]">check_circle</span>
+                                Livré
+                            </span>`;
+                    }
+                }
+
+                // Time ago rough calculation (simplified for UI)
+                const diffSeconds = Math.floor(Date.now()/1000) - group.timestamp;
+                let timeStr = diffSeconds < 60 ? 'maintenant' : Math.floor(diffSeconds/60) + ' min ago';
+
+                // Price display check
+                const prefCurrency = '{{ pref_currency }}';
+                const rate = {{ profile.bar.taux_change_usd_to_cdf|default:2800 }};
+                let displayPrice = '';
+                if (prefCurrency === 'USD') {
+                    let val = group.total_usd > 0 ? group.total_usd : (group.total_cdf / rate);
+                    displayPrice = val.toFixed(2) + ' $';
+                } else {
+                    let val = group.total_cdf > 0 ? group.total_cdf : (group.total_usd * rate);
+                    displayPrice = Math.floor(val).toLocaleString() + ' FC';
+                }
+
+                // Inline Products Display
+                let itemsArr = Object.values(group.items);
+                let productsHtml = '';
+                let totalItemsCount = 0;
+                
+                if (itemsArr.length > 0) {
+                    productsHtml = '<div class="flex flex-wrap gap-1 mt-2">';
+                    itemsArr.forEach(item => {
+                        totalItemsCount += item.qty;
+                        productsHtml += `<span class="px-2 py-0.5 rounded-md bg-surface-container-low border border-surface-container text-[9px] font-bold text-on-surface-variant uppercase tracking-tighter">${item.qty}x ${item.name}</span>`;
+                    });
+                    productsHtml += '</div>';
+                }
+
+                html += `
+                <div class="flex flex-col p-5 rounded-[24px] bg-white hover:bg-surface-container-lowest hover:executive-shadow transition-all group border border-surface-container shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-5">
+                            <div class="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
+                                <span class="material-symbols-outlined text-2xl">table_restaurant</span>
+                            </div>
+                            <div>
+                                <h4 class="font-black text-lg text-on-surface tracking-tight">${group.table_nom}</h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-tighter text-orange-600">Actif: ${timeStr}</span>
+                                    <span class="w-1 h-1 rounded-full bg-surface-container-highest"></span>
+                                    <span class="text-[10px] font-bold text-orange-600 uppercase">${totalItemsCount} Produits</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-8">
+                            <div class="hidden sm:flex items-center gap-2">
+                                ${chronoHtml}
+                                ${statusBadge}
+                                ${actionBtn}
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-black text-on-surface">${displayPrice}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Render Inline Products -->
+                    ${productsHtml}
+                </div>`;
+            });
+            
+            // If the HTML actually changed (simple diff check to avoid flickering)
+            if (container.innerHTML !== html) {
+                container.innerHTML = html;
+            }
+        }
+
+        // --- Payment Modal Logic ---
+        let eligibilityDebounceTimer = null;
+        let isEligibleForDebt = false;
+
+        function onPaymentInputChanged() {
+            clearTimeout(eligibilityDebounceTimer);
+            eligibilityDebounceTimer = setTimeout(() => {
+                queryClientEligibility();
+            }, 400);
+        }
+
+        function queryClientEligibility() {
+            const name = document.getElementById('paymentClientName').value.trim();
+            const phone = document.getElementById('paymentClientPhone').value.trim();
+            const statusBox = document.getElementById('creditEligibilityStatus');
+            
+            if (!name && !phone) {
+                isEligibleForDebt = false;
+                statusBox.className = "p-4 rounded-xl text-xs font-bold bg-surface-container-low text-on-surface-variant/70 border border-surface-container flex items-center gap-3";
+                statusBox.innerHTML = `
+                    <span class="material-symbols-outlined text-base">info</span>
+                    <span>Saisissez le nom ou le téléphone pour vérifier l'historique d'achat.</span>
+                `;
+                updatePayLaterButtonState();
+                return;
+            }
+
+            statusBox.innerHTML = `
+                <span class="material-symbols-outlined animate-spin text-base">sync</span>
+                <span>Vérification de l'éligibilité en cours...</span>
+            `;
+
+            fetch(`/proprietaire/api/client-history/?phone=${encodeURIComponent(phone)}&name=${encodeURIComponent(name)}`)
+            .then(res => res.json())
+            .then(data => {
+                const totalSpent = data.total_spent_cdf || 0;
+                
+                // Auto-remplissage du téléphone si le client est reconnu dans le CRM
+                const phoneInput = document.getElementById('paymentClientPhone');
+                if (data.client_found && data.client_telephone && !phoneInput.value.trim()) {
+                    phoneInput.value = data.client_telephone;
+                    phoneInput.style.borderColor = '#10b981';
+                    phoneInput.title = 'Numéro rempli automatiquement depuis le CRM';
+                }
+                
+                if (data.eligible) {
+                    isEligibleForDebt = true;
+                    statusBox.className = "p-4 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-100 flex items-center gap-3";
+                    statusBox.innerHTML = `
+                        <span class="material-symbols-outlined text-base text-emerald-600">check_circle</span>
+                        <div>
+                            <span class="block">✅ Client éligible !</span>
+                            <span class="block text-[10px] font-medium text-emerald-700/80 mt-0.5">Dépenses totales: ${totalSpent.toLocaleString()} FC (Seuil: 100 000 FC)</span>
+                        </div>
+                    `;
+                } else {
+                    isEligibleForDebt = false;
+                    statusBox.className = "p-4 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-100 flex items-center gap-3";
+                    statusBox.innerHTML = `
+                        <span class="material-symbols-outlined text-base text-amber-600">warning</span>
+                        <div>
+                            <span class="block">⚠️ Éligibilité insuffisante</span>
+                            <span class="block text-[10px] font-medium text-amber-700/80 mt-0.5">Dépenses: ${totalSpent.toLocaleString()} FC / 100 000 FC. Garant obligatoire.</span>
+                        </div>
+                    `;
+                }
+                updatePayLaterButtonState();
+            })
+            .catch(err => {
+                console.error("Error querying client history", err);
+                statusBox.innerHTML = `
+                    <span class="material-symbols-outlined text-base text-red-600">error</span>
+                    <span>Erreur de vérification. Veuillez réessayer.</span>
+                `;
+            });
+        }
+
+        function checkDeferredEligibility() {
+            updatePayLaterButtonState();
+        }
+
+        function getSelectedGuarantor() {
+            const radios = document.getElementsByName('paymentGuarantor');
+            for (let radio of radios) {
+                if (radio.checked) return radio.value;
+            }
+            return '';
+        }
+
+        function updatePayLaterButtonState() {
+            const payLaterBtn = document.getElementById('payLaterBtn');
+            const guarantor = getSelectedGuarantor();
+            const canDefer = isEligibleForDebt || guarantor !== '';
+            
+            if (canDefer) {
+                payLaterBtn.disabled = false;
+                payLaterBtn.className = "w-1/3 bg-white border border-surface-container text-on-surface py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-surface-container-low transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer";
+                payLaterBtn.innerHTML = `<span class="material-symbols-outlined text-sm text-emerald-600">assignment_turned_in</span> Enregistrer en Dette`;
+                payLaterBtn.removeAttribute('title');
+            } else {
+                payLaterBtn.disabled = true;
+                payLaterBtn.className = "w-1/3 bg-surface-container text-on-surface-variant/40 border border-surface-container/80 py-5 rounded-2xl font-black uppercase tracking-widest cursor-not-allowed opacity-60 transition-all flex items-center justify-center gap-1.5";
+                payLaterBtn.innerHTML = `<span class="material-symbols-outlined text-sm">lock</span> Enregistrer en Dette`;
+                payLaterBtn.setAttribute('title', 'Le client doit avoir dépensé > 100 000 FC ou avoir un garant.');
+            }
+        }
+
+        function submitDeferredPayment() {
+            const orderId = document.getElementById('paymentOrderId').value;
+            const clientName = document.getElementById('paymentClientName').value.trim();
+            const clientPhone = document.getElementById('paymentClientPhone').value.trim();
+            const guarantor = getSelectedGuarantor();
+
+            const canDefer = isEligibleForDebt || guarantor !== '';
+            if (!canDefer) {
+                alert("Erreur: Le client n'est pas éligible et aucun garant n'a été désigné.");
+                return;
+            }
+
+            const bodyParams = new URLSearchParams();
+            bodyParams.append('order_id', orderId);
+            bodyParams.append('status', 'PAID');
+            bodyParams.append('deferred', 'true');
+            if (guarantor) bodyParams.append('guarantor', guarantor);
+            if (clientName) bodyParams.append('client_name', clientName);
+            if (clientPhone) bodyParams.append('client_phone', clientPhone);
+
+            fetch('/proprietaire/api/update-order-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: bodyParams.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    closePaymentModal();
+                    if (typeof fetchLiveOrders === 'function') {
+                        fetchLiveOrders();
+                    } else {
+                        location.reload();
+                    }
+                } else {
+                    alert("Erreur lors de l'enregistrement de la dette : " + (data.error || 'inconnue'));
+                }
+            })
+            .catch(err => {
+                console.error("Error submitting deferred payment", err);
+                alert("Erreur de connexion.");
+            });
+        }
+
+        function openPaymentModal(orderId, itemsJsonStr, totalUsd, totalCdf) {
+            document.getElementById('paymentOrderId').value = orderId;
+            document.getElementById('paymentClientName').value = '';
+            document.getElementById('paymentClientPhone').value = '';
+            
+            // Uncheck guarantors
+            const radios = document.getElementsByName('paymentGuarantor');
+            radios.forEach(r => r.checked = false);
+            
+            isEligibleForDebt = false;
+            updatePayLaterButtonState();
+            
+            // Set listener if not set already
+            const nameInput = document.getElementById('paymentClientName');
+            const phoneInput = document.getElementById('paymentClientPhone');
+            
+            nameInput.oninput = onPaymentInputChanged;
+            phoneInput.oninput = onPaymentInputChanged;
+            
+            // Reset eligibility message box
+            const statusBox = document.getElementById('creditEligibilityStatus');
+            statusBox.className = "p-4 rounded-xl text-xs font-bold bg-surface-container-low text-on-surface-variant/70 border border-surface-container flex items-center gap-3";
+            statusBox.innerHTML = `
+                <span class="material-symbols-outlined text-base">info</span>
+                <span>Saisissez le nom ou le téléphone pour vérifier l'historique d'achat.</span>
+            `;
+
+            // Decode and parse items
+            const items = JSON.parse(decodeURIComponent(itemsJsonStr));
+            const container = document.getElementById('paymentOrderItems');
+            
+            let html = '';
+            items.forEach(item => {
+                const isUSD = item.devise === 'USD';
+                const priceDisplay = isUSD ? `${item.price} $` : `${item.price.toLocaleString()} FC`;
+                html += `
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-bold text-on-surface"><span class="text-on-surface-variant mr-1">${item.qty}x</span> ${item.name}</span>
+                    <span class="font-black text-on-surface-variant">${priceDisplay}</span>
+                </div>`;
+            });
+            container.innerHTML = html;
+
+            // Display total based on preferred currency
+            const prefCurrency = '{{ pref_currency }}';
+            const rate = {{ profile.bar.taux_change_usd_to_cdf|default:2800 }};
+            let totalDisplay = '';
+            if (prefCurrency === 'USD') {
+                let val = totalUsd > 0 ? totalUsd : (totalCdf / rate);
+                totalDisplay = val.toFixed(2) + ' $';
+            } else {
+                let val = totalCdf > 0 ? totalCdf : (totalUsd * rate);
+                totalDisplay = Math.floor(val).toLocaleString() + ' FC';
+            }
+            document.getElementById('paymentOrderTotal').innerText = totalDisplay;
+
+            // Show Modal
+            const modal = document.getElementById('paymentModal');
+            const content = document.getElementById('paymentModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closePaymentModal() {
+            const modal = document.getElementById('paymentModal');
+            const content = document.getElementById('paymentModalContent');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function submitPayment() {
+            const orderId = document.getElementById('paymentOrderId').value;
+            const clientName = document.getElementById('paymentClientName').value;
+            const clientPhone = document.getElementById('paymentClientPhone').value;
+
+            // Prepare POST data
+            const bodyParams = new URLSearchParams();
+            bodyParams.append('order_id', orderId);
+            bodyParams.append('status', 'PAID');
+            if (clientName) bodyParams.append('client_name', clientName);
+            if (clientPhone) bodyParams.append('client_phone', clientPhone);
+
+            fetch('/proprietaire/api/update-order-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: bodyParams.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    closePaymentModal();
+                    if (receptionModeActive) fetchLiveOrders();
+                    else window.location.reload();
+                } else {
+                    alert("Erreur lors du paiement");
+                }
+            });
+        }
+
+        // Modal Logic
+        function openServiceModal() {
+            const modal = document.getElementById('serviceModal');
+            const content = document.getElementById('serviceModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeServiceModal() {
+            const modal = document.getElementById('serviceModal');
+            const content = document.getElementById('serviceModalContent');
+            content.classList.add('scale-95', 'opacity-0');
+            content.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+        // Filter Products
+        function filterServiceProducts(catId) {
+            const cards = document.querySelectorAll('.service-product-card');
+            const buttons = document.querySelectorAll('.service-cat-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            cards.forEach(card => {
+                if (catId === 'all' || card.dataset.category === catId) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        // Order Logic
+        let currentOrder = {};
+        const exchangeRate = {{ profile.bar.taux_change_usd_to_cdf|default:2800 }};
+        const prefCurrency = '{{ pref_currency }}';
+        
+        function addToOrder(id, name, price, unit, currency) {
+            const key = `${id}:${unit}`;
+            if (currentOrder[key]) {
+                currentOrder[key].qty += 1;
+            } else {
+                currentOrder[key] = { id, name, price, unit, currency, qty: 1 };
+            }
+            updateOrderUI();
+        }
+
+        function removeFromOrder(key) {
+            if (currentOrder[key].qty > 1) {
+                currentOrder[key].qty -= 1;
+            } else {
+                delete currentOrder[key];
+            }
+            updateOrderUI();
+        }
+
+        function updateOrderUI() {
+            const container = document.getElementById('selectedItems');
+            const msg = document.getElementById('emptyOrderMsg');
+            const totalDisplay = document.getElementById('orderTotalDisplay');
+            const form = document.getElementById('takeOrderForm');
+            
+            // Remove existing hidden inputs
+            form.querySelectorAll('input[name="items[]"]').forEach(el => el.remove());
+            
+            container.innerHTML = '';
+            let totalUSD = 0;
+            let totalCDF = 0;
+            let keys = Object.keys(currentOrder);
+            
+            if (keys.length === 0) {
+                container.appendChild(msg);
+                totalDisplay.innerText = prefCurrency === 'USD' ? '0.00 $' : '0 FC';
+                return;
+            }
+
+            keys.forEach(key => {
+                const item = currentOrder[key];
+                const itemPrice = parseFloat(item.price);
+                
+                // Track totals separately based on original currency
+                if (item.currency === 'USD') {
+                    totalUSD += itemPrice * item.qty;
+                } else {
+                    totalCDF += itemPrice * item.qty;
+                }
+                
+                // Display price in UI (convert if needed)
+                let displayPriceStr = "";
+                if (prefCurrency === 'USD') {
+                    let p = item.currency === 'USD' ? itemPrice : itemPrice / exchangeRate;
+                    displayPriceStr = (p * item.qty).toFixed(2) + ' $';
+                } else {
+                    let p = item.currency === 'CDF' ? itemPrice : itemPrice * exchangeRate;
+                    displayPriceStr = (p * item.qty).toLocaleString() + ' FC';
+                }
+                
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-3 bg-surface-container-low rounded-2xl border border-surface-container animate-in fade-in zoom-in duration-200';
+                div.innerHTML = `
+                    <div class="flex-1">
+                        <p class="text-xs font-black text-on-surface">${item.name}</p>
+                        <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase">${item.unit} x${item.qty}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="removeFromOrder('${key}')" class="w-8 h-8 rounded-lg bg-white text-on-surface-variant hover:text-red-600 flex items-center justify-center transition-colors">
+                            <span class="material-symbols-outlined text-sm">remove</span>
+                        </button>
+                        <p class="text-xs font-black text-on-surface w-20 text-right">${displayPriceStr}</p>
+                    </div>
+                `;
+                container.appendChild(div);
+                
+                // Add hidden input for form
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'items[]';
+                input.value = `${item.id}:${item.qty}:${item.unit}`;
+                form.appendChild(input);
+            });
+
+            // Final Total display
+            if (prefCurrency === 'USD') {
+                let finalTotal = totalUSD + (totalCDF / exchangeRate);
+                totalDisplay.innerText = finalTotal.toFixed(2) + ' $';
+            } else {
+                let finalTotal = totalCDF + (totalUSD * exchangeRate);
+                totalDisplay.innerText = finalTotal.toLocaleString() + ' FC';
+            }
+        }
+
+        // Pilot Advisor Logic (already exists in your file)
+        function toggleChat() {
+            const win = document.getElementById('chatWindow');
+            if (win.classList.contains('hidden')) {
+                win.classList.remove('hidden');
+                setTimeout(() => {
+                    win.classList.remove('translate-y-4', 'opacity-0');
+                    win.classList.add('flex');
+                }, 10);
+            } else {
+                win.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => {
+                    win.classList.add('hidden');
+                    win.classList.remove('flex');
+                }, 300);
+            }
+        }
+
+        function appendMessage(text, isUser = false) {
+            const container = document.getElementById('chatMessages');
+            const msg = document.createElement('div');
+            msg.className = `flex ${isUser ? 'justify-end' : ''} gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300`;
+            
+            if (!isUser) {
+                msg.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-sm">smart_toy</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-surface-container-high text-sm text-on-surface leading-relaxed shadow-sm">
+                        ${text}
+                    </div>
+                `;
+            } else {
+                msg.innerHTML = `
+                    <div class="bg-on-surface text-white p-4 rounded-2xl rounded-tr-none text-sm leading-relaxed max-w-[85%] shadow-lg">
+                        ${text}
+                    </div>
+                `;
+            }
+            
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function askAI(topic) {
+            if (!topic) return;
+            appendMessage(topic, true);
+            
+            setTimeout(() => {
+                let response = "";
+                if (topic.includes('stock')) {
+                    response = "D'après mes calculs, vous vendez beaucoup de <strong>Primus</strong> aujourd'hui. Il vous reste seulement 5 bouteilles en réserve. Je vous conseille d'en commander un casier avant 19h.";
+                } else if (topic.includes('Revenu') || topic.includes('ventes')) {
+                    response = "Votre panier moyen est de <strong>{{ avg_basket_usd|floatformat:2 }}$</strong>. Pour l'augmenter, vous pourriez proposer un 'Happy Hour' sur les Softs entre 16h et 18h.";
+                } else if (topic.includes('Staff') || topic.includes('équipe')) {
+                    response = "Jean est votre meilleur vendeur ce soir, mais les commandes de la Table 4 prennent du retard. Un petit coup de main en salle serait utile.";
+                } else {
+                    response = "C'est une excellente question. Je vais continuer d'analyser vos données pour vous donner la meilleure réponse stratégique.";
+                }
+                appendMessage(response);
+            }, 1000);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('aiInput');
+            if (input.value.trim()) {
+                askAI(input.value);
+                input.value = '';
+            }
+        }
+
+        document.getElementById('aiInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Live ticking chronometers (updates elapsed times every second on the screen)
+        setInterval(() => {
+            // 1. Update active table orders timer
+            document.querySelectorAll('.live-chrono').forEach(el => {
+                const startTime = parseInt(el.getAttribute('data-start'));
+                if (startTime) {
+                    const elapsed = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+                    el.innerHTML = `
+                        <span class="material-symbols-outlined text-[12px] animate-spin">hourglass_empty</span>
+                        ⏱️ ${formatDuration(elapsed)}
+                    `;
+                }
+            });
+
+            // 2. Update last paid cashing timer
+            const lastCashingEl = document.querySelector('.live-last-cashing');
+            if (lastCashingEl) {
+                const startTime = parseInt(lastCashingEl.getAttribute('data-start'));
+                if (startTime) {
+                    const elapsed = Math.max(0, Math.floor((Date.now() - (startTime * 1000)) / 1000));
+                    let timeStr = "";
+                    if (elapsed < 60) {
+                        timeStr = "à l'instant";
+                    } else if (elapsed < 3600) {
+                        timeStr = `il y a ${Math.floor(elapsed / 60)} min`;
+                    } else {
+                        timeStr = `il y a ${Math.floor(elapsed / 3600)} h`;
+                    }
+                    lastCashingEl.textContent = `Dernier encaissement : ${timeStr}`;
+                } else {
+                    lastCashingEl.textContent = `Dernier encaissement : aucun aujourd'hui`;
+                }
+            }
+        }, 1000);
+
+        // Fetch live active orders immediately on page load to group same-table items
+        fetchLiveOrders();
+    </script>
 {% endblock %}

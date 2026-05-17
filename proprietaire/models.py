@@ -35,7 +35,33 @@ class Bar(models.Model):
         verbose_name="Code d'invitation QR"
     )
     logo = models.ImageField(upload_to='bar_logos/', blank=True, null=True, verbose_name="Logo de l'établissement")
+    taux_change_usd_to_cdf = models.DecimalField(max_digits=10, decimal_places=2, default=2800.00, verbose_name="Taux de change (1$ en FC)")
+    
+    # Abonnement & Période d'essai
+    abonnement_expire_le = models.DateTimeField(null=True, blank=True, verbose_name="Date d'expiration de l'abonnement")
     date_creation = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # Si c'est un nouveau bar, on offre 30 jours d'essai gratuit par défaut
+        if not self.pk and not self.abonnement_expire_le:
+            from django.utils import timezone
+            from datetime import timedelta
+            self.abonnement_expire_le = timezone.now() + timedelta(days=30)
+        super().save(*args, **kwargs)
+
+    @property
+    def jours_restants(self):
+        from django.utils import timezone
+        if not self.abonnement_expire_le:
+            return 0
+        delta = self.abonnement_expire_le - timezone.now()
+        return max(0, delta.days)
+
+    @property
+    def prix_mensuel_estime(self):
+        """Calcule le prix basé sur le nombre de tables (2.5$ par table)"""
+        count = self.tables.count()
+        return count * 2.5
 
     def __str__(self):
         return self.nom
@@ -77,6 +103,7 @@ class PilotProfile(models.Model):
     sexe = models.CharField(max_length=1, choices=SEXE_CHOICES, blank=True, verbose_name="Sexe")
     telephone = models.CharField(max_length=20, blank=True, verbose_name="Numéro de téléphone")
     photo_profil = models.ImageField(upload_to=upload_pilot_photo, blank=True, null=True, verbose_name="Photo de Profil")
+    preferred_currency = models.CharField(max_length=3, choices=[('USD', 'USD ($)'), ('CDF', 'CDF (FC)')], default='USD')
     
     def __str__(self):
         return f"{self.get_role_display()}: {self.prenom} {self.nom} ({self.postnom})"
@@ -120,9 +147,6 @@ class Perte(models.Model):
 
     def __str__(self):
         return f"Perte: {self.quantite} x {self.item.produit.nom} ({self.raison})"
-
-    def __str__(self):
-        return f"{self.nom} - {self.bar.nom}"
 
 class Category(models.Model):
     """
@@ -320,6 +344,9 @@ class Order(models.Model):
     
     statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     
+    client_name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Nom du Client")
+    client_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Téléphone du Client")
+    
     # Totaux (calculés)
     total_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_cdf = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -388,6 +415,53 @@ class StaffShift(models.Model):
 
     def __str__(self):
         return f"Shift {self.worker.prenom} - {self.status} ({self.start_time.strftime('%H:%M')})"
+
+class Facture(models.Model):
+    """
+    Modèle pour gérer les factures (Dettes clients ou Dépenses fournisseurs).
+    """
+    TYPE_CHOICES = [
+        ('CLIENT', 'Dette Client'),
+        ('FOURNISSEUR', 'Dépense Fournisseur'),
+    ]
+    STATUS_CHOICES = [
+        ('PAYEE', 'Payée'),
+        ('IMPAYEE', 'Impayée'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='factures')
+    numero = models.CharField(max_length=50, unique=True, verbose_name="Numéro de Facture")
+    client_fournisseur = models.CharField(max_length=255, verbose_name="Nom du Client / Fournisseur")
+    
+    montant_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    montant_cdf = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    
+    type_facture = models.CharField(max_length=20, choices=TYPE_CHOICES, default='CLIENT')
+    statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IMPAYEE')
+    
+    date_emission = models.DateTimeField(auto_now_add=True)
+    date_echeance = models.DateTimeField(null=True, blank=True)
+    date_paiement = models.DateTimeField(null=True, blank=True)
+    
+    orders = models.ManyToManyField(Order, related_name='factures', blank=True)
+    notes = models.TextField(blank=True, null=True)
+
+class Client(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='clients')
+    nom = models.CharField(max_length=255, verbose_name="Nom du client")
+    telephone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Numéro de téléphone")
+    dette_autorisee = models.BooleanField(default=False, verbose_name="Autorisé explicitement à la dette")
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Client"
+        verbose_name_plural = "Clients"
+        ordering = ['-date_creation']
+
+    def __str__(self):
+        return f"{self.nom} ({self.telephone or 'Sans tél'})"
 
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
