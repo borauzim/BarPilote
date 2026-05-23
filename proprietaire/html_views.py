@@ -389,11 +389,13 @@ class FinanceView(LoginRequiredMixin, TemplateView):
         context['revenue_cdf'] = revenue_data['total_cdf'] or 0
         context['total_orders'] = revenue_data['count'] or 0
         
-        # Panier moyen (en USD pour l'exemple)
+        # Panier moyen (calculé pour les deux devises)
         if context['total_orders'] > 0:
-            context['avg_basket_usd'] = context['revenue_usd'] / context['total_orders']
+            context['avg_basket_usd'] = (revenue_data['total_usd'] or 0) / context['total_orders']
+            context['avg_basket_cdf'] = (revenue_data['total_cdf'] or 0) / context['total_orders']
         else:
             context['avg_basket_usd'] = 0
+            context['avg_basket_cdf'] = 0
             
         # 3. Calculs des Pertes (Perte sèche)
         from .models import Perte
@@ -454,6 +456,79 @@ class FinanceView(LoginRequiredMixin, TemplateView):
         
         # Pour le modal d'enregistrement de perte
         context['inventory_items'] = StockItem.objects.filter(bar=bar).select_related('produit')
+        
+        # 5. Performance des ventes (pour la section Performance Ventes)
+        from .models import OrderItem, Category
+        from django.db import models as django_models
+        from decimal import Decimal
+        
+        # Calculer les ventes sur la période via OrderItem (lié aux orders payés)
+        order_items = OrderItem.objects.filter(
+            order__bar=bar, 
+            order__statut='PAID',
+            order__date_creation__range=(start_date, end_date)
+        )
+        
+        # Performance par catégorie
+        category_performance = []
+        for cat in Category.objects.all():
+            cat_items = order_items.filter(product_item__produit__categorie=cat)
+            cat_revenue_usd = cat_items.filter(devise='USD').aggregate(
+                total=Sum(django_models.F('quantite') * django_models.F('prix_unitaire'))
+            )['total'] or 0
+            cat_revenue_cdf = cat_items.filter(devise='CDF').aggregate(
+                total=Sum(django_models.F('quantite') * django_models.F('prix_unitaire'))
+            )['total'] or 0
+            
+            # Convertir CDF en USD pour comparaison
+            cat_revenue_total_usd = cat_revenue_usd + (cat_revenue_cdf / Decimal(bar.taux_change_usd_to_cdf or 2800))
+            
+            if cat_revenue_total_usd > 0:
+                category_performance.append({
+                    'nom': cat.nom,
+                    'icon': cat.icon or 'local_drink',
+                    'revenue_usd': cat_revenue_usd,
+                    'revenue_cdf': cat_revenue_cdf,
+                    'revenue_total_usd': cat_revenue_total_usd,
+                    'ventes_count': cat_items.count()
+                })
+        
+        # Trier par revenu total
+        category_performance.sort(key=lambda x: x['revenue_total_usd'], reverse=True)
+        context['category_performance'] = category_performance[:5]  # Top 5 catégories
+        
+        # Produits les plus vendus
+        top_products = order_items.values('product_item__produit__nom').annotate(
+            total_qty=Sum('quantite'),
+            total_revenue_usd=Sum(django_models.F('quantite') * django_models.F('prix_unitaire'), 
+                                 output_field=django_models.DecimalField())
+        ).filter(devise='USD').order_by('-total_revenue_usd')[:5]
+        
+        context['top_products'] = top_products
+        
+        # Évolution journalière (derniers 7 jours de la période)
+        daily_performance = []
+        for i in range(7):
+            day = end_date - timedelta(days=6-i)
+            day_start = day.replace(hour=0, minute=0, second=0)
+            day_end = day.replace(hour=23, minute=59, second=59)
+            
+            day_items = order_items.filter(order__date_creation__range=(day_start, day_end))
+            day_revenue_usd = day_items.filter(devise='USD').aggregate(
+                total=Sum(django_models.F('quantite') * django_models.F('prix_unitaire'))
+            )['total'] or 0
+            day_revenue_cdf = day_items.filter(devise='CDF').aggregate(
+                total=Sum(django_models.F('quantite') * django_models.F('prix_unitaire'))
+            )['total'] or 0
+            
+            daily_performance.append({
+                'date': day.strftime('%d/%m'),
+                'revenue_usd': day_revenue_usd,
+                'revenue_cdf': day_revenue_cdf,
+                'ventes_count': day_items.count()
+            })
+        
+        context['daily_performance'] = daily_performance
         
         return context
 
@@ -1158,42 +1233,88 @@ def draw_facture_page(c, facture, profile):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import mm
     from reportlab.lib.colors import HexColor
+    import os
+    from django.conf import settings
     
     width, height = A4 # 595.27 x 841.89
     
-    # Palette de couleurs élégante (Bleu marine professionnel)
-    color_primary = HexColor("#1E3A8A")
-    color_secondary = HexColor("#3B82F6")
+    # Palette de couleurs élégante et chaleureuse (Orange premium de la marque BarPilote)
+    color_primary = HexColor("#EA580C") # Orange vif de BarPilote
+    color_secondary = HexColor("#F97316") # Orange secondaire
     color_dark = HexColor("#1F2937")
-    color_light = HexColor("#F3F4F6")
+    color_light = HexColor("#FFF7ED") # Teinte orange très claire/douce pour les fonds
     color_gray = HexColor("#6B7280")
     
-    # 1. En-tête (Logo & Infos Bar)
+    # Elegant orange accent top line (3mm thickness)
     c.setFillColor(color_primary)
-    c.rect(0, height - 40*mm, width, 40*mm, stroke=0, fill=1)
+    c.rect(0, height - 3*mm, width, 3*mm, stroke=0, fill=1)
     
-    c.setFillColor(HexColor("#FFFFFF"))
-    c.setFont("Helvetica-Bold", 24)
-    c.drawString(20*mm, height - 25*mm, profile.bar.nom.upper())
-    
-    c.setFont("Helvetica", 10)
-    c.drawString(20*mm, height - 32*mm, f"Tél: {profile.telephone or 'N/A'} | Email: {profile.user.email or 'N/A'}")
-    
-    c.setFont("Helvetica-Bold", 20)
-    c.drawRightString(width - 20*mm, height - 25*mm, "FACTURE")
-    
-    c.setFont("Helvetica-Bold", 10)
-    c.drawRightString(width - 20*mm, height - 32*mm, f"N° : {facture.numero}")
+    # Paths for logos
+    logo_bp_path = os.path.join(settings.BASE_DIR, 'static', 'logo_orange.png')
+    if not os.path.exists(logo_bp_path):
+        logo_bp_path = os.path.join(settings.BASE_DIR, 'static', 'logo.png')
+        
+    logo_est_path = None
+    if profile.bar and profile.bar.logo:
+        try:
+            if os.path.exists(profile.bar.logo.path):
+                logo_est_path = profile.bar.logo.path
+        except Exception:
+            pass
+            
+    # 1. En-tête (Logos & Infos Bar)
+    # A. Draw Establishment (Left Side)
+    if logo_est_path:
+        c.drawImage(logo_est_path, 20*mm, height - 28*mm, width=18*mm, height=18*mm, mask='auto')
+        c.setFillColor(color_dark)
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(42*mm, height - 19*mm, profile.bar.nom.upper())
+        
+        c.setFont("Helvetica", 9)
+        c.setFillColor(color_gray)
+        c.drawString(42*mm, height - 25*mm, f"Tél: {profile.telephone or 'N/A'} | Email: {profile.user.email or 'N/A'}")
+    else:
+        c.setFillColor(color_dark)
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(20*mm, height - 19*mm, profile.bar.nom.upper())
+        
+        c.setFont("Helvetica", 9)
+        c.setFillColor(color_gray)
+        c.drawString(20*mm, height - 25*mm, f"Tél: {profile.telephone or 'N/A'} | Email: {profile.user.email or 'N/A'}")
+        
+    # B. Draw BarPilote Branding (Right Side)
+    if os.path.exists(logo_bp_path):
+        c.drawImage(logo_bp_path, width - 38*mm, height - 28*mm, width=18*mm, height=18*mm, mask='auto')
+        c.setFillColor(color_primary)
+        c.setFont("Helvetica-Bold", 14)
+        c.drawRightString(width - 42*mm, height - 19*mm, "FACTURE")
+        
+        c.setFont("Helvetica-Bold", 9)
+        c.setFillColor(color_dark)
+        c.drawRightString(width - 42*mm, height - 25*mm, f"N° : {facture.numero}")
+    else:
+        c.setFillColor(color_primary)
+        c.setFont("Helvetica-Bold", 16)
+        c.drawRightString(width - 20*mm, height - 19*mm, "FACTURE")
+        
+        c.setFont("Helvetica-Bold", 9)
+        c.setFillColor(color_dark)
+        c.drawRightString(width - 20*mm, height - 25*mm, f"N° : {facture.numero}")
+        
+    # Beautiful thin orange separation line below header
+    c.setStrokeColor(color_primary)
+    c.setLineWidth(1)
+    c.line(20*mm, height - 35*mm, width - 20*mm, height - 35*mm)
     
     # 2. Infos Client & Facture (Double colonnes)
-    y = height - 60*mm
+    y = height - 48*mm
     c.setFillColor(color_dark)
-    c.setFont("Helvetica-Bold", 12)
+    c.setFont("Helvetica-Bold", 11)
     c.drawString(20*mm, y, "FACTURÉ À :")
     c.drawRightString(width - 20*mm, y, "DÉTAILS DE FACTURATION :")
     
     y -= 6*mm
-    c.setFont("Helvetica", 10)
+    c.setFont("Helvetica", 9)
     c.setFillColor(color_dark)
     c.drawString(20*mm, y, facture.client_fournisseur)
     c.drawRightString(width - 20*mm, y, f"Date d'émission : {facture.date_emission.strftime('%d/%m/%Y %H:%M')}")
@@ -1203,8 +1324,8 @@ def draw_facture_page(c, facture, profile):
     c.drawRightString(width - 20*mm, y, f"Statut : {facture.get_statut_display().upper()}")
     
     # 3. Ligne de séparation
-    y -= 10*mm
-    c.setStrokeColor(color_light)
+    y -= 8*mm
+    c.setStrokeColor(HexColor("#E5E7EB"))
     c.setLineWidth(1)
     c.line(20*mm, y, width - 20*mm, y)
     
@@ -1384,8 +1505,8 @@ class ClientHistoryAPIView(LoginRequiredMixin, View):
         rate = bar.taux_change_usd_to_cdf or 2800
         total_spent_cdf = float(total_cdf) + float(total_usd) * float(rate)
         
-        # Eligible if manually authorized OR spent >= 100,000 FC
-        eligible = is_manually_authorized or (total_spent_cdf >= 100000)
+        # Eligible if manually authorized OR spent >= seuil_dette_eligible FC
+        eligible = is_manually_authorized or (total_spent_cdf >= float(bar.seuil_dette_eligible))
         
         return JsonResponse({
             'total_spent_cdf': total_spent_cdf,
@@ -1395,6 +1516,7 @@ class ClientHistoryAPIView(LoginRequiredMixin, View):
             'client_found': client is not None,
             'client_nom': client.nom if client else '',
             'client_telephone': client.telephone if client else '',
+            'seuil_dette_eligible': float(bar.seuil_dette_eligible),
         })
 
 class ClientManagementView(LoginRequiredMixin, View):
@@ -1421,7 +1543,7 @@ class ClientManagementView(LoginRequiredMixin, View):
             total_cdf = sum(f.montant_cdf for f in factures)
             total_spent_cdf = float(total_cdf) + float(total_usd) * float(rate)
             
-            eligible = c.dette_autorisee or (total_spent_cdf >= 100000)
+            eligible = c.dette_autorisee or (total_spent_cdf >= float(bar.seuil_dette_eligible))
             
             clients_data.append({
                 'id': c.id,
@@ -1473,6 +1595,19 @@ class ClientManagementView(LoginRequiredMixin, View):
             client_id = request.POST.get('client_id')
             client = get_object_or_404(Client, id=client_id, bar=bar)
             client.delete()
+            return redirect('clients_html')
+            
+        elif action == 'update_threshold':
+            threshold_val = request.POST.get('seuil_dette_eligible', '').strip()
+            if threshold_val:
+                try:
+                    from decimal import Decimal
+                    # Clean commas or spaces if entered
+                    threshold_val = threshold_val.replace(' ', '').replace(',', '')
+                    bar.seuil_dette_eligible = Decimal(threshold_val)
+                    bar.save()
+                except Exception as e:
+                    pass
             return redirect('clients_html')
             
         return redirect('clients_html')

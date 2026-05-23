@@ -2,6 +2,26 @@
 {% load static %}
 {% load currency_tags %}
 
+{% block extra_head %}
+<style>
+    @media (max-width: 768px) {
+        .text-3xl { font-size: 1.5rem !important; }
+        .text-2xl { font-size: 1.25rem !important; }
+        .text-xl { font-size: 1.125rem !important; }
+        .text-lg { font-size: 1rem !important; }
+        .p-8 { padding: 1rem !important; }
+        .p-10 { padding: 1.25rem !important; }
+        .p-6 { padding: 0.75rem !important; }
+        .p-5 { padding: 0.75rem !important; }
+        .gap-8 { gap: 1rem !important; }
+        .gap-6 { gap: 0.75rem !important; }
+        .gap-4 { gap: 0.5rem !important; }
+        .px-8 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+        .py-5 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+    }
+</style>
+{% endblock %}
+
 {% block title %}Finances - BarPilote{% endblock %}
 
 {% block content %}
@@ -109,7 +129,7 @@
                     <span class="material-symbols-outlined">analytics</span>
                 </div>
                 <h3 class="text-on-surface-variant/60 font-bold text-[10px] uppercase tracking-widest mb-1">Panier Moyen</h3>
-                <p class="text-2xl font-black text-on-surface">{% display_price avg_basket_usd None %}</p>
+                <p class="text-2xl font-black text-on-surface">{% display_price avg_basket_usd avg_basket_cdf %}</p>
                 <p class="text-[10px] font-bold text-on-surface-variant/40 mt-1 uppercase">Par commande</p>
             </div>
         </div>
@@ -142,7 +162,7 @@
 
                 {% if pertes_par_produit %}
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="w-full min-w-[500px]">
                         <thead>
                             <tr class="text-left border-b border-surface-container">
                                 <th class="pb-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Boisson</th>
@@ -186,9 +206,72 @@
             <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high">
                 <h2 class="text-xl font-black text-on-surface mb-8">Performance Ventes</h2>
                 <div class="space-y-6">
-                    <div class="flex items-center justify-center py-12">
-                        <p class="text-on-surface-variant/40 text-sm font-medium italic">Analyse des ventes en cours...</p>
+                    {% if category_performance %}
+                    <!-- Top Catégories -->
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Top Catégories</h3>
+                        <div class="space-y-3">
+                            {% for cat in category_performance %}
+                            <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-surface-container-high">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-sm">{{ cat.icon }}</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-black text-sm text-on-surface">{{ cat.nom }}</p>
+                                        <p class="text-[10px] text-on-surface-variant/60">{{ cat.ventes_count }} ventes</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-black text-sm text-on-surface">{% display_price cat.revenue_usd cat.revenue_cdf %}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
+                    {% endif %}
+
+                    {% if top_products %}
+                    <!-- Top Produits -->
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Produits Populaires</h3>
+                        <div class="space-y-2">
+                            {% for product in top_products %}
+                            <div class="flex items-center justify-between p-2 bg-surface-container rounded-lg">
+                                <p class="font-bold text-xs text-on-surface">{{ product.item__produit__nom }}</p>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[10px] font-black text-on-surface-variant/60">{{ product.total_qty }} vendus</span>
+                                    <span class="font-black text-xs text-orange-600">${{ product.total_revenue_usd|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if daily_performance %}
+                    <!-- Évolution Journalière -->
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Évolution (7 derniers jours)</h3>
+                        <div class="space-y-2">
+                            {% for day in daily_performance %}
+                            <div class="flex items-center justify-between p-2 bg-surface-container rounded-lg">
+                                <span class="text-[10px] font-black text-on-surface-variant/60">{{ day.date }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-black text-on-surface-variant/40">{{ day.ventes_count }} ventes</span>
+                                    <span class="text-xs font-black text-orange-600">{% display_price day.revenue_usd day.revenue_cdf %}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if not category_performance and not top_products and not daily_performance %}
+                    <div class="flex items-center justify-center py-12">
+                        <p class="text-on-surface-variant/40 text-sm font-medium italic">Aucune vente enregistrée sur cette période.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -218,7 +301,7 @@
         </div>
         
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                     <tr class="bg-surface-container-low/50">
                         <th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">N° Facture</th>
@@ -386,9 +469,14 @@
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Client / Fournisseur</label>
                     <div class="relative">
-                        <input type="text" name="client" id="factureClientInput" required placeholder="Ex: Jean Mukendi"
+                        <input type="text" name="client" id="factureClientInput" list="clientsList" required placeholder="Ex: Jean Mukendi"
                                autocomplete="off"
                                class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 text-on-surface font-bold focus:ring-2 focus:ring-orange-500 transition-all">
+                        <datalist id="clientsList">
+                            {% for client in bar.clients.all %}
+                                <option value="{{ client.nom }}">{{ client.telephone|default:'' }}</option>
+                            {% endfor %}
+                        </datalist>
                         <div id="clientAutocompleteStatus" class="hidden mt-1.5 ml-2 flex items-center gap-1.5 text-[10px] font-black text-emerald-600">
                             <span class="material-symbols-outlined text-xs">check_circle</span>
                             <span id="clientAutocompleteMsg"></span>

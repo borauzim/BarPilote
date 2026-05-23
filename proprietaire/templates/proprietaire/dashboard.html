@@ -2,6 +2,25 @@
 {% load static %}
 {% load currency_tags %}
 
+{% block extra_head %}
+<style>
+    @media (max-width: 768px) {
+        .text-6xl { font-size: 2.5rem !important; }
+        .text-5xl { font-size: 2rem !important; }
+        .text-3xl { font-size: 1.5rem !important; }
+        .text-2xl { font-size: 1.25rem !important; }
+        .text-xl { font-size: 1.125rem !important; }
+        .p-8 { padding: 1rem !important; }
+        .p-10 { padding: 1.25rem !important; }
+        .gap-8 { gap: 1rem !important; }
+        .gap-6 { gap: 0.75rem !important; }
+        .gap-4 { gap: 0.5rem !important; }
+        .h-32 { height: 6rem !important; }
+        .w-64 { width: 100% !important; }
+    }
+</style>
+{% endblock %}
+
 {% block title %}Tableau de Bord - BarPilote{% endblock %}
 
 {% block content %}
@@ -331,7 +350,12 @@
                 <div class="space-y-4">
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Nom du client (Optionnel)</label>
-                        <input type="text" id="paymentClientName" placeholder="Ex: Jean Dupont" class="w-full bg-surface-container-lowest border border-surface-container rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-emerald-500 transition-all">
+                        <input type="text" id="paymentClientName" list="clientsList" placeholder="Ex: Jean Dupont" class="w-full bg-surface-container-lowest border border-surface-container rounded-2xl py-4 px-6 font-bold text-on-surface focus:ring-2 focus:ring-emerald-500 transition-all">
+                        <datalist id="clientsList">
+                            {% for client in bar.clients.all %}
+                                <option value="{{ client.nom }}">{{ client.telephone|default:'' }}</option>
+                            {% endfor %}
+                        </datalist>
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-black uppercase text-on-surface-variant/40 ml-1">Téléphone (Optionnel)</label>
@@ -858,6 +882,7 @@
         // --- Payment Modal Logic ---
         let eligibilityDebounceTimer = null;
         let isEligibleForDebt = false;
+        let phoneManuallyModified = false;
 
         function onPaymentInputChanged() {
             clearTimeout(eligibilityDebounceTimer);
@@ -873,6 +898,9 @@
             
             if (!name && !phone) {
                 isEligibleForDebt = false;
+                phoneManuallyModified = false; // Reset modification flag when empty
+                const phoneInput = document.getElementById('paymentClientPhone');
+                phoneInput.style.borderColor = '';
                 statusBox.className = "p-4 rounded-xl text-xs font-bold bg-surface-container-low text-on-surface-variant/70 border border-surface-container flex items-center gap-3";
                 statusBox.innerHTML = `
                     <span class="material-symbols-outlined text-base">info</span>
@@ -892,14 +920,21 @@
             .then(data => {
                 const totalSpent = data.total_spent_cdf || 0;
                 
-                // Auto-remplissage du téléphone si le client est reconnu dans le CRM
+                // Auto-remplissage du téléphone si le client est reconnu dans le CRM et n'a pas été édité manuellement
                 const phoneInput = document.getElementById('paymentClientPhone');
-                if (data.client_found && data.client_telephone && !phoneInput.value.trim()) {
-                    phoneInput.value = data.client_telephone;
-                    phoneInput.style.borderColor = '#10b981';
-                    phoneInput.title = 'Numéro rempli automatiquement depuis le CRM';
+                if (!phoneManuallyModified) {
+                    if (data.client_found && data.client_telephone) {
+                        phoneInput.value = data.client_telephone;
+                        phoneInput.style.borderColor = '#10b981';
+                        phoneInput.title = 'Numéro rempli automatiquement depuis le CRM';
+                    } else {
+                        phoneInput.value = '';
+                        phoneInput.style.borderColor = '';
+                    }
                 }
                 
+                const threshold = data.seuil_dette_eligible || 100000;
+
                 if (data.eligible) {
                     isEligibleForDebt = true;
                     statusBox.className = "p-4 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-100 flex items-center gap-3";
@@ -907,7 +942,7 @@
                         <span class="material-symbols-outlined text-base text-emerald-600">check_circle</span>
                         <div>
                             <span class="block">✅ Client éligible !</span>
-                            <span class="block text-[10px] font-medium text-emerald-700/80 mt-0.5">Dépenses totales: ${totalSpent.toLocaleString()} FC (Seuil: 100 000 FC)</span>
+                            <span class="block text-[10px] font-medium text-emerald-700/80 mt-0.5">Dépenses totales: ${totalSpent.toLocaleString()} FC (Seuil: ${threshold.toLocaleString()} FC)</span>
                         </div>
                     `;
                 } else {
@@ -917,7 +952,7 @@
                         <span class="material-symbols-outlined text-base text-amber-600">warning</span>
                         <div>
                             <span class="block">⚠️ Éligibilité insuffisante</span>
-                            <span class="block text-[10px] font-medium text-amber-700/80 mt-0.5">Dépenses: ${totalSpent.toLocaleString()} FC / 100 000 FC. Garant obligatoire.</span>
+                            <span class="block text-[10px] font-medium text-amber-700/80 mt-0.5">Dépenses: ${totalSpent.toLocaleString()} FC / ${threshold.toLocaleString()} FC. Garant obligatoire.</span>
                         </div>
                     `;
                 }
@@ -958,7 +993,7 @@
                 payLaterBtn.disabled = true;
                 payLaterBtn.className = "w-1/3 bg-surface-container text-on-surface-variant/40 border border-surface-container/80 py-5 rounded-2xl font-black uppercase tracking-widest cursor-not-allowed opacity-60 transition-all flex items-center justify-center gap-1.5";
                 payLaterBtn.innerHTML = `<span class="material-symbols-outlined text-sm">lock</span> Enregistrer en Dette`;
-                payLaterBtn.setAttribute('title', 'Le client doit avoir dépensé > 100 000 FC ou avoir un garant.');
+                payLaterBtn.setAttribute('title', "Le client doit avoir dépensé > " + ({{ profile.bar.seuil_dette_eligible|default:100000|floatformat:0 }}).toLocaleString() + " FC ou avoir un garant.");
             }
         }
 
@@ -1013,6 +1048,7 @@
             document.getElementById('paymentOrderId').value = orderId;
             document.getElementById('paymentClientName').value = '';
             document.getElementById('paymentClientPhone').value = '';
+            phoneManuallyModified = false; // Reset modification flag when opening modal
             
             // Uncheck guarantors
             const radios = document.getElementsByName('paymentGuarantor');
@@ -1026,7 +1062,17 @@
             const phoneInput = document.getElementById('paymentClientPhone');
             
             nameInput.oninput = onPaymentInputChanged;
-            phoneInput.oninput = onPaymentInputChanged;
+            
+            // When user types in phone input, we mark it as manually modified
+            phoneInput.oninput = function() {
+                phoneManuallyModified = true;
+                this.style.borderColor = '';
+                onPaymentInputChanged();
+            };
+            
+            phoneInput.onfocus = function() {
+                this.style.borderColor = '';
+            };
             
             // Reset eligibility message box
             const statusBox = document.getElementById('creditEligibilityStatus');

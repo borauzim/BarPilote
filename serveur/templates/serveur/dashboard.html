@@ -120,4 +120,21 @@
         }, 300);
     }
 </script>
+
+{% block extra_body %}
+<style>
+    /* Masquer le header et footer sur la page serveur */
+    header, nav {
+        display: none !important;
+    }
+    main {
+        padding-top: 2rem !important;
+    }
+    @media (max-width: 768px) {
+        main {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+    }
+</style>
 {% endblock %}

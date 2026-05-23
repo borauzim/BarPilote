@@ -46,14 +46,25 @@
                 </p>
             </div>
         </div>
-        <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex items-center gap-5">
-            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
-                <span class="material-symbols-outlined">payments</span>
+        <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex flex-col justify-between gap-4">
+            <div class="flex items-center gap-5">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                    <span class="material-symbols-outlined">payments</span>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Seuil d'éligibilité Auto</p>
+                    <p class="text-2xl font-black text-on-surface">{{ bar.seuil_dette_eligible|floatformat:0 }} FC</p>
+                </div>
             </div>
-            <div>
-                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Dépense cumulée moyenne</p>
-                <p class="text-2xl font-black text-on-surface">CDF 100K+</p>
-            </div>
+            <form method="POST" action="{% url 'clients_html' %}" class="flex items-center gap-2 mt-2 pt-2 border-t border-surface-container/50">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_threshold">
+                <input type="number" name="seuil_dette_eligible" value="{{ bar.seuil_dette_eligible|floatformat:0 }}" required class="w-full bg-surface-container-low border border-surface-container rounded-xl py-2 px-3 font-bold text-xs text-on-surface focus:ring-1 focus:ring-orange-500 transition-all" placeholder="Modifier le seuil en FC">
+                <button type="submit" class="citrus-gradient text-white px-3 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90 active:scale-95 flex items-center gap-1 shrink-0">
+                    <span class="material-symbols-outlined text-sm">save</span>
+                    <span>Sauver</span>
+                </button>
+            </form>
         </div>
     </div>
 
@@ -104,7 +115,7 @@
                                     </span>
                                 {% elif client.eligible %}
                                     <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-blue-100">
-                                        <span class="material-symbols-outlined text-xs">star</span> Automatique (>=100k)
+                                        <span class="material-symbols-outlined text-xs">star</span> Auto (>={{ bar.seuil_dette_eligible|floatformat:0 }} FC)
                                     </span>
                                 {% else %}
                                     <span class="inline-flex items-center gap-1 bg-zinc-100 text-zinc-500 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-zinc-200">

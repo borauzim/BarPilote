@@ -36,6 +36,7 @@ class Bar(models.Model):
     )
     logo = models.ImageField(upload_to='bar_logos/', blank=True, null=True, verbose_name="Logo de l'établissement")
     taux_change_usd_to_cdf = models.DecimalField(max_digits=10, decimal_places=2, default=2800.00, verbose_name="Taux de change (1$ en FC)")
+    seuil_dette_eligible = models.DecimalField(max_digits=12, decimal_places=2, default=100000.00, verbose_name="Seuil d'éligibilité pour dette (FC)")
     
     # Abonnement & Période d'essai
     abonnement_expire_le = models.DateTimeField(null=True, blank=True, verbose_name="Date d'expiration de l'abonnement")
