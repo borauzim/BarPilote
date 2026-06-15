@@ -18,6 +18,57 @@
         .h-32 { height: 6rem !important; }
         .w-64 { width: 100% !important; }
     }
+
+    @media (max-width: 640px) {
+        section.rounded-\[40px\],
+        .rounded-\[40px\] { border-radius: 1.5rem !important; }
+        .rounded-\[32px\] { border-radius: 1.25rem !important; }
+        #serviceModalContent,
+        #paymentModalContent {
+            width: calc(100vw - 1rem) !important;
+            max-width: calc(100vw - 1rem) !important;
+            max-height: 92dvh !important;
+            height: auto !important;
+        }
+        #serviceModalContent > .flex-1 {
+            flex-direction: column !important;
+            overflow-y: auto !important;
+        }
+        #serviceModalContent .w-80 {
+            width: 100% !important;
+            max-height: 45dvh !important;
+        }
+        #serviceModalContent .p-8,
+        #paymentModalContent .p-8,
+        #paymentModalContent .p-6 { padding: 1rem !important; }
+        #aiChatWidget {
+            left: 1rem !important;
+            right: 1rem !important;
+            bottom: 6.5rem !important;
+            align-items: flex-end !important;
+            pointer-events: none;
+        }
+        #aiChatWidget > * { pointer-events: auto; }
+        #chatWindow {
+            width: calc(100vw - 2rem) !important;
+            max-width: calc(100vw - 2rem) !important;
+            height: min(70dvh, 520px) !important;
+        }
+        button.fixed.bottom-32 {
+            right: 1rem !important;
+            bottom: 6.5rem !important;
+            width: 3.5rem !important;
+            height: 3.5rem !important;
+            border-radius: 1.25rem !important;
+        }
+        #liveOrdersContainer .flex.items-center.justify-between,
+        #liveOrdersContainer .flex.items-center.gap-5 {
+            align-items: flex-start !important;
+        }
+        #liveOrdersContainer > div {
+            gap: 1rem !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -198,7 +249,7 @@
 
                 <div id="liveOrdersContainer" class="space-y-4">
                     {% for order in recent_orders %}
-                    <div class="flex items-center justify-between p-5 rounded-[24px] hover:bg-surface-container-lowest hover:executive-shadow transition-all group border border-transparent hover:border-surface-container">
+                    <div onclick="openOrderDetailsPopover('{{ order.table.nom|escapejs }}', '{{ order.get_statut_display|escapejs }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'f' }}, {{ order.total_cdf|stringformat:'f' }})" class="flex items-center justify-between p-5 rounded-[24px] hover:bg-surface-container-lowest hover:executive-shadow transition-all group border border-transparent hover:border-surface-container cursor-pointer">
                         <div class="flex items-center gap-5">
                             <div class="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-orange-600 group-hover:text-white transition-all duration-500">
                                 <span class="material-symbols-outlined text-2xl">local_bar</span>
@@ -216,22 +267,46 @@
                             <div class="hidden sm:flex items-center gap-2">
                                 {% if order.statut == 'PENDING' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>
-                                <button onclick="updateOrderStatus('{{ order.id }}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter</button>
+                                <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter</button>
                                 {% elif order.statut == 'PREPARING' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>
-                                <button onclick="updateOrderStatus('{{ order.id }}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>
+                                <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>
                                 {% elif order.statut == 'SERVED' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Servi</span>
-                                <button onclick="openPaymentModal('{{ order.id }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'f' }}, {{ order.total_cdf|stringformat:'f' }})" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>
+                                <button onclick="event.stopPropagation(); openPaymentModal('{{ order.id }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'f' }}, {{ order.total_cdf|stringformat:'f' }})" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>
                                 {% elif order.statut == 'PAID' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-600 uppercase tracking-widest border border-emerald-100">Réglé</span>
                                 {% else %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-surface-container text-on-surface-variant uppercase tracking-widest">{{ order.get_statut_display }}</span>
                                 {% endif %}
                             </div>
-                            <div class="text-right">
-                                <p class="text-xl font-black text-on-surface">{% display_price order.total_usd order.total_cdf %}</p>
+                            <div class="flex items-center gap-3">
+                                <div class="text-right">
+                                    <p class="text-xl font-black text-on-surface">{% display_price order.total_usd order.total_cdf %}</p>
+                                </div>
+                                <button type="button" onclick="event.stopPropagation(); toggleInlineOrderDetails('ownerOrderDetails-{{ order.id }}', this)" class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-orange-600 hover:bg-orange-50 transition-all">
+                                    <span data-toggle-icon class="material-symbols-outlined text-sm transition-transform duration-300">expand_more</span>
+                                </button>
                             </div>
+                        </div>
+                    </div>
+                    <div id="ownerOrderDetails-{{ order.id }}" class="hidden max-h-0 opacity-0 -translate-y-2 transition-all duration-300 overflow-hidden rounded-[24px] border border-surface-container bg-surface-container-lowest px-5 py-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-orange-600">Produits commandés</span>
+                            <span class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Table {{ order.table.nom }}</span>
+                        </div>
+                        <div class="space-y-2">
+                            {% for item in order.items.all %}
+                            <div class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 border border-surface-container">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-black text-on-surface truncate">{{ item.product_item.produit.nom }}</p>
+                                    <p class="text-[9px] font-bold text-on-surface-variant/50 uppercase">{{ item.unite_vente }} x{{ item.quantite }}</p>
+                                </div>
+                                <span class="text-[10px] font-black text-on-surface-variant shrink-0">{{ item.prix_unitaire|floatformat:2 }} {{ item.devise }}</span>
+                            </div>
+                            {% empty %}
+                            <p class="text-xs text-on-surface-variant/50 font-bold text-center py-4">Aucun produit trouvé.</p>
+                            {% endfor %}
                         </div>
                     </div>
                     {% empty %}
@@ -314,6 +389,29 @@
     </button>
 
     <!-- 💰 Modal: Payment & Client Details -->
+
+    <div id="orderDetailsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[65] hidden items-start justify-center pt-6 md:pt-10 p-4">
+        <div id="orderDetailsModalContent" class="bg-white rounded-[36px] w-full max-w-lg shadow-2xl scale-95 translate-y-4 opacity-0 transition-all duration-300 overflow-hidden origin-top">
+            <div class="p-6 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-orange-600">Détail commande</p>
+                    <h2 id="orderDetailsTitle" class="text-xl font-black text-on-surface">Table</h2>
+                    <p id="orderDetailsStatus" class="text-xs font-bold text-on-surface-variant/60 mt-1">Statut</p>
+                </div>
+                <button type="button" aria-label="Fermer" onclick="closeOrderDetailsPopover()" class="w-10 h-10 rounded-xl hover:bg-surface-container flex items-center justify-center text-on-surface-variant border border-transparent hover:border-surface-container">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-6 space-y-5">
+                <div id="orderDetailsItems" class="space-y-3"></div>
+                <div class="flex items-center justify-between p-4 rounded-2xl bg-orange-50 border border-orange-100">
+                    <span class="text-xs font-black uppercase tracking-widest text-orange-600">Total</span>
+                    <span id="orderDetailsTotal" class="text-2xl font-black text-on-surface">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="paymentModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
         <div class="bg-white rounded-[40px] w-full max-w-lg max-h-[90vh] shadow-2xl scale-95 opacity-0 transition-all duration-300 transform flex flex-col overflow-hidden" id="paymentModalContent">
             <!-- Header -->
@@ -415,7 +513,7 @@
 
     <!-- 🍽️ Modal: Direct Service (Take Order) -->
     <div id="serviceModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-[40px] w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl scale-95 opacity-0 transition-all duration-300 transform overflow-hidden" id="serviceModalContent">
+        <div class="bg-white rounded-[40px] w-full max-w-6xl h-[88vh] flex flex-col shadow-2xl scale-95 opacity-0 transition-all duration-300 transform overflow-hidden" id="serviceModalContent">
             <!-- Header -->
             <div class="p-8 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest shrink-0">
                 <div class="flex items-center gap-4">
@@ -457,6 +555,7 @@
                                         <p class="text-[10px] font-bold text-on-surface-variant/40 uppercase">{{ item.produit.volume_cl }}cl • Stock: {{ item.quantite_actuelle|floatformat:0 }}</p>
                                     </div>
                                     <div class="text-right">
+                                        {% if item.can_sell_bottle %}
                                         <p class="font-black text-orange-600 text-sm">
                                             {% if item.devise == 'CDF' %}
                                                 {% display_price None item.prix_vente_unitaire %}
@@ -464,7 +563,10 @@
                                                 {% display_price item.prix_vente_unitaire None %}
                                             {% endif %}
                                         </p>
-                                        {% if item.vente_au_verre %}
+                                        {% else %}
+                                        <p class="text-[9px] font-black text-red-500 uppercase">Prix bouteille manquant</p>
+                                        {% endif %}
+                                        {% if item.can_sell_glass %}
                                         <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase">
                                             Verre: 
                                             {% if item.devise == 'CDF' %}
@@ -478,15 +580,20 @@
                                 </div>
                                 
                                 <div class="flex gap-2">
-                                    <button onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom }}', {{ item.prix_vente_unitaire|stringformat:'.2f' }}, 'BOUTEILLE', '{{ item.devise }}')" 
+                                    {% if item.can_sell_bottle %}
+                                    <button type="button" onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_unitaire|stringformat:'.2f' }}, 'BOUTEILLE', '{{ item.devise }}')" 
                                             class="flex-1 py-2 bg-on-surface text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95">
-                                        + Bouteille
+                                        + Bottle
                                     </button>
-                                    {% if item.vente_au_verre %}
-                                    <button onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom }}', {{ item.prix_vente_verre|stringformat:'.2f' }}, 'VERRE', '{{ item.devise }}')"
+                                    {% endif %}
+                                    {% if item.can_sell_glass %}
+                                    <button type="button" onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_verre|stringformat:'.2f' }}, 'VERRE', '{{ item.devise }}')"
                                             class="flex-1 py-2 bg-orange-50 text-orange-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-95 border border-orange-100">
-                                        + Verre
+                                        + Glass
                                     </button>
+                                    {% endif %}
+                                    {% if not item.can_sell_bottle and not item.can_sell_glass %}
+                                    <span class="w-full py-2 bg-red-50 text-red-600 rounded-xl text-[9px] font-black uppercase tracking-widest text-center border border-red-100">Prix non configuré</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -538,7 +645,7 @@
     <!-- 🤖 Pilot Advisor Floating Widget -->
     <div id="aiChatWidget" class="fixed bottom-8 right-8 md:bottom-12 md:right-12 z-50 flex flex-col items-end gap-4">
         <!-- Chat Window (Hidden by default) -->
-        <div id="chatWindow" class="hidden w-[350px] md:w-[400px] h-[550px] bg-white rounded-[32px] shadow-2xl border border-surface-container-high overflow-hidden flex flex-col transition-all duration-300 translate-y-4 opacity-0">
+        <div id="chatWindow" class="hidden w-[350px] md:w-[460px] h-[550px] bg-white rounded-[32px] shadow-2xl border border-surface-container-high overflow-hidden flex flex-col transition-all duration-300 translate-y-4 opacity-0">
             <!-- Header -->
             <div class="citrus-gradient p-6 text-white flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -750,21 +857,20 @@
                 
                 const hasPending = group.orders.some(o => o.statut === 'PENDING');
                 const hasPreparing = group.orders.some(o => o.statut === 'PREPARING');
+                const groupItemsJson = encodeURIComponent(JSON.stringify(Object.values(group.items)));
                 
                 if (hasPending) {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>';
                     const pendingIds = group.orders.filter(o => o.statut === 'PENDING').map(o => o.id).join(',');
-                    actionBtn = `<button onclick="updateOrderStatus('${pendingIds}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter tournée</button>`;
+                    actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${pendingIds}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter tournée</button>`;
                 } else if (hasPreparing) {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>';
                     const preparingIds = group.orders.filter(o => o.statut === 'PREPARING').map(o => o.id).join(',');
-                    actionBtn = `<button onclick="updateOrderStatus('${preparingIds}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>`;
+                    actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${preparingIds}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>`;
                 } else {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Servi</span>';
                     const allIds = group.orders.map(o => o.id).join(',');
-                    const itemsArr = Object.values(group.items);
-                    const itemsJson = encodeURIComponent(JSON.stringify(itemsArr));
-                    actionBtn = `<button onclick="openPaymentModal('${allIds}', '${itemsJson}', ${group.total_usd}, ${group.total_cdf})" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>`;
+                    actionBtn = `<button onclick="event.stopPropagation(); openPaymentModal('${allIds}', '${groupItemsJson}', ${group.total_usd}, ${group.total_cdf})" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>`;
                 }
 
                 // Chronometer Logic
@@ -842,7 +948,7 @@
                 }
 
                 html += `
-                <div class="flex flex-col p-5 rounded-[24px] bg-white hover:bg-surface-container-lowest hover:executive-shadow transition-all group border border-surface-container shadow-sm">
+                <div onclick="openOrderDetailsPopover(decodeURIComponent('${encodeURIComponent(group.table_nom)}'), 'Tournée active', '${groupItemsJson}', ${group.total_usd}, ${group.total_cdf})" class="flex flex-col p-5 rounded-[24px] bg-white hover:bg-surface-container-lowest hover:executive-shadow transition-all group border border-surface-container shadow-sm cursor-pointer">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-5">
                             <div class="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
@@ -863,13 +969,23 @@
                                 ${statusBadge}
                                 ${actionBtn}
                             </div>
-                            <div class="text-right">
-                                <p class="text-xl font-black text-on-surface">${displayPrice}</p>
+                            <div class="flex items-center gap-3">
+                                <div class="text-right">
+                                    <p class="text-xl font-black text-on-surface">${displayPrice}</p>
+                                </div>
+                                <button type="button" onclick="event.stopPropagation(); toggleInlineOrderDetails('ownerGroupDetails-${index}', this)" class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-orange-600 hover:bg-orange-50 transition-all">
+                                    <span data-toggle-icon class="material-symbols-outlined text-sm transition-transform duration-300">expand_more</span>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <!-- Render Inline Products -->
-                    ${productsHtml}
+                    <div id="ownerGroupDetails-${index}" class="hidden max-h-0 opacity-0 -translate-y-2 transition-all duration-300 overflow-hidden rounded-[24px] border border-surface-container bg-surface-container-lowest px-5 py-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-orange-600">Produits commandés</span>
+                            <span class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">${totalItemsCount} lignes</span>
+                        </div>
+                        ${productsHtml}
+                    </div>
                 </div>`;
             });
             
@@ -877,6 +993,93 @@
             if (container.innerHTML !== html) {
                 container.innerHTML = html;
             }
+        }
+
+
+        function toggleInlineOrderDetails(panelId, buttonEl) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+            const icon = buttonEl ? buttonEl.querySelector('[data-toggle-icon]') : null;
+            const isOpen = !panel.classList.contains('hidden');
+
+            if (isOpen) {
+                panel.style.maxHeight = panel.scrollHeight + 'px';
+                requestAnimationFrame(() => {
+                    panel.classList.add('opacity-0', '-translate-y-2');
+                    panel.classList.remove('opacity-100', 'translate-y-0');
+                    panel.style.maxHeight = '0px';
+                });
+                if (icon) icon.classList.remove('rotate-180');
+                setTimeout(() => panel.classList.add('hidden'), 300);
+                return;
+            }
+
+            panel.classList.remove('hidden');
+            panel.style.maxHeight = '0px';
+            panel.classList.remove('opacity-0', '-translate-y-2');
+            panel.classList.add('opacity-100', 'translate-y-0');
+            requestAnimationFrame(() => {
+                panel.style.maxHeight = panel.scrollHeight + 'px';
+            });
+            if (icon) icon.classList.add('rotate-180');
+        }
+
+        function formatOrderDetailsPrice(amount, currency) {
+            const value = Number(amount || 0);
+            if (currency === 'CDF') return Math.floor(value).toLocaleString() + ' FC';
+            return value.toFixed(2) + ' $';
+        }
+
+        function formatOrderDetailsTotal(totalUsd, totalCdf) {
+            const prefCurrency = '{{ pref_currency }}';
+            const rate = {{ profile.bar.taux_change_usd_to_cdf|default:2800 }};
+            if (prefCurrency === 'USD') {
+                return (Number(totalUsd || 0) + (Number(totalCdf || 0) / rate)).toFixed(2) + ' $';
+            }
+            return Math.floor(Number(totalCdf || 0) + (Number(totalUsd || 0) * rate)).toLocaleString() + ' FC';
+        }
+
+        function openOrderDetailsPopover(tableName, statusLabel, itemsJsonStr, totalUsd, totalCdf) {
+            const modal = document.getElementById('orderDetailsModal');
+            const content = document.getElementById('orderDetailsModalContent');
+            const itemsContainer = document.getElementById('orderDetailsItems');
+            document.getElementById('orderDetailsTitle').innerText = tableName || 'Table';
+            document.getElementById('orderDetailsStatus').innerText = statusLabel || 'Commande';
+            document.getElementById('orderDetailsTotal').innerText = formatOrderDetailsTotal(totalUsd, totalCdf);
+            let items = [];
+            try { items = JSON.parse(decodeURIComponent(itemsJsonStr || '[]')); } catch (e) { items = []; }
+            if (!items.length) {
+                itemsContainer.innerHTML = '<p class="text-sm text-on-surface-variant/50 text-center py-8 font-bold">Aucun produit trouvé.</p>';
+            } else {
+                itemsContainer.innerHTML = items.map(item => {
+                    const unit = item.unit || 'BOUTEILLE';
+                    const lineTotal = Number(item.price || 0) * Number(item.qty || 0);
+                    return `<div class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container-lowest border border-surface-container">
+                        <div class="min-w-0">
+                            <p class="font-black text-on-surface truncate">${item.name}</p>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-orange-600 mt-1">${unit} x${item.qty}</p>
+                        </div>
+                        <p class="font-black text-on-surface whitespace-nowrap">${formatOrderDetailsPrice(lineTotal, item.devise)}</p>
+                    </div>`;
+                }).join('');
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'translate-y-4', 'opacity-0');
+                content.classList.add('scale-100', 'translate-y-0', 'opacity-100');
+            }, 10);
+        }
+
+        function closeOrderDetailsPopover() {
+            const modal = document.getElementById('orderDetailsModal');
+            const content = document.getElementById('orderDetailsModalContent');
+            content.classList.remove('scale-100', 'translate-y-0', 'opacity-100');
+            content.classList.add('scale-95', 'translate-y-4', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
         }
 
         // --- Payment Modal Logic ---
@@ -1117,16 +1320,16 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
+                content.classList.remove('scale-95', 'translate-y-4', 'opacity-0');
+                content.classList.add('scale-100', 'translate-y-0', 'opacity-100');
             }, 10);
         }
 
         function closePaymentModal() {
             const modal = document.getElementById('paymentModal');
             const content = document.getElementById('paymentModalContent');
-            content.classList.remove('scale-100', 'opacity-100');
-            content.classList.add('scale-95', 'opacity-0');
+            content.classList.remove('scale-100', 'translate-y-0', 'opacity-100');
+            content.classList.add('scale-95', 'translate-y-4', 'opacity-0');
             setTimeout(() => {
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
@@ -1172,8 +1375,8 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
+                content.classList.remove('scale-95', 'translate-y-4', 'opacity-0');
+                content.classList.add('scale-100', 'translate-y-0', 'opacity-100');
             }, 10);
         }
 

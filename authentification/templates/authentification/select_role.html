@@ -1,4 +1,4 @@
-{% extends 'proprietaire/base.html' %}
+{% extends 'authentification/base_auth.html' %}
 {% load static %}
 
 {% block title %}Sélectionnez votre Rôle - BarPilote{% endblock %}
@@ -8,12 +8,9 @@
     <div class="text-center mb-10 flex flex-col items-center">
         <!-- Logo -->
         <div class="w-16 h-16 mb-6 flex items-center justify-center">
-            <div
-                class="w-full h-full bg-orange-600 drop-shadow-md"
-                style="-webkit-mask-image: url('{% static 'logo.png' %}'); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-image: url('{% static 'logo.png' %}'); mask-size: contain; mask-repeat: no-repeat; mask-position: center;"
-            ></div>
+            <img src="{% static 'logo.png' %}" alt="BarPilote Logo" class="w-full h-full object-contain" style="filter: brightness(0) saturate(100%) invert(40%) sepia(80%) saturate(1000%) hue-rotate(5deg) brightness(0.9) contrast(0.9);">
         </div>
-        <h1 class="text-3xl font-black tracking-tight text-on-surface mb-2">Bienvenue sur BarPilote</h1>
+        <h1 class="text-3xl font-black tracking-tight text-orange-600 mb-2">Bienvenue sur BarPilote</h1>
         <p class="text-on-surface-variant font-medium">Pour continuer, veuillez sélectionner votre rôle.</p>
     </div>
 
@@ -49,16 +46,4 @@
         </form>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_body %}
-<style>
-    /* Masquer le header et footer sur la page de sélection de rôle */
-    header, nav {
-        display: none !important;
-    }
-    main {
-        padding-top: 2rem !important;
-    }
-</style>
 {% endblock %}

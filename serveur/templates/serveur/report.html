@@ -1,0 +1,60 @@
+{% extends 'serveur/base_serveur.html' %}
+{% load static %}
+
+{% block title %}Mon rapport - BarPilote{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="pt-4">
+        <p class="text-[10px] font-black uppercase tracking-widest text-primary">Rapport personnel</p>
+        <h1 class="text-3xl font-black tracking-tight text-on-surface mt-1">Mon rapport</h1>
+        <p class="text-xs text-on-surface-variant mt-2">Ce rapport est limité a votre propre activité.</p>
+    </div>
+
+    {% if report_available %}
+    <div class="grid grid-cols-2 gap-3">
+        <div class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-4">
+            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Commandes</p>
+            <p class="text-2xl font-black text-on-surface">{{ summary.orders_count }}</p>
+        </div>
+        <div class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-4">
+            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Servies</p>
+            <p class="text-2xl font-black text-on-surface">{{ summary.served_orders_count }}</p>
+        </div>
+        <div class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-4">
+            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">USD</p>
+            <p class="text-2xl font-black text-on-surface">{{ summary.total_usd|floatformat:2 }}</p>
+        </div>
+        <div class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-4">
+            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">CDF</p>
+            <p class="text-2xl font-black text-on-surface">{{ summary.total_cdf|floatformat:0 }}</p>
+        </div>
+    </div>
+
+    <div class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-black text-on-surface">Dernieres commandes</h2>
+            <span class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{{ summary.today_orders }} aujourd'hui</span>
+        </div>
+        <div class="space-y-3">
+            {% for order in report_orders %}
+            <div class="flex items-center justify-between text-xs border-b border-orange-100 pb-3 last:border-b-0 last:pb-0">
+                <div>
+                    <p class="font-black text-on-surface">{{ order.table.nom }}</p>
+                    <p class="text-on-surface-variant">{{ order.get_statut_display }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-black text-primary">{{ order.total_usd|floatformat:2 }}$</p>
+                    <p class="text-on-surface-variant">{{ order.date_creation|date:"d/m H:i" }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-xs text-on-surface-variant">Aucune commande pour le moment.</p>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-surface rounded-3xl border border-orange-100 p-8 text-center text-on-surface-variant">Acces au rapport non autorise.</div>
+    {% endif %}
+</div>
+{% endblock %}

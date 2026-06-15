@@ -6,7 +6,7 @@ from .models import ServeurProfile, Shift, CommandeServeur
 class ServeurProfileSerializer(serializers.ModelSerializer):
     """Serializer pour le profil du serveur"""
     bar_nom = serializers.CharField(source='bar.nom', read_only=True)
-    bar_id = serializers.IntegerField(source='bar.id', read_only=True)
+    bar_id = serializers.UUIDField(source='bar.id', read_only=True)
     full_name = serializers.SerializerMethodField()
     
     class Meta:
@@ -14,9 +14,14 @@ class ServeurProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'nom', 'postnom', 'prenom', 'email', 'telephone', 
             'sexe', 'photo', 'bar', 'bar_nom', 'bar_id', 'date_embauche', 
-            'actif', 'full_name', 'created_at', 'updated_at'
+            'actif', 'inventory_access_granted', 'tables_access_granted', 'reports_access_granted',
+            'confirmation_status', 'full_name', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['user', 'created_at', 'updated_at']
+        read_only_fields = [
+            'user', 'bar', 'actif', 'inventory_access_granted',
+            'tables_access_granted', 'reports_access_granted',
+            'confirmation_status', 'date_embauche', 'created_at', 'updated_at'
+        ]
     
     def get_full_name(self, obj):
         if obj.postnom:
@@ -96,13 +101,24 @@ class ServeurProfileCreateSerializer(serializers.ModelSerializer):
     
     def validate_email(self, value):
         """Valider le format de l'email et vérifier l'unicité"""
-        if not value or '@' not in value:
+        request = self.context.get('request')
+        if not value:
+            if request and request.user.email:
+                value = request.user.email
+            elif request:
+                value = f"{request.user.username}@barpilote.local"
+            else:
+                raise serializers.ValidationError("Veuillez entrer une adresse email valide")
+
+        if '@' not in value:
             raise serializers.ValidationError("Veuillez entrer une adresse email valide")
-        
-        # Vérifier si l'email est déjà utilisé
-        if ServeurProfile.objects.filter(email=value).exists():
+
+        existing = ServeurProfile.objects.filter(email=value)
+        if request and request.user.is_authenticated:
+            existing = existing.exclude(user=request.user)
+        if existing.exists():
             raise serializers.ValidationError("Cet email est déjà utilisé par un autre serveur")
-        
+
         return value.lower().strip()
     
     def validate_telephone(self, value):
@@ -127,15 +143,18 @@ class ServeurProfileCreateSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         
         # Utiliser l'email de l'utilisateur connecté
-        validated_data['email'] = user.email
+        validated_data['email'] = user.email or validated_data.get('email') or f"{user.username}@barpilote.local"
         
-        # Créer le profil avec l'utilisateur connecté
-        profile = ServeurProfile.objects.create(
+        profile, _created = ServeurProfile.objects.update_or_create(
             user=user,
-            bar=bar,
-            **validated_data
+            defaults={
+                'bar': bar,
+                'actif': True,
+                'confirmation_status': 'PENDING',
+                **validated_data,
+            }
         )
-        
+
         return profile
 
 class DashboardServeurSerializer(serializers.Serializer):

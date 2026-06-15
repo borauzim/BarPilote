@@ -1,4 +1,4 @@
-{% extends 'proprietaire/base.html' %}
+{% extends base_template|default:'proprietaire/base.html' %}
 {% load static %}
 
 {% block title %}Tables & QR Codes - BarPilote{% endblock %}
@@ -10,9 +10,9 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
             <h1 class="text-3xl font-black tracking-tight text-on-surface">Plan de Salle</h1>
-            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Gérez l'occupation de vos tables en temps réel.</p>
+            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">{% if is_server_interface %}Suivez vos tables, les tables libres et celles prises par l'équipe.{% else %}Gérez l'occupation de vos tables en temps réel.{% endif %}</p>
         </div>
-        <div class="flex gap-3">
+        {% if not read_only_interface %}<div class="flex gap-3">
             <button onclick="openAddTablesModal()" class="bg-surface-container-high text-on-surface px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-surface-container-highest transition-all">
                 <span class="material-symbols-outlined">add_circle</span>
                 <span class="hidden sm:inline">Ajouter des Tables</span>
@@ -21,7 +21,7 @@
                 <span class="material-symbols-outlined">download_for_offline</span>
                 <span class="hidden sm:inline">Tout Télécharger</span>
             </button>
-        </div>
+        </div>{% endif %}
     </div>
 
     <!-- Status Filters -->
@@ -32,6 +32,10 @@
         <button onclick="filterTables('occupied')" class="filter-btn px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-orange-600 hover:bg-orange-50" id="btn-occupied">
             Occupées ({{ occupied_count }})
         </button>
+        {% if is_server_interface %}
+        <span class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-orange-50 text-orange-600">Mes tables {{ server_occupied_count|default:0 }}</span>
+        <span class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-surface-container text-on-surface-variant">Équipe {{ other_occupied_count|default:0 }}</span>
+        {% endif %}
         <button onclick="filterTables('free')" class="filter-btn px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-emerald-600 hover:bg-emerald-50" id="btn-free">
             Libres ({{ free_count }})
         </button>
@@ -52,7 +56,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="tablesGrid">
         {% for table in tables %}
         <div class="table-card bg-white rounded-[32px] p-8 executive-shadow border transition-all duration-500 relative overflow-hidden group 
-                    {% if table.is_occupied %}border-orange-500/30 ring-4 ring-orange-500/5 status-occupied{% else %}border-surface-container-high status-free{% endif %}"
+                    {% if table.is_occupied %}{% if is_server_interface and table.is_mine %}border-orange-500/40 ring-4 ring-orange-500/10 status-occupied{% elif is_server_interface %}border-blue-300/50 ring-4 ring-blue-500/5 status-occupied{% elif not read_only_interface %}border-orange-500/30 ring-4 ring-orange-500/5 status-occupied{% else %}border-surface-container-high status-occupied{% endif %}{% else %}border-surface-container-high status-free{% endif %}"
              data-status="{% if table.is_occupied %}occupied{% else %}free{% endif %}">
             
             {% if table.is_occupied %}
@@ -61,10 +65,10 @@
 
             <div class="flex justify-between items-start mb-8 relative z-10">
                 <div class="w-14 h-14 rounded-2xl flex items-center justify-center transition-colors 
-                            {% if table.is_occupied %}bg-orange-600 text-white shadow-lg shadow-orange-500/30{% else %}bg-surface-container text-on-surface-variant{% endif %}">
+                            {% if table.is_occupied %}{% if is_server_interface and not table.is_mine %}bg-blue-100 text-blue-600{% else %}bg-orange-600 text-white shadow-lg shadow-orange-500/30{% endif %}{% else %}bg-surface-container text-on-surface-variant{% endif %}">
                     <span class="material-symbols-outlined text-2xl">{% if table.is_occupied %}person_pin_circle{% else %}table_restaurant{% endif %}</span>
                 </div>
-                <div class="flex gap-1">
+                {% if not read_only_interface %}<div class="flex gap-1">
                     <button onclick="openRenameModal('{{ table.id }}', '{{ table.nom }}')" class="w-10 h-10 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors" title="Renommer">
                         <span class="material-symbols-outlined text-lg">edit</span>
                     </button>
@@ -79,7 +83,7 @@
                             <span class="material-symbols-outlined text-lg">delete</span>
                         </button>
                     </form>
-                </div>
+                </div>{% endif %}
             </div>
             
             <div class="relative z-10">
@@ -93,8 +97,9 @@
                         <p class="text-2xl font-black text-on-surface mt-1">
                             {% display_price table.order_info.total_usd table.order_info.total_cdf %}
                         </p>
-                        <div class="mt-2 flex items-center gap-2">
+                        <div class="mt-2 flex flex-col gap-1">
                             <span class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Statut : {{ table.order_info.statut }}</span>
+                            {% if is_server_interface %}<span class="text-[9px] font-black {% if table.is_mine %}text-orange-600{% else %}text-blue-600{% endif %} uppercase tracking-widest">{% if table.is_mine %}Votre table{% else %}Serveur : {{ table.order_info.server_name }}{% endif %}</span>{% endif %}
                         </div>
                     </div>
                 {% else %}
@@ -109,11 +114,11 @@
             
             <div class="mt-8 pt-8 border-t border-surface-container-high flex items-center justify-between relative z-10">
                 <div class="flex gap-2 w-full">
-                    <a href="{% url 'dashboard_html' %}" class="flex-1 flex items-center justify-center gap-2 bg-orange-50 text-orange-600 font-black text-[10px] uppercase tracking-widest hover:bg-orange-100 px-4 py-3 rounded-xl transition-all border border-orange-100">
+                    <a href="{% if is_server_interface %}{% url 'serveur_dashboard' %}{% else %}{% url 'dashboard_html' %}{% endif %}" class="flex-1 flex items-center justify-center gap-2 bg-orange-50 text-orange-600 font-black text-[10px] uppercase tracking-widest hover:bg-orange-100 px-4 py-3 rounded-xl transition-all border border-orange-100">
                         <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
                         Service
                     </a>
-                    {% if table.is_occupied %}
+                    {% if table.is_occupied and not read_only_interface %}
                         <form method="post" action="{% url 'table_action' %}" onsubmit="return confirm('Voulez-vous vraiment libérer cette table ?')" class="flex-1">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="liberate">
@@ -139,6 +144,7 @@
     </div>
 </div>
 
+{% if not read_only_interface %}
 <!-- Modal Rename -->
 <div id="renameModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="renameModalContent">
@@ -281,4 +287,5 @@
         downloadNext();
     }
 </script>
+{% endif %}
 {% endblock %}

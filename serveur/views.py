@@ -5,37 +5,35 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models import Q, Count, Sum, Avg
 from django.contrib.auth.models import User
-from proprietaire.models import Bar, PilotProfile
+from proprietaire.models import Bar, PilotProfile, StockItem, Table, Order
 from .models import ServeurProfile, Shift, CommandeServeur, InvitationCode
+from .invitations import InvitationError, resolve_invitation
 from .serializers import (
     ServeurProfileSerializer, ServeurProfileCreateSerializer, ShiftSerializer, 
     CommandeServeurSerializer, DashboardServeurSerializer
 )
+from proprietaire.serializers import StockItemSerializer, TableSerializer, OrderSerializer
 
 class ServeurProfileViewSet(viewsets.ModelViewSet):
     """ViewSet pour gérer les profils des serveurs"""
     serializer_class = ServeurProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
-        # Retourner tous les profils (pour l'admin) ou filtrer par email
-        email = self.request.user.email
-        return ServeurProfile.objects.filter(email=email)
-    
+        return ServeurProfile.objects.filter(user=self.request.user)
+
     @action(detail=False, methods=['get'])
     def me(self, request):
         """Endpoint pour obtenir le profil du serveur connecté"""
-        try:
-            # Chercher le profil par email de l'utilisateur connecté
-            profile = ServeurProfile.objects.get(email=request.user.email)
-            serializer = self.get_serializer(profile)
-            return Response(serializer.data)
-        except ServeurProfile.DoesNotExist:
+        profile = ServeurProfile.objects.filter(user=request.user).first()
+        if not profile:
             return Response(
-                {'error': 'Aucun profil trouvé pour cet utilisateur'}, 
+                {'error': 'Aucun profil trouvé pour cet utilisateur'},
                 status=status.HTTP_404_NOT_FOUND
             )
-    
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['post'])
     def create_profile(self, request):
         """Créer le profil serveur après scan QR"""
@@ -43,67 +41,57 @@ class ServeurProfileViewSet(viewsets.ModelViewSet):
             data=request.data,
             context={'request': request}
         )
-        
+
         if serializer.is_valid():
             profile = serializer.save()
-            # Retourner le profil avec le serializer standard
             profile_serializer = ServeurProfileSerializer(profile)
             return Response({
                 'message': 'Profil serveur créé avec succès',
                 'profile': profile_serializer.data
             }, status=status.HTTP_201_CREATED)
-        
+
         return Response({
             'error': 'Erreur de validation',
             'details': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['patch'])
+    def update_profile(self, request):
+        """Mettre à jour le profil du serveur"""
+        profile = ServeurProfile.objects.filter(user=request.user).first()
+        if not profile:
+            return Response(
+                {'error': 'Aucun profil trouvé pour cet utilisateur'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def create_serveur_profile(request):
     """Vue dédiée pour créer un profil serveur"""
-    print("📥 Requête reçue pour créer un profil serveur")
-    print(f"📋 Données reçues: {request.data}")
-    print(f"👤 Utilisateur: {request.user}")
-    
     serializer = ServeurProfileCreateSerializer(
         data=request.data,
         context={'request': request}
     )
-    
+
     if serializer.is_valid():
         profile = serializer.save()
-        print(f"✅ Profil créé avec succès: {profile}")
-        
-        # Retourner le profil avec le serializer standard
         profile_serializer = ServeurProfileSerializer(profile)
         return Response({
             'message': 'Profil serveur créé avec succès',
             'profile': profile_serializer.data
         }, status=status.HTTP_201_CREATED)
-    
-    print(f"❌ Erreurs de validation: {serializer.errors}")
+
     return Response({
         'error': 'Erreur de validation',
         'details': serializer.errors
     }, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(detail=False, methods=['patch'])
-    def update_profile(self, request):
-        """Mettre à jour le profil du serveur"""
-        try:
-            profile = ServeurProfile.objects.get(email=request.user.email)
-            serializer = self.get_serializer(profile, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except ServeurProfile.DoesNotExist:
-            return Response(
-                {'error': 'Aucun profil trouvé pour cet utilisateur'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
 
 class ShiftViewSet(viewsets.ModelViewSet):
     """ViewSet pour gérer les quart de travail"""
@@ -113,7 +101,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Un serveur ne voit que ses shifts
         try:
-            profile = ServeurProfile.objects.get(email=self.request.user.email)
+            profile = ServeurProfile.objects.get(user=self.request.user)
             return Shift.objects.filter(serveur=profile).order_by('-created_at')
         except ServeurProfile.DoesNotExist:
             return Shift.objects.none()
@@ -122,7 +110,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
     def start(self, request):
         """Démarrer un nouveau quart de travail"""
         try:
-            profile = ServeurProfile.objects.get(email=request.user.email)
+            profile = ServeurProfile.objects.get(user=request.user)
         except ServeurProfile.DoesNotExist:
             return Response(
                 {'error': 'Aucun profil trouvé pour cet utilisateur'}, 
@@ -156,7 +144,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
     def end(self, request):
         """Terminer le quart de travail actif"""
         try:
-            profile = ServeurProfile.objects.get(email=request.user.email)
+            profile = ServeurProfile.objects.get(user=request.user)
         except ServeurProfile.DoesNotExist:
             return Response(
                 {'error': 'Aucun profil trouvé pour cet utilisateur'}, 
@@ -187,7 +175,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
     def current(self, request):
         """Obtenir le quart de travail actif"""
         try:
-            profile = ServeurProfile.objects.get(email=request.user.email)
+            profile = ServeurProfile.objects.get(user=request.user)
         except ServeurProfile.DoesNotExist:
             return Response({'detail': 'Aucun profil trouvé'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -210,7 +198,7 @@ class CommandeServeurViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Un serveur ne voit que ses commandes
         try:
-            profile = ServeurProfile.objects.get(email=self.request.user.email)
+            profile = ServeurProfile.objects.get(user=self.request.user)
             queryset = CommandeServeur.objects.filter(serveur=profile)
         except ServeurProfile.DoesNotExist:
             queryset = CommandeServeur.objects.none()
@@ -272,114 +260,117 @@ class CommandeServeurViewSet(viewsets.ModelViewSet):
 @permission_classes([permissions.IsAuthenticated])
 def verify_invitation(request):
     """Vérifier un code d'invitation et retourner les informations du bar"""
+    invitation_code = request.data.get('invitation_code') or request.data.get('code')
+
     try:
-        print(f"🔍 Requête reçue: {request.method} {request.path}")
-        print(f"📋 Données reçues: {request.data}")
-        print(f"👤 Utilisateur: {request.user}")
-        print(f"🔑 Headers: {dict(request.headers)}")
-        
-        invitation_code = request.data.get('invitation_code')
-        
-        if not invitation_code:
-            print(f"❌ Code d'invitation manquant dans les données: {request.data}")
-            return Response(
-                {'error': 'Code d\'invitation manquant', 'received_data': request.data}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Le code_invitation est un UUID, essayer de le convertir
-        try:
-            from uuid import UUID
-            # Nettoyer le code d'invitation (enlever les espaces, tirets, etc.)
-            clean_code = invitation_code.strip().replace('-', '').replace(' ', '')
-            uuid_code = UUID(clean_code)
-            print(f"🔍 Recherche du bar avec code_invitation: {uuid_code}")
-        except ValueError:
-            return Response(
-                {'error': 'Code d\'invitation invalide (format UUID requis)'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Chercher le bar par son code d'invitation UUID
-        try:
-            bar = Bar.objects.get(code_invitation=uuid_code)
-            print(f"✅ Bar trouvé: {bar.nom} (ID: {bar.id})")
-            
-            # Chercher le propriétaire du bar (PilotProfile)
-            proprietaire = bar.proprietaires.first()
-            
-            if not proprietaire:
-                print(f"❌ Aucun propriétaire trouvé pour le bar {bar.nom}")
-                return Response(
-                    {'error': 'Aucun propriétaire trouvé pour ce bar'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Vérifier si un profil serveur existe déjà pour cet utilisateur et ce bar
-            existing_profile = ServeurProfile.objects.filter(
-                user=request.user,
-                bar=bar
-            ).first()
-            
-            if existing_profile:
-                print(f"ℹ️ Profil existant trouvé pour l'utilisateur {request.user.email} au bar {bar.nom}")
-                # Retourner quand même les informations pour permettre la connexion
-                bar_data = {
-                    'bar_id': str(bar.id),
-                    'bar_nom': bar.nom,
-                    'proprietaire_id': str(proprietaire.id),
-                    'proprietaire_nom': f"{proprietaire.user.first_name} {proprietaire.user.last_name}",
-                    'proprietaire_email': proprietaire.user.email,
-                    'localisation': "Kinshasa, RDC",
-                    'invitation_code': str(uuid_code),
-                    'bar_type': bar.type_etablissement,
-                    'is_valid': True,
-                    'existing_profile': True,
-                    'message': 'Vous avez déjà un profil pour ce bar'
-                }
-                
-                print(f"🔄 Retour des données du bar (profil existant): {bar_data}")
-                return Response(bar_data, status=status.HTTP_200_OK)
-            
-            print(f"✅ Propriétaire trouvé: {proprietaire.user.first_name} {proprietaire.user.last_name}")
-            
-            # Construire la localisation à partir de l'adresse si disponible
-            localisation = "Kinshasa, RDC"  # Valeur par défaut
-            if bar.adresse:
-                # Extraire la ville et le pays de l'adresse si possible
-                adresse_parts = bar.adresse.split(',')
-                if len(adresse_parts) >= 2:
-                    localisation = f"{adresse_parts[-2].strip()}, {adresse_parts[-1].strip()}"
-            
-            # Retourner les informations du bar et du propriétaire
-            bar_data = {
-                'bar_id': str(bar.id),
-                'bar_nom': bar.nom,
-                'proprietaire_id': str(proprietaire.id),
-                'proprietaire_nom': f"{proprietaire.user.first_name} {proprietaire.user.last_name}",
-                'proprietaire_email': proprietaire.user.email,
-                'localisation': localisation,
-                'invitation_code': str(uuid_code),
-                'bar_type': bar.type_etablissement,
-                'is_valid': True
-            }
-            
-            print(f"🔄 Retour des données du bar: {bar_data}")
-            return Response(bar_data, status=status.HTTP_200_OK)
-            
-        except Bar.DoesNotExist:
-            print(f"❌ Bar non trouvé avec code_invitation: {uuid_code}")
-            return Response(
-                {'error': 'Code d\'invitation invalide ou bar non trouvé'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-    except Exception as e:
-        print(f"❌ Erreur lors de la vérification: {str(e)}")
-        return Response(
-            {'error': f'Erreur lors de la vérification: {str(e)}'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        bar, _invitation, normalized_code = resolve_invitation(invitation_code)
+    except InvitationError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    proprietaire = bar.proprietaires.first()
+    proprietaire_nom = f"{proprietaire.prenom} {proprietaire.nom}".strip() if proprietaire else "Propriétaire BarPilote"
+    proprietaire_email = proprietaire.user.email if proprietaire else ""
+
+    localisation = "Kinshasa, RDC"
+    if bar.adresse:
+        adresse_parts = [part.strip() for part in bar.adresse.split(',') if part.strip()]
+        if len(adresse_parts) >= 2:
+            localisation = f"{adresse_parts[-2]}, {adresse_parts[-1]}"
+        else:
+            localisation = bar.adresse
+
+    existing_profile = ServeurProfile.objects.filter(user=request.user, bar=bar).exists()
+
+    return Response({
+        'bar_id': str(bar.id),
+        'bar_nom': bar.nom,
+        'proprietaire_id': str(proprietaire.id) if proprietaire else None,
+        'proprietaire_nom': proprietaire_nom,
+        'proprietaire_email': proprietaire_email,
+        'localisation': localisation,
+        'invitation_code': str(normalized_code),
+        'bar_type': bar.type_etablissement,
+        'is_valid': True,
+        'existing_profile': existing_profile,
+    }, status=status.HTTP_200_OK)
+
+def _get_authorized_serveur_profile(request, required_flag=None):
+    profile = get_object_or_404(ServeurProfile, user=request.user)
+    if not profile.bar:
+        return None, Response({'error': 'Profil incomplet.'}, status=status.HTTP_400_BAD_REQUEST)
+    if profile.confirmation_status != 'CONFIRMED':
+        return None, Response({'error': 'Profil non confirmé.'}, status=status.HTTP_403_FORBIDDEN)
+    if required_flag and not getattr(profile, required_flag, False):
+        return None, Response({'error': 'Accès non autorisé.'}, status=status.HTTP_403_FORBIDDEN)
+    return profile, None
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def inventory_read_only(request):
+    profile, error_response = _get_authorized_serveur_profile(request, 'inventory_access_granted')
+    if error_response:
+        return error_response
+
+    items = StockItem.objects.filter(bar=profile.bar).select_related('produit', 'produit__categorie').order_by('produit__nom')
+    payload = StockItemSerializer(items, many=True).data
+    for item, obj in zip(payload, items):
+        item['product_name'] = obj.produit.nom
+        item['category_name'] = obj.produit.categorie.nom if obj.produit.categorie else None
+    return Response({
+        'bar': {'id': str(profile.bar.id), 'nom': profile.bar.nom},
+        'items': payload,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def tables_read_only(request):
+    profile, error_response = _get_authorized_serveur_profile(request, 'tables_access_granted')
+    if error_response:
+        return error_response
+
+    tables = Table.objects.filter(bar=profile.bar).order_by('nom')
+    occupied_table_ids = set(Order.objects.filter(bar=profile.bar, statut__in=['PENDING', 'PREPARING', 'SERVED']).values_list('table_id', flat=True))
+    payload = []
+    for table in tables:
+        payload.append({
+            'table': TableSerializer(table).data,
+            'is_occupied': table.id in occupied_table_ids,
+        })
+
+    return Response({
+        'bar': {'id': str(profile.bar.id), 'nom': profile.bar.nom},
+        'tables': payload,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def my_report(request):
+    profile, error_response = _get_authorized_serveur_profile(request, 'reports_access_granted')
+    if error_response:
+        return error_response
+
+    pilot_profile = PilotProfile.objects.filter(user=request.user).first()
+    if not pilot_profile:
+        return Response({'error': 'Profil pilote introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    orders = Order.objects.filter(bar=profile.bar, serveur=pilot_profile).order_by('-date_creation')
+    served_orders = orders.filter(statut__in=['SERVED', 'PAID'])
+    return Response({
+        'bar': {'id': str(profile.bar.id), 'nom': profile.bar.nom},
+        'summary': {
+            'orders_count': orders.count(),
+            'served_orders_count': served_orders.count(),
+            'open_orders': orders.exclude(statut__in=['PAID', 'CANCELLED']).count(),
+            'tables_touched': orders.values('table_id').distinct().count(),
+            'total_usd': float(served_orders.aggregate(total=Sum('total_usd'))['total'] or 0),
+            'total_cdf': float(served_orders.aggregate(total=Sum('total_cdf'))['total'] or 0),
+        },
+        'orders': OrderSerializer(orders[:20], many=True).data,
+    })
+
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])

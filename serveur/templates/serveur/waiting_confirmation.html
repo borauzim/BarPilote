@@ -1,0 +1,124 @@
+{% extends 'serveur/base_serveur.html' %}
+{% load static %}
+
+{% block title %}En attente de confirmation - BarPilote{% endblock %}
+
+{% block header %}
+<header class="fixed top-0 left-0 w-full z-50 bg-white/85 backdrop-blur-md border-b border-orange-100">
+    <div class="flex items-center justify-between px-6 h-16 w-full">
+        <a href="{% url 'serveur_logout' %}" class="text-on-surface-variant hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-2xl">close</span>
+        </a>
+        <h1 class="text-lg font-black tracking-tight text-orange-600 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+            En attente
+        </h1>
+        <div class="w-8"></div>
+    </div>
+</header>
+{% endblock %}
+
+{% block bottom_nav %}
+<!-- Aucun bottom nav sur la page d'attente -->
+{% endblock %}
+
+{% block content %}
+<div class="min-h-[90vh] flex flex-col items-center justify-center text-center px-4 pt-16 pb-12">
+    
+    <!-- Status Card -->
+    <div class="w-full max-w-sm bg-surface-container-lowest/95 backdrop-blur-md rounded-[32px] border border-orange-100 p-8 premium-shadow space-y-6 mb-8">
+        <div class="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto">
+            <span class="material-symbols-outlined text-4xl">schedule</span>
+        </div>
+        
+        <div class="space-y-2">
+            <h2 class="text-2xl font-extrabold text-on-surface tracking-tight">En attente de confirmation</h2>
+            <p class="text-on-surface-variant text-sm">
+                Votre demande d'affiliation au bar <span class="text-on-surface font-bold">{{ profile.bar.nom }}</span> est en attente de confirmation par le propriétaire.
+            </p>
+        </div>
+
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+            <p class="text-amber-400 text-xs font-bold uppercase tracking-wider mb-1">Statut actuel</p>
+            <p class="text-on-surface text-sm">Le propriétaire doit confirmer votre affiliation avant que vous puissiez commencer à travailler.</p>
+        </div>
+    </div>
+
+    <!-- Profile Form - Allow filling while waiting -->
+    <div class="w-full max-w-sm bg-surface-container-lowest/95 backdrop-blur-md rounded-[32px] border border-orange-100 p-6 premium-shadow space-y-6">
+        <div class="space-y-1">
+            <p class="text-xs text-on-surface font-bold">Compléter votre profil</p>
+            <p class="text-[10px] text-on-surface-variant">Vous pouvez remplir vos informations personnelles en attendant la confirmation.</p>
+        </div>
+
+        <form method="post" action="{% url 'serveur_waiting_confirmation' %}" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] text-on-surface-variant uppercase tracking-wider font-bold mb-1 block">Prénom</label>
+                    <input type="text" name="prenom" value="{{ profile.prenom|default:'' }}" required class="w-full bg-surface-container border border-orange-100 rounded-xl py-3 px-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] text-on-surface-variant uppercase tracking-wider font-bold mb-1 block">Nom</label>
+                    <input type="text" name="nom" value="{{ profile.nom|default:'' }}" required class="w-full bg-surface-container border border-orange-100 rounded-xl py-3 px-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] text-on-surface-variant uppercase tracking-wider font-bold mb-1 block">Postnom (optionnel)</label>
+                <input type="text" name="postnom" value="{{ profile.postnom|default:'' }}" class="w-full bg-surface-container border border-orange-100 rounded-xl py-3 px-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+            </div>
+
+            <div>
+                <label class="text-[10px] text-on-surface-variant uppercase tracking-wider font-bold mb-1 block">Téléphone</label>
+                <input type="tel" name="telephone" value="{{ profile.telephone|default:'' }}" class="w-full bg-surface-container border border-orange-100 rounded-xl py-3 px-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+            </div>
+
+            <div>
+                <label class="text-[10px] text-on-surface-variant uppercase tracking-wider font-bold mb-1 block">Âge</label>
+                <input type="number" name="age" value="{{ profile.age|default:'' }}" min="16" max="99" class="w-full bg-surface-container border border-orange-100 rounded-xl py-3 px-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+            </div>
+
+            <div>
+                <label class="text-[10px] text-on-surface-variant uppercase tracking-wider font-bold mb-1 block">Sexe</label>
+                <select name="sexe" class="w-full bg-surface-container border border-orange-100 rounded-xl py-3 px-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                    <option value="M" {% if profile.sexe == 'M' %}selected{% endif %}>Masculin</option>
+                    <option value="F" {% if profile.sexe == 'F' %}selected{% endif %}>Féminin</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="text-[10px] text-on-surface-variant uppercase tracking-wider font-bold mb-1 block">Photo de profil</label>
+                <div class="relative">
+                    <input type="file" name="photo" accept="image/*" class="w-full bg-surface-container border border-orange-100 rounded-xl py-3 px-3 text-on-surface text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary/20 file:text-primary file:text-xs file:font-black focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                </div>
+                {% if profile.photo %}
+                <p class="text-[10px] text-on-surface-variant mt-1">Photo actuelle: {{ profile.photo.name }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20">
+                Enregistrer mes informations
+            </button>
+        </form>
+    </div>
+
+    <!-- Refresh Status Button -->
+    <div class="mt-8">
+        <button onclick="location.reload()" class="inline-flex items-center gap-2 bg-surface-container hover:bg-surface-container-high border border-orange-100 px-6 py-3 rounded-full shadow-2xl text-on-surface transition-all active:scale-95">
+            <span class="material-symbols-outlined text-primary text-sm">refresh</span>
+            <span class="text-xs font-bold tracking-tight">Vérifier le statut</span>
+        </button>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<style>
+    body {
+        background: linear-gradient(135deg, #fff7ed 0%, #ffffff 45%, #f9f9fb 100%);
+    }
+</style>
+{% endblock %}

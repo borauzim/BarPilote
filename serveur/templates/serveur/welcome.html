@@ -1,0 +1,67 @@
+{% extends 'serveur/base_serveur.html' %}
+{% load static %}
+
+{% block title %}Bienvenue - BarPilote{% endblock %}
+
+{% block header %}
+<!-- Aucun header sur la page d'accueil de bienvenue -->
+{% endblock %}
+
+{% block bottom_nav %}
+<!-- Aucun bottom nav sur l'onboarding -->
+{% endblock %}
+
+{% block content %}
+<div class="min-h-[85vh] flex flex-col justify-between px-4 py-8 text-center">
+    
+    <!-- Espace vide ou logo discret -->
+    <div></div>
+
+    <!-- Central Welcome Area -->
+    <div class="space-y-8 flex flex-col items-center">
+        <!-- Circular check with glow -->
+        <div class="relative w-32 h-32 flex items-center justify-center">
+            <!-- Glow background -->
+            <div class="absolute inset-0 bg-emerald-500/10 rounded-full blur-xl animate-pulse"></div>
+            <!-- Circle border -->
+            <div class="w-24 h-24 rounded-full bg-surface-container border border-emerald-500/30 flex items-center justify-center relative">
+                <div class="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-background">
+                    <span class="material-symbols-outlined text-4xl font-black">check</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <h1 class="text-4xl font-black text-on-surface">Bienvenue, {{ profile.prenom }}</h1>
+            <p class="text-base text-on-surface-variant font-medium">Prêt pour votre quart de travail ?</p>
+        </div>
+
+        <!-- Meta Info Cards -->
+        <div class="grid grid-cols-2 gap-4 w-full max-w-sm pt-4">
+            <div class="bg-surface rounded-3xl p-5 border border-orange-100 text-left space-y-1">
+                <p class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40">Poste</p>
+                <p class="text-xs font-black text-on-surface truncate">{{ profile.bar.nom }}</p>
+            </div>
+            <div class="bg-surface rounded-3xl p-5 border border-orange-100 text-left space-y-1">
+                <p class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40">Statut</p>
+                <p class="text-xs font-black text-emerald-400 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    En Service
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Button -->
+    <div class="w-full max-w-sm mx-auto pt-8">
+        <form method="post" action="{% url 'serveur_welcome' %}">
+            {% csrf_token %}
+            <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white py-4.5 rounded-full font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl transition-all active:scale-95 text-sm">
+                Aller à la Vigie
+                <span class="material-symbols-outlined font-black">arrow_forward</span>
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

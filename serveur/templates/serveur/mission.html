@@ -1,0 +1,78 @@
+{% extends 'serveur/base_serveur.html' %}
+{% load static %}
+
+{% block title %}Mission en cours - BarPilote{% endblock %}
+
+{% block header %}
+<header class="fixed top-0 left-0 w-full z-40 bg-white/85 backdrop-blur-md border-b border-orange-100">
+    <div class="flex items-center justify-between px-6 h-16 w-full">
+        <a href="{% url 'serveur_dashboard' %}" class="text-on-surface-variant hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </a>
+        <span class="text-sm font-black tracking-widest text-on-surface uppercase">Mission en cours</span>
+        <div class="w-8"></div>
+    </div>
+</header>
+{% endblock %}
+
+{% block bottom_nav %}
+<!-- Aucun bottom nav sur l'écran de mission active -->
+{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex flex-col justify-between px-4 py-6 text-center">
+    
+    <!-- Central Icon/Mission Container -->
+    <div class="flex-grow flex flex-col items-center justify-center space-y-8">
+        
+        <!-- Large Orange Tilted Badge -->
+        <div class="relative w-44 h-44 bg-primary rounded-[36px] rotate-[12deg] flex items-center justify-center premium-shadow animate-pulse" style="animation-duration: 3s;">
+            <div class="-rotate-[12deg] flex flex-col items-center justify-center text-white space-y-1">
+                <!-- Delivery plane icon or drink cup -->
+                <span class="material-symbols-outlined text-6xl font-light">local_shipping</span>
+            </div>
+        </div>
+
+        <div class="space-y-3 pt-4">
+            <p class="text-[10px] font-black uppercase tracking-widest text-primary">Statut de la mission</p>
+            <h1 class="text-4xl font-black text-on-surface">Mission en cours</h1>
+            <p class="text-lg text-on-surface-variant">Livrer à la <strong class="text-on-surface font-black">{{ order.table.nom }}</strong></p>
+        </div>
+
+        <!-- Timeline Tracker -->
+        <div class="w-full max-w-sm pt-6 space-y-3">
+            <!-- Progress line -->
+            <div class="relative w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                <!-- Filled to transit (66%) -->
+                <div class="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-1000" style="width: 66%;"></div>
+            </div>
+            <!-- Labels -->
+            <div class="flex justify-between text-[9px] font-black uppercase tracking-widest">
+                <span class="text-on-surface-variant/40">Départ</span>
+                <span class="text-primary">En Transit</span>
+                <span class="text-on-surface-variant/40">Arrivée</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="w-full max-w-sm mx-auto space-y-4 pt-6">
+        <form method="post" action="{% url 'serveur_shift_action' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="deliver">
+            <input type="hidden" name="order_id" value="{{ order.id }}">
+            <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white py-4.5 rounded-full font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl transition-all active:scale-95 text-sm">
+                <span class="material-symbols-outlined font-black">check_circle</span>
+                Confirmer la Livraison
+            </button>
+        </form>
+
+        <a href="#" onclick="alert('Incident signalé au chef de rang.'); return false;" class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 hover:text-orange-600 flex items-center justify-center gap-1.5 transition-colors py-2">
+            <span class="material-symbols-outlined text-sm">warning</span>
+            Signaler un Problème
+        </a>
+    </div>
+
+</div>
+{% endblock %}

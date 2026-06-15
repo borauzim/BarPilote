@@ -1,0 +1,236 @@
+{% extends 'serveur/base_serveur.html' %}
+{% load static %}
+{% load currency_tags %}
+
+{% block title %}Nouvelle commande - BarPilote{% endblock %}
+
+{% block header %}
+<header class="fixed top-0 left-0 w-full z-40 bg-white/85 backdrop-blur-md border-b border-orange-100">
+    <div class="flex items-center justify-between px-6 h-16 w-full">
+        <a href="{% url 'serveur_dashboard' %}" class="text-on-surface-variant hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </a>
+        <span class="text-sm font-black tracking-widest text-on-surface uppercase">Nouvelle commande</span>
+        <div class="w-8"></div>
+    </div>
+</header>
+{% endblock %}
+
+{% block bottom_nav %}
+<!-- Aucun bottom nav pendant la saisie de commande -->
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5 pb-8">
+    <section class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-5 space-y-2">
+        <p class="text-[10px] font-black uppercase tracking-widest text-primary">Mode Service Direct</p>
+        <h1 class="text-2xl font-black tracking-tight text-on-surface">Prendre une commande</h1>
+        <p class="text-xs font-semibold text-on-surface-variant">{{ bar.nom }} · sélectionnez une table, puis ajoutez les boissons.</p>
+    </section>
+
+    <form action="{% url 'serveur_take_order' %}" method="post" id="takeOrderForm" class="space-y-5">
+        {% csrf_token %}
+
+        <section class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-5 space-y-3">
+            <label class="text-[10px] font-black uppercase text-on-surface-variant tracking-widest">Sélectionner la table</label>
+            <select name="table_id" required class="w-full bg-surface-container-lowest border border-orange-100 rounded-2xl py-4 px-5 font-bold text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                <option value="">-- Choisir Table --</option>
+                {% for table in tables %}
+                <option value="{{ table.id }}">{{ table.nom }}</option>
+                {% endfor %}
+            </select>
+        </section>
+
+        <section class="bg-surface rounded-3xl border border-orange-100 premium-shadow overflow-hidden">
+            <div class="px-5 py-4 border-b border-orange-100 bg-surface-container-lowest">
+                <h2 class="text-xs font-black uppercase tracking-widest text-on-surface">Produits</h2>
+            </div>
+
+            <div class="px-5 py-3 flex gap-2 overflow-x-auto no-scrollbar border-b border-orange-100 bg-surface-container-lowest">
+                <button type="button" onclick="filterServiceProducts('all', this)" class="service-cat-btn active px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap">Tout</button>
+                {% for cat in categories %}
+                <button type="button" onclick="filterServiceProducts('cat-{{ cat.id }}', this)" class="service-cat-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap">
+                    {{ cat.nom }}
+                </button>
+                {% endfor %}
+            </div>
+
+            <div class="p-5 space-y-3" id="serviceProductsGrid">
+                {% for item in inventory_items %}
+                <article class="service-product-card bg-surface-container-lowest p-4 rounded-3xl border border-orange-100 transition-all" data-category="cat-{{ item.produit.categorie.id }}">
+                    <div class="flex justify-between items-start gap-3 mb-4">
+                        <div class="min-w-0">
+                            <h3 class="font-black text-on-surface tracking-tight truncate">{{ item.produit.nom }}</h3>
+                            <p class="text-[10px] font-bold text-on-surface-variant uppercase">{{ item.produit.volume_cl }}cl · Stock: {{ item.quantite_actuelle|floatformat:0 }}</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="font-black text-primary text-sm">
+                                {% if item.can_sell_bottle %}
+                                    {% if item.devise == 'CDF' %}
+                                        {% display_price None item.prix_vente_unitaire %}
+                                    {% else %}
+                                        {% display_price item.prix_vente_unitaire None %}
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-[9px] text-red-500 uppercase">Prix bouteille manquant</span>
+                                {% endif %}
+                            </p>
+                            {% if item.can_sell_glass %}
+                            <p class="text-[9px] font-bold text-on-surface-variant uppercase">
+                                Verre:
+                                {% if item.devise == 'CDF' %}
+                                    {% display_price None item.prix_vente_verre %}
+                                {% else %}
+                                    {% display_price item.prix_vente_verre None %}
+                                {% endif %}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        {% if item.can_sell_bottle %}
+                        <button type="button" onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_unitaire|stringformat:'.2f' }}, 'BOUTEILLE', '{{ item.devise }}')" class="flex-1 py-3 bg-on-surface text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary transition-all active:scale-95">
+                            + Bottle
+                        </button>
+                        {% endif %}
+                        {% if item.can_sell_glass %}
+                        <button type="button" onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_verre|stringformat:'.2f' }}, 'VERRE', '{{ item.devise }}')" class="flex-1 py-3 bg-orange-50 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-95 border border-orange-100">
+                            + Glass
+                        </button>
+                        {% endif %}
+                        {% if not item.can_sell_bottle and not item.can_sell_glass %}<span class="w-full py-3 bg-red-50 text-red-600 rounded-xl text-[9px] font-black uppercase tracking-widest text-center border border-red-100">Prix non configuré</span>{% endif %}
+                    </div>
+                </article>
+                {% empty %}
+                <div class="py-10 text-center text-on-surface-variant text-xs font-semibold">
+                    Aucun produit disponible dans l'inventaire.
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="sticky bottom-4 bg-white/95 backdrop-blur-md rounded-3xl border border-orange-100 premium-shadow p-5 space-y-4">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Articles sélectionnés</h2>
+                    <strong id="orderTotalDisplay" class="text-xl font-black text-primary">0.00 $</strong>
+                </div>
+                <div id="selectedItems" class="space-y-3 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    <p id="emptyOrderMsg" class="text-xs text-center py-6 text-on-surface-variant italic">Aucun article sélectionné</p>
+                </div>
+            </div>
+            <button type="submit" class="w-full citrus-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                Confirmer la commande
+            </button>
+        </section>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #f97316; border-radius: 10px; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .service-cat-btn.active { background: #ff5e00; color: white; box-shadow: 0 4px 15px rgba(255, 94, 0, 0.24); }
+    .service-cat-btn:not(.active) { background: white; color: #5b4137; border: 1px solid #fed7aa; }
+</style>
+<script>
+    function filterServiceProducts(catId, button) {
+        const cards = document.querySelectorAll('.service-product-card');
+        const buttons = document.querySelectorAll('.service-cat-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        cards.forEach(card => {
+            card.classList.toggle('hidden', !(catId === 'all' || card.dataset.category === catId));
+        });
+    }
+
+    let currentOrder = {};
+    const exchangeRate = {{ profile.bar.taux_change_usd_to_cdf|default:2800 }};
+    const prefCurrency = '{{ pref_currency }}';
+
+    function addToOrder(id, name, price, unit, currency) {
+        const key = `${id}:${unit}`;
+        if (currentOrder[key]) {
+            currentOrder[key].qty += 1;
+        } else {
+            currentOrder[key] = { id, name, price, unit, currency, qty: 1 };
+        }
+        updateOrderUI();
+    }
+
+    function removeFromOrder(key) {
+        if (!currentOrder[key]) return;
+        if (currentOrder[key].qty > 1) {
+            currentOrder[key].qty -= 1;
+        } else {
+            delete currentOrder[key];
+        }
+        updateOrderUI();
+    }
+
+    function updateOrderUI() {
+        const container = document.getElementById('selectedItems');
+        const totalDisplay = document.getElementById('orderTotalDisplay');
+        const form = document.getElementById('takeOrderForm');
+        form.querySelectorAll('input[name="items[]"]').forEach(el => el.remove());
+        container.innerHTML = '';
+
+        let totalUSD = 0;
+        let totalCDF = 0;
+        const keys = Object.keys(currentOrder);
+
+        if (keys.length === 0) {
+            container.innerHTML = '<p id="emptyOrderMsg" class="text-xs text-center py-6 text-on-surface-variant italic">Aucun article sélectionné</p>';
+            totalDisplay.innerText = prefCurrency === 'USD' ? '0.00 $' : '0 FC';
+            return;
+        }
+
+        keys.forEach(key => {
+            const item = currentOrder[key];
+            const itemPrice = parseFloat(item.price);
+            if (item.currency === 'USD') totalUSD += itemPrice * item.qty;
+            else totalCDF += itemPrice * item.qty;
+
+            let displayPriceStr = '';
+            if (prefCurrency === 'USD') {
+                const p = item.currency === 'USD' ? itemPrice : itemPrice / exchangeRate;
+                displayPriceStr = (p * item.qty).toFixed(2) + ' $';
+            } else {
+                const p = item.currency === 'CDF' ? itemPrice : itemPrice * exchangeRate;
+                displayPriceStr = Math.floor(p * item.qty).toLocaleString() + ' FC';
+            }
+
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between p-3 bg-surface-container-low rounded-2xl border border-orange-100';
+            row.innerHTML = `
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-black text-on-surface truncate">${item.name}</p>
+                    <p class="text-[9px] font-bold text-on-surface-variant uppercase">${item.unit} x${item.qty}</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="removeFromOrder('${key}')" class="w-8 h-8 rounded-lg bg-white text-on-surface-variant hover:text-red-600 flex items-center justify-center transition-colors border border-orange-100">
+                        <span class="material-symbols-outlined text-sm">remove</span>
+                    </button>
+                    <p class="text-xs font-black text-on-surface w-20 text-right">${displayPriceStr}</p>
+                </div>`;
+            container.appendChild(row);
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'items[]';
+            input.value = `${item.id}:${item.qty}:${item.unit}`;
+            form.appendChild(input);
+        });
+
+        if (prefCurrency === 'USD') {
+            totalDisplay.innerText = (totalUSD + (totalCDF / exchangeRate)).toFixed(2) + ' $';
+        } else {
+            totalDisplay.innerText = Math.floor(totalCDF + (totalUSD * exchangeRate)).toLocaleString() + ' FC';
+        }
+    }
+</script>
+{% endblock %}

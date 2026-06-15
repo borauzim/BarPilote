@@ -1,0 +1,336 @@
+{% extends 'serveur/base_serveur.html' %}
+{% load static %}
+
+{% block title %}Affiliation au Bar - BarPilote{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+{% endblock %}
+
+{% block header %}
+<header class="fixed top-0 left-0 w-full z-50 bg-white/85 backdrop-blur-md border-b border-orange-100">
+    <div class="flex items-center justify-between px-6 h-16 w-full">
+        <a href="{% url 'serveur_logout' %}" class="text-on-surface-variant hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-2xl">close</span>
+        </a>
+        <h1 class="text-lg font-black tracking-tight text-orange-600 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+            BarPilote Vigie
+        </h1>
+        <div class="w-8"></div>
+    </div>
+</header>
+{% endblock %}
+
+{% block bottom_nav %}
+<!-- Aucun bottom nav sur la page d'onboarding -->
+{% endblock %}
+
+{% block content %}
+<!-- Immersive Fullscreen Video Background -->
+<div class="absolute inset-0 z-0 overflow-hidden bg-background">
+    <video id="cameraStream" autoplay playsinline muted class="w-full h-full object-cover transition-opacity duration-500 opacity-0 bg-background"></video>
+    <!-- Blurry Ambient Background when camera is loading or inactive -->
+    <div id="ambientBg" class="absolute inset-0 bg-gradient-to-tr from-background via-white to-orange-50 opacity-90 transition-opacity duration-500">
+        <div class="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+    </div>
+</div>
+
+<div class="relative z-10 min-h-[calc(100vh-5rem)] flex flex-col items-center text-center px-4 pt-2 pb-8 overflow-y-auto">
+    <!-- Connection Status -->
+    <div class="mb-5 text-center relative z-20 shrink-0">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 mb-3">
+            <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+            <span class="text-[9px] font-black tracking-widest text-primary uppercase">CONNEXION A VOTRE AIRBASE</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-on-surface tracking-tight">Affiliation du Bar</h2>
+    </div>
+
+    <div class="w-full max-w-sm flex flex-col items-center relative z-20 gap-5">
+        <!-- Scanner visible area -->
+        <div id="scannerSection" class="w-full flex flex-col items-center gap-5 transition-all duration-300">
+            <div class="relative w-56 h-56 sm:w-64 sm:h-64 rounded-[28px] flex items-center justify-center overflow-visible premium-shadow group border border-orange-100 bg-surface-container-lowest/80">
+                <div class="absolute inset-0 scanner-frame rounded-[28px] pointer-events-none z-0"></div>
+
+                <div class="absolute inset-0 pointer-events-none z-10">
+                    <div class="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-xl"></div>
+                    <div class="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-xl"></div>
+                    <div class="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-xl"></div>
+                    <div class="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl"></div>
+                </div>
+
+                <div class="absolute top-0 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-80 shadow-[0_0_15px_rgba(255,94,0,0.8)] animate-bounce z-10" style="animation-duration: 2.5s;"></div>
+
+                <div id="cameraPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-surface-container-lowest/95 rounded-[28px] z-20 text-on-surface-variant/40">
+                    <span class="material-symbols-outlined text-6xl">qr_code_2</span>
+                    <p class="text-[9px] font-black uppercase tracking-widest mt-2">Demarrage camera...</p>
+                </div>
+            </div>
+
+            <p class="text-on-surface-variant text-sm font-medium leading-relaxed max-w-xs">
+                Scannez le code QR du Bar ou utilisez une des options ci-dessous pour lier votre compte.
+            </p>
+        </div>
+
+        <!-- Always-visible controls -->
+        <div class="w-full rounded-[28px] border border-orange-100 bg-surface-container-lowest/95 backdrop-blur-md p-4 premium-shadow space-y-4 text-left">
+            <div class="grid grid-cols-2 gap-3">
+                <button id="torchButton" type="button" onclick="toggleTorch()" class="scan-action-btn text-on-surface-variant hover:text-on-surface">
+                    <span class="material-symbols-outlined text-xl text-primary">flashlight_on</span>
+                    <span>Lampe</span>
+                </button>
+
+                <form id="quickFileImportForm" method="post" action="{% url 'serveur_scan' %}" enctype="multipart/form-data" class="min-w-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="file_import">
+                    <label for="quickQrImage" class="scan-action-btn cursor-pointer text-primary hover:text-on-surface">
+                        <span class="material-symbols-outlined text-xl">photo_library</span>
+                        <span>Photo QR</span>
+                    </label>
+                    <input id="quickQrImage" type="file" name="qr_image" accept="image/*" class="sr-only" onchange="submitSelectedQrImage(this)">
+                </form>
+            </div>
+
+            <form method="post" action="{% url 'serveur_scan' %}" class="space-y-3">
+                {% csrf_token %}
+                <label for="invitationCodeInput" class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Coller un code d'invitation</label>
+                <div class="flex gap-2">
+                    <input id="invitationCodeInput" type="text" name="invitation_code" placeholder="Code ou lien d'invitation" required class="min-w-0 flex-1 bg-surface-container border border-orange-100 rounded-2xl py-3.5 px-4 font-bold text-on-surface placeholder-on-surface-variant/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm">
+                    <button type="submit" class="h-[50px] w-[54px] shrink-0 bg-primary hover:bg-primary-hover text-white rounded-2xl flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-primary/20" aria-label="Lier le compte">
+                        <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Kept for backward-compatible JS state switching; no longer used as primary UI. -->
+        <div id="manualSection" class="hidden"></div>
+        <div id="fileImportSection" class="hidden"></div>
+    </div>
+
+    <div class="mt-5 relative z-20 shrink-0">
+        <a href="https://barpilote.com/help/" target="_blank" class="inline-flex items-center gap-2 bg-surface-container hover:bg-surface-container-high border border-orange-100 px-5 py-3 rounded-full shadow-2xl text-on-surface transition-all active:scale-95">
+            <span class="material-symbols-outlined text-primary text-sm">help</span>
+            <span class="text-xs font-bold tracking-tight">Besoin d'aide ?</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<style>
+    .scanner-frame {
+        box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.56);
+    }
+
+    .scan-action-btn {
+        width: 100%;
+        min-height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.055);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease, color 160ms ease;
+    }
+
+    .scan-action-btn:hover {
+        background: rgba(255, 94, 0, 0.14);
+        border-color: rgba(255, 94, 0, 0.35);
+    }
+
+    .scan-action-btn:active {
+        transform: scale(0.98);
+    }
+
+    body {
+        overflow-y: auto !important;
+        padding-bottom: 0 !important;
+    }
+</style>
+
+<script>
+    const scannerSection = document.getElementById('scannerSection');
+    const manualSection = document.getElementById('manualSection');
+    const fileImportSection = document.getElementById('fileImportSection');
+    const video = document.getElementById('cameraStream');
+    const placeholder = document.getElementById('cameraPlaceholder');
+    const ambientBg = document.getElementById('ambientBg');
+    let activeStream = null;
+    let scanInterval = null;
+    let torchEnabled = false;
+
+    function startCamera() {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(stream) {
+                    activeStream = stream;
+                    video.srcObject = stream;
+                    video.classList.remove('opacity-0');
+                    ambientBg.classList.add('opacity-0');
+                    placeholder.classList.add('hidden');
+                    
+                    // Start QR code scanning
+                    video.addEventListener('loadedmetadata', function() {
+                        video.play();
+                        requestAnimationFrame(tick);
+                    });
+                })
+                .catch(function(err) {
+                    console.warn("Essai caméra générique...");
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(function(stream) {
+                            activeStream = stream;
+                            video.srcObject = stream;
+                            video.classList.remove('opacity-0');
+                            ambientBg.classList.add('opacity-0');
+                            placeholder.classList.add('hidden');
+                            
+                            // Start QR code scanning
+                            video.addEventListener('loadedmetadata', function() {
+                                video.play();
+                                requestAnimationFrame(tick);
+                            });
+                        })
+                        .catch(function(e) {
+                            showCameraBlocked();
+                        });
+                });
+        } else {
+            showCameraBlocked("Non supporté");
+        }
+    }
+
+    function tick() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Try to decode QR code
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+            });
+            
+            if (code) {
+                // QR code found, submit it
+                submitQRCode(code.data);
+                return;
+            }
+        }
+        
+        if (scannerSection.classList.contains('hidden')) {
+            stopCamera();
+        } else {
+            requestAnimationFrame(tick);
+        }
+    }
+
+    function submitQRCode(qrData) {
+        stopCamera();
+        
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "serveur_scan" %}';
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            form.appendChild(csrfToken.cloneNode());
+        }
+        
+        const codeInput = document.createElement('input');
+        codeInput.type = 'hidden';
+        codeInput.name = 'invitation_code';
+        codeInput.value = qrData;
+        form.appendChild(codeInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function showCameraBlocked(msg = "Caméra bloquée") {
+        placeholder.innerHTML = `
+            <span class="material-symbols-outlined text-red-500/40 text-5xl">videocam_off</span>
+            <p class="text-[9px] font-black uppercase tracking-widest mt-2 text-red-500/60">${msg}</p>
+        `;
+        placeholder.classList.remove('hidden');
+        ambientBg.classList.remove('opacity-0');
+        video.classList.add('opacity-0');
+    }
+
+    function stopCamera() {
+        if (activeStream) {
+            activeStream.getTracks().forEach(track => track.stop());
+            activeStream = null;
+            video.srcObject = null;
+            video.classList.add('opacity-0');
+            ambientBg.classList.remove('opacity-0');
+            placeholder.classList.remove('hidden');
+        }
+    }
+
+    function switchToManual() {
+        document.getElementById('invitationCodeInput')?.focus();
+    }
+
+    function switchToScan() {
+        manualSection.classList.add('hidden');
+        fileImportSection.classList.add('hidden');
+        scannerSection.classList.remove('hidden');
+        startCamera();
+    }
+
+    function switchToFileImport() {
+        document.getElementById('quickQrImage')?.click();
+    }
+
+    function submitSelectedQrImage(input) {
+        if (input.files && input.files.length > 0) {
+            stopCamera();
+            document.getElementById('quickFileImportForm').submit();
+        }
+    }
+
+    async function toggleTorch() {
+        const button = document.getElementById('torchButton');
+        const track = activeStream?.getVideoTracks?.()[0];
+
+        if (!track) {
+            showCameraBlocked('Camera indisponible');
+            return;
+        }
+
+        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+        if (!capabilities.torch) {
+            button?.classList.add('text-red-400');
+            button?.setAttribute('title', 'Torche non supportee sur cet appareil');
+            return;
+        }
+
+        try {
+            torchEnabled = !torchEnabled;
+            await track.applyConstraints({ advanced: [{ torch: torchEnabled }] });
+            button?.classList.toggle('bg-primary/20', torchEnabled);
+            button?.classList.toggle('text-white', torchEnabled);
+        } catch (error) {
+            console.warn('Torch unavailable', error);
+            button?.classList.add('text-red-400');
+        }
+    }
+
+    // Démarrer la caméra au chargement initial
+    window.addEventListener('DOMContentLoaded', startCamera);
+</script>
+{% endblock %}

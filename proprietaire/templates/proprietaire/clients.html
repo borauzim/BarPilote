@@ -1,4 +1,4 @@
-{% extends 'proprietaire/base.html' %}
+{% extends base_template|default:'proprietaire/base.html' %}
 {% load static %}
 
 {% block title %}Gestion des Clients & Dettes - BarPilote{% endblock %}
@@ -8,15 +8,17 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-            <h1 class="text-3xl font-black tracking-tight text-on-surface">Gestion des Clients & Dettes</h1>
-            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Gérez la liste de confiance, vérifiez l'historique d'achat et whitelistez manuellement vos clients éligibles aux dettes.</p>
+            <h1 class="text-3xl font-black tracking-tight text-on-surface">{% if read_only_interface %}Mes Clients & Dettes{% else %}Gestion des Clients & Dettes{% endif %}</h1>
+            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">{% if read_only_interface %}Clients que vous avez servis, historique personnel et dettes ouvertes liées à vos commandes.{% else %}Gérez la liste de confiance, vérifiez l'historique d'achat et whitelistez manuellement vos clients éligibles aux dettes.{% endif %}</p>
         </div>
+        {% if not read_only_interface %}
         <div>
             <button onclick="openAddClientModal()" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
                 <span class="material-symbols-outlined">person_add</span>
                 <span>Nouveau Client de Confiance</span>
             </button>
         </div>
+        {% endif %}
     </div>
 
     <!-- Stats summary -->
@@ -26,7 +28,7 @@
                 <span class="material-symbols-outlined">group</span>
             </div>
             <div>
-                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Total Clients Listés</p>
+                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">{% if read_only_interface %}Clients Servis{% else %}Total Clients Listés{% endif %}</p>
                 <p class="text-2xl font-black text-on-surface">{{ clients|length }}</p>
             </div>
         </div>
@@ -35,14 +37,18 @@
                 <span class="material-symbols-outlined">verified_user</span>
             </div>
             <div>
-                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Whitelistés Manuels</p>
+                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">{% if read_only_interface %}Clients en Dette{% else %}Whitelistés Manuels{% endif %}</p>
                 <p class="text-2xl font-black text-emerald-600" id="statWhitelistedCount">
-                    {% regroup clients by dette_autorisee as whitelist_groups %}
-                    {% for group in whitelist_groups %}
-                        {% if group.grouper == True %}{{ group.list|length }}{% endif %}
-                    {% empty %}
-                        0
-                    {% endfor %}
+                    {% if read_only_interface %}
+                        {{ personal_debt_clients_count|default:0 }}
+                    {% else %}
+                        {% regroup clients by dette_autorisee as whitelist_groups %}
+                        {% for group in whitelist_groups %}
+                            {% if group.grouper == True %}{{ group.list|length }}{% endif %}
+                        {% empty %}
+                            0
+                        {% endfor %}
+                    {% endif %}
                 </p>
             </div>
         </div>
@@ -56,7 +62,7 @@
                     <p class="text-2xl font-black text-on-surface">{{ bar.seuil_dette_eligible|floatformat:0 }} FC</p>
                 </div>
             </div>
-            <form method="POST" action="{% url 'clients_html' %}" class="flex items-center gap-2 mt-2 pt-2 border-t border-surface-container/50">
+            {% if not read_only_interface %}<form method="POST" action="{% url 'clients_html' %}" class="flex items-center gap-2 mt-2 pt-2 border-t border-surface-container/50">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_threshold">
                 <input type="number" name="seuil_dette_eligible" value="{{ bar.seuil_dette_eligible|floatformat:0 }}" required class="w-full bg-surface-container-low border border-surface-container rounded-xl py-2 px-3 font-bold text-xs text-on-surface focus:ring-1 focus:ring-orange-500 transition-all" placeholder="Modifier le seuil en FC">
@@ -64,14 +70,14 @@
                     <span class="material-symbols-outlined text-sm">save</span>
                     <span>Sauver</span>
                 </button>
-            </form>
+            </form>{% endif %}
         </div>
     </div>
 
     <!-- Clients List Table -->
     <div class="bg-surface-container-lowest rounded-3xl border border-surface-container/50 executive-shadow overflow-hidden">
         <div class="p-6 border-b border-surface-container flex items-center justify-between">
-            <h3 class="font-black text-lg text-on-surface">Répertoire des Clients Whitelistés</h3>
+            <h3 class="font-black text-lg text-on-surface">{% if read_only_interface %}Clients que vous avez servis{% else %}Répertoire des Clients Whitelistés{% endif %}</h3>
             <span class="text-[10px] font-black uppercase text-on-surface-variant/40 bg-surface-container px-3 py-1.5 rounded-full tracking-widest">Confiance & Crédit</span>
         </div>
         
@@ -82,9 +88,10 @@
                         <th class="py-5 px-6">Client</th>
                         <th class="py-5 px-6">Téléphone</th>
                         <th class="py-5 px-6">Total Dépensé (CDF)</th>
+                        {% if read_only_interface %}<th class="py-5 px-6">Dette Ouverte</th>{% endif %}
                         <th class="py-5 px-6">Statut d'éligibilité</th>
-                        <th class="py-5 px-6 text-center">Autoriser la dette</th>
-                        <th class="py-5 px-6 text-right">Actions</th>
+                        {% if not read_only_interface %}<th class="py-5 px-6 text-center">Autoriser la dette</th>
+                        <th class="py-5 px-6 text-right">Actions</th>{% endif %}
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-surface-container">
@@ -106,7 +113,13 @@
                         </td>
                         <td class="py-5 px-6 font-black text-on-surface text-sm">
                             {{ client.total_spent_cdf|floatformat:0 }} FC
+                            {% if read_only_interface %}<p class="text-[9px] text-on-surface-variant/40 font-bold mt-1">{{ client.orders_count }} commande(s)</p>{% endif %}
                         </td>
+                        {% if read_only_interface %}
+                        <td class="py-5 px-6 font-black text-sm {% if client.debt_usd or client.debt_cdf %}text-red-600{% else %}text-emerald-600{% endif %}">
+                            {% if client.debt_usd or client.debt_cdf %}${{ client.debt_usd|floatformat:2 }} / {{ client.debt_cdf|floatformat:0 }} FC{% else %}Aucune{% endif %}
+                        </td>
+                        {% endif %}
                         <td class="py-5 px-6">
                             <div id="badge-{{ client.id }}">
                                 {% if client.dette_autorisee %}
@@ -124,7 +137,7 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="py-5 px-6 text-center">
+                        {% if not read_only_interface %}<td class="py-5 px-6 text-center">
                             <label class="relative inline-flex items-center cursor-pointer select-none">
                                 <input type="checkbox" {% if client.dette_autorisee %}checked{% endif %} 
                                        onchange="toggleDebtPermission('{{ client.id }}')" 
@@ -142,7 +155,7 @@
                                     <span class="material-symbols-outlined text-base">delete</span>
                                 </button>
                             </form>
-                        </td>
+                        </td>{% endif %}
                     </tr>
                     {% empty %}
                     <tr>
@@ -158,6 +171,7 @@
     </div>
 </div>
 
+{% if not read_only_interface %}
 <!-- Modal: Add Client -->
 <div id="addClientModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
     <div class="bg-white rounded-[40px] w-full max-w-md shadow-2xl scale-95 opacity-0 transition-all duration-300 transform flex flex-col overflow-hidden" id="addClientModalContent">
@@ -280,4 +294,5 @@
         });
     }
 </script>
+{% endif %}
 {% endblock %}

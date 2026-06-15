@@ -1,0 +1,39 @@
+{% extends 'serveur/base_serveur.html' %}
+{% load static %}
+
+{% block title %}Inventaire - BarPilote{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="pt-4">
+        <p class="text-[10px] font-black uppercase tracking-widest text-primary">Acces autorise</p>
+        <h1 class="text-3xl font-black tracking-tight text-on-surface mt-1">Inventaire du bar</h1>
+        <p class="text-xs text-on-surface-variant mt-2">Lecture seule. Les prix sont pris directement depuis le stock.</p>
+    </div>
+
+    <div class="space-y-3">
+        {% for item in inventory_items %}
+        <article class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-5 space-y-3">
+            <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <h2 class="text-lg font-black text-on-surface truncate">{{ item.produit.nom }}</h2>
+                    <p class="text-[10px] font-bold text-on-surface-variant uppercase">{{ item.produit.categorie.nom }} · {{ item.produit.volume_cl }}cl</p>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="text-sm font-black text-primary">{% if item.devise == 'CDF' %}{{ item.prix_vente_unitaire|floatformat:0 }} FC{% else %}{{ item.prix_vente_unitaire|floatformat:2 }}${% endif %}</p>
+                    {% if item.can_sell_glass %}
+                    <p class="text-[10px] text-on-surface-variant uppercase">Glass: {% if item.devise == 'CDF' %}{{ item.prix_vente_verre|floatformat:0 }} FC{% else %}{{ item.prix_vente_verre|floatformat:2 }}${% endif %}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-xs border-t border-orange-100 pt-3">
+                <span class="text-on-surface-variant">Stock actuel</span>
+                <strong class="text-on-surface">{{ item.quantite_actuelle|floatformat:0 }}</strong>
+            </div>
+        </article>
+        {% empty %}
+        <div class="bg-surface rounded-3xl border border-orange-100 p-8 text-center text-on-surface-variant">Aucun produit disponible.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

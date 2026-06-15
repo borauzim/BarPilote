@@ -1,4 +1,4 @@
-{% extends 'proprietaire/base.html' %}
+{% extends base_template|default:'proprietaire/base.html' %}
 {% load static %}
 {% load currency_tags %}
 
@@ -30,6 +30,7 @@
             <h1 class="text-3xl font-black tracking-tight text-on-surface">Gestion de l'Inventaire</h1>
             <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Suivez vos stocks et mettez à jour vos prix en temps réel.</p>
         </div>
+        {% if not read_only_interface %}
         <div class="flex items-center gap-3">
             <a href="{% url 'mixed_case_arrival' %}" class="bg-surface-container-high text-on-surface-variant px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white transition-all border border-surface-container-high">
                 <span class="material-symbols-outlined text-xl">inventory</span>
@@ -40,6 +41,7 @@
                 <span>Nouveau Produit</span>
             </a>
         </div>
+        {% endif %}
     </div>
 
     <!-- Live Search Bar -->
@@ -119,6 +121,7 @@
                 <div class="h-full {% if item.quantite_actuelle <= item.seuil_alerte %}bg-orange-600{% else %}bg-emerald-500{% endif %} rounded-full" style="width: {{ item.quantite_actuelle }}%"></div>
             </div>
             
+            {% if not read_only_interface %}
             <!-- Quick Actions Overlay -->
             <div class="mt-4 flex gap-2">
                 <button onclick="openEditModal('{{ item.id }}', '{{ item.produit.nom|escapejs }}', '{{ item.prix_vente_unitaire }}', '{{ item.quantite_actuelle }}', '{{ item.seuil_alerte }}', '{{ item.devise }}', '{{ item.strategie_gestion }}', '{{ item.bouteilles_par_casier }}', '{{ item.prix_achat_casier }}', '{{ item.vente_au_verre|yesno:'true,false' }}', '{{ item.produit.volume_cl }}', '{{ item.volume_verre_cl }}', '{{ item.prix_vente_verre }}', '{{ item.reduction_bouteille_entiere }}', '{{ item.prix_achat_unitaire }}')" 
@@ -129,6 +132,7 @@
                     <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
                 </button>
             </div>
+            {% endif %}
         </div>
         {% empty %}
         <div class="col-span-full py-24 text-center">
@@ -137,12 +141,13 @@
             </div>
             <h2 class="text-xl font-black text-on-surface">Votre inventaire est vide</h2>
             <p class="text-on-surface-variant/60 max-w-xs mx-auto mt-2">Commencez par ajouter des produits depuis le catalogue BarPilote.</p>
-            <a href="{% url 'catalogue_setup' %}" class="mt-8 inline-flex citrus-gradient text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest shadow-lg">Ajouter mon premier produit</a>
+            {% if not read_only_interface %}<a href="{% url 'catalogue_setup' %}" class="mt-8 inline-flex citrus-gradient text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest shadow-lg">Ajouter mon premier produit</a>{% endif %}
         </div>
         {% endfor %}
     </div>
 </div>
 
+{% if not read_only_interface %}
 <!-- Edit Modal -->
 <div id="editModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-[32px] w-full max-w-lg p-6 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform max-h-[95vh] overflow-y-auto" id="editModalContent">
@@ -451,4 +456,5 @@
         }, 300);
     }
 </script>
+{% endif %}
 {% endblock %}

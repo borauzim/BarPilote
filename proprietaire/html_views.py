@@ -17,6 +17,7 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
 import uuid
 from .models import PilotProfile, Order, Table, Bar, StockItem, OrderItem, Category, Facture, Client
+from .order_services import take_order_for_profile
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/dashboard.html'
@@ -142,49 +143,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 class TakeOrderView(LoginRequiredMixin, View):
     """Permet au propriétaire de prendre une commande directement."""
     def post(self, request):
-        table_id = request.POST.get('table_id')
-        items_raw = request.POST.getlist('items[]') # Format attendu: stockitem_id:qty:unite
-        
-        if not table_id:
-            return redirect('dashboard_html')
-            
         profile = PilotProfile.objects.get(user=request.user)
-        table = get_object_or_404(Table, id=table_id, bar=profile.bar)
-        
-        # Trouver ou créer la commande active pour cette table
-        order = Order.objects.filter(table=table, statut__in=['PENDING', 'PREPARING']).first()
-        if not order:
-            order = Order.objects.create(
-                bar=profile.bar,
-                table=table,
-                serveur=profile, # Le proprio est le serveur ici
-                statut='PENDING'
-            )
-            
-        # Ajouter les items
-        for item_str in items_raw:
-            try:
-                sid, qty, unite = item_str.split(':')
-                stock_item = StockItem.objects.get(id=sid, bar=profile.bar)
-                qty = int(qty)
-                
-                if qty <= 0: continue
-                
-                # Prix
-                price = stock_item.prix_vente_unitaire if unite == 'BOUTEILLE' else stock_item.prix_vente_verre
-                
-                OrderItem.objects.create(
-                    order=order,
-                    product_item=stock_item,
-                    unite_vente=unite,
-                    quantite=qty,
-                    prix_unitaire=price,
-                    devise=stock_item.devise
-                )
-            except Exception as e:
-                print(f"Error adding item to order: {e}")
-                
-        order.recalculate_totals()
+        take_order_for_profile(
+            bar=profile.bar,
+            pilot_profile=profile,
+            table_id=request.POST.get('table_id'),
+            items_raw=request.POST.getlist('items[]'),
+        )
         return redirect('dashboard_html')
 
 class EstablishmentSetupView(LoginRequiredMixin, TemplateView):
@@ -591,6 +556,7 @@ class RecordLossView(LoginRequiredMixin, View):
         Perte.objects.create(
             bar=profile.bar,
             item=item,
+            reported_by=profile,
             quantite=quantite,
             raison=raison,
             commentaire=commentaire
@@ -608,13 +574,113 @@ class RecordLossView(LoginRequiredMixin, View):
 
 class TeamView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/team.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         profile = PilotProfile.objects.get(user=self.request.user)
+        context['bar'] = profile.bar
         if profile.bar:
+            from serveur.models import ServeurProfile
             context['staff'] = PilotProfile.objects.filter(bar=profile.bar).exclude(role='PROPRIETAIRE')
+            serveur_staff = list(ServeurProfile.objects.filter(
+                bar=profile.bar,
+                confirmation_status='CONFIRMED',
+                actif=True,
+            ).select_related('user').order_by('prenom', 'nom'))
+            for member in serveur_staff:
+                member_pilot = PilotProfile.objects.filter(user=member.user, bar=profile.bar).first()
+                member.is_online = bool(member_pilot and member_pilot.is_online)
+            context['serveur_staff'] = serveur_staff
+            context['pending_requests'] = ServeurProfile.objects.filter(
+                bar=profile.bar,
+                confirmation_status='PENDING',
+                actif=True,
+            ).select_related('user').order_by('-updated_at')
         return context
+
+
+class TeamRequestActionView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        from django.contrib import messages
+        from serveur.models import ServeurProfile
+
+        profile = get_object_or_404(PilotProfile, user=request.user, role='PROPRIETAIRE')
+        server_profile = get_object_or_404(
+            ServeurProfile,
+            id=request.POST.get('server_profile_id'),
+            bar=profile.bar,
+            confirmation_status='PENDING',
+        )
+        action = request.POST.get('action')
+
+        if action == 'approve':
+            server_profile.confirmation_status = 'CONFIRMED'
+            server_profile.actif = True
+            server_profile.inventory_access_granted = False
+            server_profile.tables_access_granted = False
+            server_profile.reports_access_granted = False
+            server_profile.save(update_fields=['confirmation_status', 'actif', 'inventory_access_granted', 'tables_access_granted', 'reports_access_granted', 'updated_at'])
+
+            pilot_profile, _ = PilotProfile.objects.get_or_create(user=server_profile.user)
+            pilot_profile.role = 'SERVEUR'
+            pilot_profile.bar = profile.bar
+            pilot_profile.nom = server_profile.nom
+            pilot_profile.postnom = server_profile.postnom
+            pilot_profile.prenom = server_profile.prenom
+            pilot_profile.sexe = server_profile.sexe
+            pilot_profile.telephone = server_profile.telephone
+            pilot_profile.save()
+
+            messages.success(request, f"{server_profile.prenom} {server_profile.nom} a ete ajoute a votre equipe.")
+        elif action == 'reject':
+            server_profile.confirmation_status = 'REJECTED'
+            server_profile.actif = False
+            server_profile.save(update_fields=['confirmation_status', 'actif', 'updated_at'])
+            messages.success(request, f"La demande de {server_profile.prenom} {server_profile.nom} a ete rejetee.")
+        else:
+            messages.error(request, "Action invalide.")
+
+        return redirect('team_html')
+
+
+class TeamAccessActionView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        from django.contrib import messages
+        from serveur.models import ServeurProfile
+
+        profile = get_object_or_404(PilotProfile, user=request.user, role='PROPRIETAIRE')
+        server_profile = get_object_or_404(
+            ServeurProfile,
+            id=request.POST.get('server_profile_id'),
+            bar=profile.bar,
+            confirmation_status='CONFIRMED',
+            actif=True,
+        )
+        permission = request.POST.get('permission')
+        enabled = request.POST.get('enabled') == '1'
+
+        permission_map = {
+            'inventory': 'inventory_access_granted',
+            'tables': 'tables_access_granted',
+            'reports': 'reports_access_granted',
+        }
+        field_name = permission_map.get(permission)
+        if not field_name:
+            messages.error(request, "Autorisation invalide.")
+            return redirect('team_html')
+
+        setattr(server_profile, field_name, enabled)
+        server_profile.save(update_fields=[field_name, 'updated_at'])
+
+        labels = {
+            'inventory': 'inventaire',
+            'tables': 'tables',
+            'reports': 'rapports',
+        }
+        state = 'accordé' if enabled else 'retiré'
+        messages.success(request, f"Accès {labels[permission]} {state} pour {server_profile.prenom} {server_profile.nom}.")
+        return redirect('team_html')
+
 
 class TablesView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/tables.html'
@@ -1209,9 +1275,11 @@ class UpdateOrderStatusView(LoginRequiredMixin, View):
                 facture_status = 'IMPAYEE' if deferred else 'PAYEE'
                 
                 notes_lines = [f"Paiement différé (Dette) de {orders.count()} commande(s) pour la {table_nom}" if deferred else f"Paiement de {orders.count()} commande(s) pour la {table_nom}"]
+                guaranteed_by = None
                 if deferred and guarantor:
                     guarantor_label = "Propriétaire" if guarantor == 'proprietaire' else "Serveur"
                     notes_lines.append(f"Garant: {guarantor_label}")
+                    guaranteed_by = profile
                 
                 facture = Facture.objects.create(
                     bar=profile.bar,
@@ -1221,6 +1289,7 @@ class UpdateOrderStatusView(LoginRequiredMixin, View):
                     montant_cdf=total_cdf,
                     type_facture='CLIENT',
                     statut=facture_status,
+                    guaranteed_by=guaranteed_by,
                     notes="\n".join(notes_lines)
                 )
                 facture.orders.set(orders)

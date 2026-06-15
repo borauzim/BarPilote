@@ -1,4 +1,4 @@
-{% extends 'proprietaire/base.html' %}
+{% extends base_template|default:'proprietaire/base.html' %}
 {% load static %}
 {% load currency_tags %}
 
@@ -29,8 +29,8 @@
     <!-- Header & Date Filter -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-            <h1 class="text-3xl font-black tracking-tight text-on-surface">Rapport Financier</h1>
-            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Analyse des revenus et des pertes du {{ start_date }} au {{ end_date }}.</p>
+            <h1 class="text-3xl font-black tracking-tight text-on-surface">{% if read_only_interface %}Mes Finances{% else %}Rapport Financier{% endif %}</h1>
+            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">{% if read_only_interface %}Vos revenus, pertes, bénéfices estimés et dettes clients du {{ start_date }} au {{ end_date }}.{% else %}Analyse des revenus et des pertes du {{ start_date }} au {{ end_date }}.{% endif %}</p>
         </div>
         
         <div class="flex flex-col sm:flex-row items-end gap-3 bg-white p-5 rounded-[24px] executive-shadow border border-surface-container-high">
@@ -56,14 +56,17 @@
                     <span class="ml-2 text-xs font-black uppercase tracking-widest sm:hidden">Filtrer</span>
                 </button>
             </form>
+            {% if not read_only_interface %}
             <div class="h-10 w-[1px] bg-surface-container mx-2 hidden sm:block"></div>
             <button onclick="openLossModal()" class="bg-red-50 text-red-600 px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-red-100 transition-all border border-red-100">
                 <span class="material-symbols-outlined text-sm">inventory_2</span>
                 Signaler une Perte
             </button>
+            {% endif %}
         </div>
     </div>
 
+    {% if not read_only_interface %}
     <!-- Taux de Change Config -->
     <div class="bg-white rounded-[32px] p-6 executive-shadow border border-orange-100 flex flex-col md:flex-row items-center justify-between gap-6">
         <div class="flex items-center gap-4">
@@ -90,6 +93,8 @@
             </button>
         </form>
     </div>
+
+    {% endif %}
 
     <!-- Stats Overview -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -141,20 +146,113 @@
                 <div class="w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-6">
                     <span class="material-symbols-outlined">trending_down</span>
                 </div>
-                <h3 class="text-red-600/60 font-bold text-[10px] uppercase tracking-widest mb-1">Pertes de Stock</h3>
+                <h3 class="text-red-600/60 font-bold text-[10px] uppercase tracking-widest mb-1">{% if read_only_interface %}Pertes + Dettes{% else %}Pertes de Stock{% endif %}</h3>
                 <div class="space-y-1">
                     <p class="text-2xl font-black text-red-600">{% display_price total_perte_usd total_perte_cdf %}</p>
-                    <p class="text-xs font-bold text-red-400">Total pertes calculées</p>
+                    <p class="text-xs font-bold text-red-400">{% if read_only_interface %}Pertes signalées + factures impayées{% else %}Total pertes calculées{% endif %}</p>
                 </div>
             </div>
         </div>
     </div>
 
+    {% if read_only_interface %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-[28px] p-6 executive-shadow border border-surface-container-high">
+            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Bénéfice brut estimé</p>
+            <p class="text-2xl font-black text-emerald-600 mt-2">{% display_price gross_profit_usd gross_profit_cdf %}</p>
+        </div>
+        <div class="bg-white rounded-[28px] p-6 executive-shadow border border-surface-container-high">
+            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Bénéfice net estimé</p>
+            <p class="text-2xl font-black {% if net_profit_usd < 0 or net_profit_cdf < 0 %}text-red-600{% else %}text-on-surface{% endif %} mt-2">{% display_price net_profit_usd net_profit_cdf %}</p>
+        </div>
+        <div class="bg-white rounded-[28px] p-6 executive-shadow border border-surface-container-high">
+            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Dettes clients ouvertes</p>
+            <p class="text-2xl font-black text-red-600 mt-2">{% display_price personal_debt_usd personal_debt_cdf %}</p>
+            <p class="text-xs font-bold text-on-surface-variant/40 mt-1">{{ personal_debt_count }} facture(s) impayée(s)</p>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Right Side: Performance -->
+        <div class="space-y-6 lg:col-span-1 order-first lg:order-last">
+            <div class="bg-surface-container-lowest rounded-[32px] p-6 sm:p-8 executive-shadow border border-surface-container-high">
+                <h2 class="text-xl font-black text-on-surface mb-8">Performance Ventes</h2>
+                <div class="space-y-6">
+                    {% if category_performance %}
+                    <!-- Top Catégories -->
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Top Catégories</h3>
+                        <div class="space-y-3">
+                            {% for cat in category_performance %}
+                            <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-surface-container-high gap-2">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-sm">{{ cat.icon }}</span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="font-black text-sm text-on-surface truncate">{{ cat.nom }}</p>
+                                        <p class="text-[10px] text-on-surface-variant/60">{{ cat.ventes_count }} ventes</p>
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <p class="font-black text-sm text-on-surface whitespace-nowrap">{% display_price cat.revenue_usd cat.revenue_cdf %}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if top_products %}
+                    <!-- Top Produits -->
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Produits Populaires</h3>
+                        <div class="space-y-2">
+                            {% for product in top_products %}
+                            <div class="flex items-center justify-between p-2 bg-surface-container rounded-lg gap-2">
+                                <p class="font-bold text-xs text-on-surface truncate min-w-0">{{ product.product_item__produit__nom }}</p>
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <span class="text-[10px] font-black text-on-surface-variant/60">{{ product.total_qty }} vendus</span>
+                                    <span class="font-black text-xs text-orange-600">${{ product.total_revenue_usd|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if daily_performance %}
+                    <!-- Évolution Journalière -->
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Évolution (7 derniers jours)</h3>
+                        <div class="space-y-2">
+                            {% for day in daily_performance %}
+                            <div class="flex items-center justify-between p-2 bg-surface-container rounded-lg gap-2">
+                                <span class="text-[10px] font-black text-on-surface-variant/60 shrink-0">{{ day.date }}</span>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="text-[10px] font-black text-on-surface-variant/40">{{ day.ventes_count }} ventes</span>
+                                    <span class="text-xs font-black text-orange-600 whitespace-nowrap">{% display_price day.revenue_usd day.revenue_cdf %}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if not category_performance and not top_products and not daily_performance %}
+                    <div class="flex items-center justify-center py-12">
+                        <p class="text-on-surface-variant/40 text-sm font-medium italic">Aucune vente enregistrée sur cette période.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
         <!-- Losses by Drink -->
-        <div class="lg:col-span-2 space-y-6">
-            <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high">
+        <div class="lg:col-span-2 space-y-6 order-last lg:order-first">
+            <div class="bg-surface-container-lowest rounded-[32px] p-6 sm:p-8 executive-shadow border border-surface-container-high">
                 <div class="flex items-center justify-between mb-8">
                     <h2 class="text-xl font-black text-on-surface">Détail des Pertes par Boisson</h2>
                     <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Coût d'achat</span>
@@ -200,82 +298,28 @@
                 {% endif %}
             </div>
         </div>
+    </div>
 
-        <!-- Right Side: Performance -->
-        <div class="space-y-6">
-            <div class="bg-surface-container-lowest rounded-[32px] p-8 executive-shadow border border-surface-container-high">
-                <h2 class="text-xl font-black text-on-surface mb-8">Performance Ventes</h2>
-                <div class="space-y-6">
-                    {% if category_performance %}
-                    <!-- Top Catégories -->
-                    <div>
-                        <h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Top Catégories</h3>
-                        <div class="space-y-3">
-                            {% for cat in category_performance %}
-                            <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-surface-container-high">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-sm">{{ cat.icon }}</span>
-                                    </div>
-                                    <div>
-                                        <p class="font-black text-sm text-on-surface">{{ cat.nom }}</p>
-                                        <p class="text-[10px] text-on-surface-variant/60">{{ cat.ventes_count }} ventes</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-black text-sm text-on-surface">{% display_price cat.revenue_usd cat.revenue_cdf %}</p>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if top_products %}
-                    <!-- Top Produits -->
-                    <div>
-                        <h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Produits Populaires</h3>
-                        <div class="space-y-2">
-                            {% for product in top_products %}
-                            <div class="flex items-center justify-between p-2 bg-surface-container rounded-lg">
-                                <p class="font-bold text-xs text-on-surface">{{ product.item__produit__nom }}</p>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-[10px] font-black text-on-surface-variant/60">{{ product.total_qty }} vendus</span>
-                                    <span class="font-black text-xs text-orange-600">${{ product.total_revenue_usd|floatformat:2 }}</span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if daily_performance %}
-                    <!-- Évolution Journalière -->
-                    <div>
-                        <h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Évolution (7 derniers jours)</h3>
-                        <div class="space-y-2">
-                            {% for day in daily_performance %}
-                            <div class="flex items-center justify-between p-2 bg-surface-container rounded-lg">
-                                <span class="text-[10px] font-black text-on-surface-variant/60">{{ day.date }}</span>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-black text-on-surface-variant/40">{{ day.ventes_count }} ventes</span>
-                                    <span class="text-xs font-black text-orange-600">{% display_price day.revenue_usd day.revenue_cdf %}</span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if not category_performance and not top_products and not daily_performance %}
-                    <div class="flex items-center justify-center py-12">
-                        <p class="text-on-surface-variant/40 text-sm font-medium italic">Aucune vente enregistrée sur cette période.</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+    {% if read_only_interface %}
+    <div class="bg-white rounded-[40px] executive-shadow border border-surface-container-high overflow-hidden mt-8">
+        <div class="p-8 border-b border-surface-container-high bg-surface-container-lowest">
+            <h3 class="text-xl font-black text-on-surface tracking-tight">Commandes personnelles</h3>
+            <p class="text-xs text-on-surface-variant/60 font-medium">Historique limité aux tables que vous avez servies.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[520px]">
+                <thead><tr class="bg-surface-container-low/50"><th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Table</th><th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Statut</th><th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Montant</th><th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Date</th></tr></thead>
+                <tbody class="divide-y divide-surface-container-high">
+                    {% for order in report_orders %}
+                    <tr><td class="px-8 py-5 font-black text-on-surface">{{ order.table.nom }}</td><td class="px-8 py-5 text-xs font-bold text-on-surface-variant">{{ order.get_statut_display }}</td><td class="px-8 py-5 font-black text-on-surface">{% display_price order.total_usd order.total_cdf %}</td><td class="px-8 py-5 text-xs font-bold text-on-surface-variant/60">{{ order.date_creation|date:"d/m H:i" }}</td></tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="px-8 py-16 text-center text-on-surface-variant/40 font-bold">Aucune commande personnelle.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
+    {% endif %}
 
     <!-- Journal des Factures & Dettes -->
     <div class="bg-white rounded-[40px] executive-shadow border border-surface-container-high overflow-hidden mt-8">
@@ -289,14 +333,14 @@
                     <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-sm">search</span>
                     <input type="text" id="factureSearch" placeholder="Rechercher par nom..." class="pl-10 pr-6 py-2.5 w-full sm:w-48 bg-surface-container border-none rounded-xl text-xs font-bold text-on-surface focus:ring-2 focus:ring-orange-500 transition-all placeholder:text-on-surface-variant/40">
                 </div>
-                <a href="{% url 'download_all_factures' %}" class="bg-orange-50 text-orange-600 border border-orange-200 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-95 flex items-center justify-center gap-2" title="Télécharger toutes les factures compilées dans un seul fichier PDF">
+                {% if not read_only_interface %}<a href="{% url 'download_all_factures' %}" class="bg-orange-50 text-orange-600 border border-orange-200 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-95 flex items-center justify-center gap-2" title="Télécharger toutes les factures compilées dans un seul fichier PDF">
                     <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
                     Tout Télécharger (PDF)
-                </a>
-                <button onclick="openFactureModal()" class="bg-on-surface text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95 flex items-center justify-center gap-2">
+                </a>{% endif %}
+                {% if not read_only_interface %}<button onclick="openFactureModal()" class="bg-on-surface text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95 flex items-center justify-center gap-2">
                     <span class="material-symbols-outlined text-sm">add</span>
                     Nouvelle Facture
-                </button>
+                </button>{% endif %}
             </div>
         </div>
         
@@ -322,7 +366,7 @@
                         </td>
                         <td class="px-8 py-5">
                             <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border
-                                       {% if f.type_facture == 'CLIENT' %}bg-blue-50 text-blue-600 border-blue-100{% else %}bg-purple-50 text-purple-600 border-purple-100{% endif %}">
+                                       {% if not read_only_interface and f.type_facture == 'CLIENT' %}bg-blue-50 text-blue-600 border-blue-100{% else %}bg-purple-50 text-purple-600 border-purple-100{% endif %}">
                                 {{ f.get_type_facture_display }}
                             </span>
                         </td>
@@ -350,13 +394,13 @@
                                     <span class="material-symbols-outlined text-sm">visibility</span>
                                 </button>
                                 
-                                {% if f.type_facture == 'CLIENT' %}
+                                {% if not read_only_interface and f.type_facture == 'CLIENT' %}
                                 <a href="{% url 'download_facture_pdf' f.id %}" class="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all flex items-center justify-center" title="Télécharger le PDF">
                                     <span class="material-symbols-outlined text-sm">download</span>
                                 </a>
                                 {% endif %}
 
-                                {% if f.statut == 'IMPAYEE' %}
+                                {% if not read_only_interface and f.statut == 'IMPAYEE' %}
                                 <form method="post" action="{% url 'facture_action' %}" class="inline-block">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="pay">
@@ -366,14 +410,14 @@
                                     </button>
                                 </form>
                                 {% endif %}
-                                <form method="post" action="{% url 'facture_action' %}" onsubmit="return confirm('Supprimer cette facture ?')" class="inline-block">
+                                {% if not read_only_interface %}<form method="post" action="{% url 'facture_action' %}" onsubmit="return confirm('Supprimer cette facture ?')" class="inline-block">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="facture_id" value="{{ f.id }}">
                                     <button type="submit" class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all flex items-center justify-center" title="Supprimer">
                                         <span class="material-symbols-outlined text-sm">delete</span>
                                     </button>
-                                </form>
+                                </form>{% endif %}
                             </div>
                         </td>
                     </tr>
@@ -393,6 +437,7 @@
     </div>
 </div>
 
+{% if not read_only_interface %}
 <!-- Modal: Record Loss -->
 <div id="lossModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-[40px] w-full max-w-lg p-10 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="lossModalContent">
@@ -736,4 +781,5 @@
         }
     }
 </script>
+{% endif %}
 {% endblock %}

@@ -16,11 +16,25 @@ class ServeurProfile(models.Model):
     prenom = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     telephone = models.CharField(max_length=20, blank=True)
+    age = models.PositiveIntegerField(null=True, blank=True, verbose_name="Âge")
     sexe = models.CharField(max_length=1, choices=SEXE_CHOICES, default='M', verbose_name="Sexe")
     photo = models.ImageField(upload_to='serveur_photos/', blank=True, null=True)
     bar = models.ForeignKey(Bar, on_delete=models.SET_NULL, null=True, blank=True, related_name='serveurs')
     date_embauche = models.DateField(auto_now_add=True)
     actif = models.BooleanField(default=True)
+    inventory_access_granted = models.BooleanField(default=False, verbose_name="Accès inventaire autorisé")
+    tables_access_granted = models.BooleanField(default=False, verbose_name="Accès tables autorisé")
+    reports_access_granted = models.BooleanField(default=False, verbose_name="Accès rapports autorisé")
+    confirmation_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('PENDING', 'En attente de confirmation'),
+            ('CONFIRMED', 'Confirmé par le propriétaire'),
+            ('REJECTED', 'Rejeté par le propriétaire'),
+        ],
+        default='PENDING',
+        verbose_name="Statut de confirmation"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -30,6 +44,15 @@ class ServeurProfile(models.Model):
 
     def __str__(self):
         return f"{self.prenom} {self.nom} - {self.bar.nom if self.bar else 'Non assigné'}"
+
+    def can_access_inventory(self):
+        return self.confirmation_status == 'CONFIRMED' and self.inventory_access_granted
+
+    def can_access_tables(self):
+        return self.confirmation_status == 'CONFIRMED' and self.tables_access_granted
+
+    def can_access_reports(self):
+        return self.confirmation_status == 'CONFIRMED' and self.reports_access_granted
 
 class InvitationCode(models.Model):
     """Code d'invitation pour lier un serveur à un bar"""

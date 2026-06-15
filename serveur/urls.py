@@ -11,29 +11,32 @@ router.register(r'commandes', views.CommandeServeurViewSet, basename='serveur-co
 # URLs de l'application serveur
 urlpatterns = [
     # API endpoints pour les serveurs
-    path('api/serveur/', include(router.urls)),
+    path('', include(router.urls)),
     
     # Dashboard spécifique pour les serveurs
-    path('api/serveur/dashboard/', views.dashboard_serveur, name='dashboard-serveur'),
+    path('dashboard/', views.dashboard_serveur, name='dashboard-serveur'),
+    path('inventory/', views.inventory_read_only, name='inventory-readonly'),
+    path('tables/', views.tables_read_only, name='tables-readonly'),
+    path('reports/me/', views.my_report, name='report-me'),
     
     # Endpoints spécifiques pour les shifts
-    path('api/serveur/shifts/start/', views.ShiftViewSet.as_view({'post': 'start'}), name='shift-start'),
-    path('api/serveur/shifts/end/', views.ShiftViewSet.as_view({'post': 'end'}), name='shift-end'),
-    path('api/serveur/shifts/current/', views.ShiftViewSet.as_view({'get': 'current'}), name='shift-current'),
+    path('shifts/start/', views.ShiftViewSet.as_view({'post': 'start'}), name='shift-start'),
+    path('shifts/end/', views.ShiftViewSet.as_view({'post': 'end'}), name='shift-end'),
+    path('shifts/current/', views.ShiftViewSet.as_view({'get': 'current'}), name='shift-current'),
     
     # Endpoints spécifiques pour les commandes
-    path('api/serveur/commandes/<int:pk>/mark_served/', views.CommandeServeurViewSet.as_view({'post': 'mark_served'}), name='commande-mark-served'),
-    path('api/serveur/commandes/<int:pk>/mark_paid/', views.CommandeServeurViewSet.as_view({'post': 'mark_paid'}), name='commande-mark-paid'),
+    path('commandes/<int:pk>/mark_served/', views.CommandeServeurViewSet.as_view({'post': 'mark_served'}), name='commande-mark-served'),
+    path('commandes/<int:pk>/mark_paid/', views.CommandeServeurViewSet.as_view({'post': 'mark_paid'}), name='commande-mark-paid'),
     
     # Endpoints spécifiques pour les profils
-    path('api/serveur/profiles/me/', views.ServeurProfileViewSet.as_view({'get': 'me'}), name='profile-me'),
-    path('api/serveur/profiles/update/', views.ServeurProfileViewSet.as_view({'patch': 'update_profile'}), name='profile-update'),
-    path('api/serveur/profile-create/', views.create_serveur_profile, name='profile-create'),
+    path('profiles/me/', views.ServeurProfileViewSet.as_view({'get': 'me'}), name='profile-me'),
+    path('profiles/update/', views.ServeurProfileViewSet.as_view({'patch': 'update_profile'}), name='profile-update'),
+    path('profile-create/', views.create_serveur_profile, name='profile-create'),
     
     # Endpoints pour les formulaires
-    path('api/serveur/commandes/create/', views.create_commande, name='create-commande'),
-    path('api/serveur/shifts/update_status/', views.update_shift_status, name='update-shift-status'),
+    path('commandes/create/', views.create_commande, name='create-commande'),
+    path('shifts/update_status/', views.update_shift_status, name='update-shift-status'),
     
     # Endpoint pour vérifier les codes d'invitation
-    path('api/serveur/verify-invitation/', views.verify_invitation, name='verify-invitation'),
+    path('verify-invitation/', views.verify_invitation, name='verify-invitation'),
 ]

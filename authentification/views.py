@@ -38,6 +38,9 @@ class LoginRedirectView(LoginRequiredMixin, View):
         user = request.user
         try:
             profile = PilotProfile.objects.get(user=user)
+            if not profile.role:
+                return redirect('select_role')
+                
             if profile.role == 'PROPRIETAIRE':
                 # Tentative de récupération des infos Google si manquantes
                 social_account = user.socialaccount_set.filter(provider='google').first()
@@ -55,34 +58,38 @@ class LoginRedirectView(LoginRequiredMixin, View):
                     return redirect('establishment_setup')
                 return redirect('dashboard_html')
             elif profile.role == 'SERVEUR':
-                # Plus tard, cela pointera vers les templates serveur Django
-                return redirect('serveur_dashboard')
+                # Pour les serveurs, rediriger vers la page de scan/setup pour créer leur ServeurProfile
+                return redirect('serveur_scan')
             else:
                 return redirect('dashboard_html')
         except PilotProfile.DoesNotExist:
-            # L'utilisateur vient de s'inscrire via Google, il n'a pas de profil
+            # L'utilisateur vient de s'inscrire, il n'a pas de profil
             return redirect('select_role')
 
 class SelectRoleView(LoginRequiredMixin, TemplateView):
     template_name = 'authentification/select_role.html'
 
     def get(self, request, *args, **kwargs):
-        # Si l'utilisateur a déjà un profil, on l'empêche de re-sélectionner
-        if PilotProfile.objects.filter(user=request.user).exists():
-            return redirect('login_redirect')
+        # Si l'utilisateur a déjà choisi un rôle, on l'empêche de re-sélectionner
+        try:
+            profile = PilotProfile.objects.get(user=request.user)
+            if profile.role:
+                return redirect('login_redirect')
+        except PilotProfile.DoesNotExist:
+            pass
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         role = request.POST.get('role')
         if role in dict(PilotProfile.ROLE_CHOICES).keys():
-            # Création du PilotProfile
-            PilotProfile.objects.create(
-                user=request.user,
-                role=role,
-                prenom=request.user.first_name,
-                nom=request.user.last_name
-            )
-            return redirect('login_redirect')
+            # Mettre à jour ou créer le PilotProfile
+            profile, created = PilotProfile.objects.get_or_create(user=request.user)
+            profile.role = role
+            if not profile.prenom:
+                profile.prenom = request.user.first_name
+            if not profile.nom:
+                profile.nom = request.user.last_name
+            profile.save()
             return redirect('login_redirect')
         return redirect('select_role')
 

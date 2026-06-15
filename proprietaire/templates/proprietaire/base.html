@@ -77,6 +77,13 @@
             background-color: #f5f5f7;
             -webkit-font-smoothing: antialiased;
             min-height: max(884px, 100dvh);
+            overflow-x: hidden;
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        img, video, canvas, svg {
+            max-width: 100%;
         }
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -137,7 +144,7 @@
 <body class="text-on-surface min-h-screen pb-32">
     <!-- TopAppBar -->
     <header id="main-header" class="fixed top-0 w-full z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
-        <div class="flex items-center justify-between px-6 h-16 w-full max-w-7xl mx-auto">
+        <div class="flex items-center justify-between px-8 h-16 w-full max-w-none mx-0">
             <div class="flex items-center gap-4">
                 {% if user.pilot_profile.photo_profil %}
                 <img alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.pilot_profile.photo_profil.url }}"/>
@@ -211,7 +218,7 @@
         </div>
     </header>
 
-    <main class="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+    <main class="pt-24 pb-12 px-8 w-full max-w-none mx-0 overflow-x-hidden">
         {% block content %}
         {% endblock %}
     </main>

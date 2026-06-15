@@ -1,0 +1,31 @@
+{% extends 'serveur/base_serveur.html' %}
+{% load static %}
+
+{% block title %}Tables - BarPilote{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="pt-4">
+        <p class="text-[10px] font-black uppercase tracking-widest text-primary">Acces autorise</p>
+        <h1 class="text-3xl font-black tracking-tight text-on-surface mt-1">Tables du bar</h1>
+        <p class="text-xs text-on-surface-variant mt-2">Lecture seule. Les suppressions restent reservees au proprietaire.</p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3">
+        {% for row in tables %}
+        <article class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-5 flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-black text-on-surface">{{ row.table.nom }}</h2>
+                <p class="text-[10px] font-bold uppercase tracking-widest {% if row.is_occupied %}text-amber-600{% else %}text-emerald-600{% endif %}">{% if row.is_occupied %}Occupée{% else %}Libre{% endif %}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] text-on-surface-variant uppercase">Commandes actives</p>
+                <strong class="text-on-surface">{{ row.active_orders|length }}</strong>
+            </div>
+        </article>
+        {% empty %}
+        <div class="bg-surface rounded-3xl border border-orange-100 p-8 text-center text-on-surface-variant">Aucune table disponible.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

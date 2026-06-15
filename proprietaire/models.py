@@ -69,7 +69,8 @@ class Bar(models.Model):
 
 def upload_pilot_photo(instance, filename):
     """Sépare les dossiers de stockage par rôle"""
-    return f'profils/{instance.role.lower()}/{filename}'
+    role_str = instance.role.lower() if instance.role else 'unknown'
+    return f'profils/{role_str}/{filename}'
 
 class PilotProfile(models.Model):
     """
@@ -91,7 +92,7 @@ class PilotProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='pilot_profile')
     
     # Rôle exécutif choisi lors de l'onboarding
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PROPRIETAIRE', verbose_name="Rôle Exécutif")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, null=True, verbose_name="Rôle Exécutif")
     
     # Lien vers le Bar (Un propriétaire peut avoir un ou plusieurs bars)
     bar = models.ForeignKey(Bar, on_delete=models.SET_NULL, null=True, blank=True, related_name='proprietaires')
@@ -105,7 +106,16 @@ class PilotProfile(models.Model):
     telephone = models.CharField(max_length=20, blank=True, verbose_name="Numéro de téléphone")
     photo_profil = models.ImageField(upload_to=upload_pilot_photo, blank=True, null=True, verbose_name="Photo de Profil")
     preferred_currency = models.CharField(max_length=3, choices=[('USD', 'USD ($)'), ('CDF', 'CDF (FC)')], default='USD')
+    last_seen = models.DateTimeField(null=True, blank=True, verbose_name="Dernière activité")
     
+    @property
+    def is_online(self):
+        if not self.last_seen:
+            return False
+        from django.utils import timezone
+        from datetime import timedelta
+        return self.last_seen >= timezone.now() - timedelta(minutes=5)
+
     def __str__(self):
         return f"{self.get_role_display()}: {self.prenom} {self.nom} ({self.postnom})"
 
@@ -141,6 +151,14 @@ class Perte(models.Model):
     
     bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='pertes')
     item = models.ForeignKey('StockItem', on_delete=models.CASCADE, related_name='details_pertes')
+    reported_by = models.ForeignKey(
+        'PilotProfile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reported_losses',
+        verbose_name="Signalée par",
+    )
     quantite = models.PositiveIntegerField(default=1)
     raison = models.CharField(max_length=20, choices=RAISON_CHOICES, default='CASSE')
     commentaire = models.TextField(blank=True, null=True)
@@ -228,6 +246,30 @@ class StockItem(models.Model):
 
     def __str__(self):
         return f"{self.produit.nom} @ {self.bar.nom}"
+
+    @property
+    def can_sell_bottle(self):
+        return self.prix_vente_unitaire and self.prix_vente_unitaire > 0
+
+    @property
+    def can_sell_glass(self):
+        if not self.prix_vente_verre or self.prix_vente_verre <= 0:
+            return False
+        if self.vente_au_verre:
+            return True
+
+        category_name = (self.produit.categorie.nom or '').lower() if self.produit and self.produit.categorie else ''
+        product_name = (self.produit.nom or '').lower() if self.produit else ''
+        searchable_name = f"{category_name} {product_name}"
+        glass_categories = (
+            'whisky', 'whiskies', 'whiskey', 'whiskeys', 'vin', 'vins',
+            'wine', 'wines', 'champagne', 'champagnes', 'vodka', 'vodkas',
+            'liqueur', 'liqueurs', 'spiritueux', 'rhum', 'rhums', 'rum',
+            'rums', 'gin', 'gins', 'tequila', 'tequilas', 'cognac',
+            'cognacs', 'brandy', 'brandies', 'aperitif', 'aperitifs',
+            'apéritif', 'apéritifs',
+        )
+        return any(token in searchable_name for token in glass_categories)
     
     def save(self, *args, **kwargs):
         # Calcul automatique du prix de revient unitaire si on achète par casier
@@ -446,6 +488,14 @@ class Facture(models.Model):
     date_paiement = models.DateTimeField(null=True, blank=True)
     
     orders = models.ManyToManyField(Order, related_name='factures', blank=True)
+    guaranteed_by = models.ForeignKey(
+        PilotProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='guaranteed_factures',
+        verbose_name="Garant",
+    )
     notes = models.TextField(blank=True, null=True)
 
 class Client(models.Model):
@@ -474,8 +524,7 @@ def create_pilot_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_pilot_profile(sender, instance, **kwargs):
-    if hasattr(instance, 'pilot_profile'):
-        instance.pilot_profile.save()
+    PilotProfile.objects.get_or_create(user=instance)
 
 @receiver([post_save, post_delete], sender=OrderItem)
 def update_order_totals(sender, instance, **kwargs):

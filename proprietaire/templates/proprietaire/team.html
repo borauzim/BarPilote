@@ -1,4 +1,4 @@
-{% extends 'proprietaire/base.html' %}
+{% extends base_template|default:'proprietaire/base.html' %}
 {% load static %}
 
 {% block extra_head %}
@@ -25,8 +25,9 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
             <h1 class="text-3xl font-black tracking-tight text-on-surface">Mon Équipe</h1>
-            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">Gérez vos serveurs, protocoles et suivez leurs performances.</p>
+            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">{% if read_only_interface %}Hiérarchie et classement selon la performance moyenne des serveurs.{% else %}Gérez vos serveurs, protocoles et suivez leurs performances.{% endif %}</p>
         </div>
+        {% if not read_only_interface %}
         <div class="flex items-center gap-3">
             <a href="{% url 'staff_download_invite' %}" class="bg-surface-container-high text-on-surface-variant px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all hover:bg-surface-container-highest">
                 <span class="material-symbols-outlined">badge</span>
@@ -37,46 +38,176 @@
                 <span>Inviter un membre</span>
             </button>
         </div>
+        {% endif %}
     </div>
+
+    {% if pending_requests and not read_only_interface %}
+    <!-- Pending Join Requests -->
+    <section class="bg-surface-container-lowest rounded-2xl executive-shadow border border-orange-200/40 p-6 space-y-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+                <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Demandes d'adhesion</p>
+                <h2 class="text-xl font-black text-on-surface mt-1">Nouveaux membres en attente</h2>
+            </div>
+            <span class="self-start md:self-auto bg-orange-50 text-orange-600 border border-orange-100 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+                {{ pending_requests|length }} en attente
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {% for request_profile in pending_requests %}
+            <article class="bg-white border border-orange-100 rounded-2xl p-4 flex flex-col gap-4">
+                <div class="flex items-center gap-4">
+                    {% if request_profile.photo %}
+                    <img src="{{ request_profile.photo.url }}" class="w-14 h-14 rounded-full object-cover border-2 border-orange-100" alt="{{ request_profile.nom }}">
+                    {% else %}
+                    <div class="w-14 h-14 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-2xl">person</span>
+                    </div>
+                    {% endif %}
+                    <div class="min-w-0">
+                        <h3 class="text-base font-black text-on-surface truncate">{{ request_profile.prenom }} {{ request_profile.nom }}</h3>
+                        <p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest mt-1">
+                            Demande pour {{ bar.nom }}
+                        </p>
+                        {% if request_profile.telephone %}
+                        <p class="text-xs text-on-surface-variant/70 mt-1">{{ request_profile.telephone }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <form method="post" action="{% url 'team_request_action' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="server_profile_id" value="{{ request_profile.id }}">
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="w-full py-3 bg-emerald-600 text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95">
+                            Approve
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'team_request_action' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="server_profile_id" value="{{ request_profile.id }}">
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="w-full py-3 bg-white border border-red-200 text-error text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-red-50 transition-all active:scale-95">
+                            Reject
+                        </button>
+                    </form>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if read_only_interface and owner_profile %}
+    <section class="bg-surface-container-lowest rounded-2xl executive-shadow border border-surface-container p-6 space-y-5">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
+            <div>
+                <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Hiérarchie</p>
+                <h2 class="text-xl font-black text-on-surface mt-1">Organisation de l'équipe</h2>
+            </div>
+            <div class="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-widest">
+                <span class="bg-orange-50 text-orange-600 border border-orange-100 px-3 py-1.5 rounded-full">Votre rang: #{{ current_server_rank|default:"-" }}</span>
+                <span class="bg-surface-container text-on-surface-variant px-3 py-1.5 rounded-full">Moyenne équipe: ${{ team_average_usd|floatformat:2 }}</span>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <article class="bg-white border border-orange-100 rounded-2xl p-5 flex items-center gap-4 lg:col-span-1">
+                <div class="relative shrink-0">
+                    {% if owner_profile.photo_profil %}<img src="{{ owner_profile.photo_profil.url }}" class="w-14 h-14 rounded-full object-cover border-2 border-orange-100" alt="{{ owner_profile.nom }}">{% else %}<div class="w-14 h-14 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center"><span class="material-symbols-outlined">workspace_premium</span></div>{% endif %}
+                    <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white {% if owner_profile.is_online %}bg-emerald-500{% else %}bg-zinc-400{% endif %}" title="{% if owner_profile.is_online %}En ligne{% else %}Hors ligne{% endif %}"></span>
+                </div>
+                <div><h3 class="font-black text-on-surface">{{ owner_profile.prenom }} {{ owner_profile.nom }}</h3><p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Propriétaire · {% if owner_profile.is_online %}En ligne{% else %}Hors ligne{% endif %}</p></div>
+            </article>
+            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                {% for member in serveur_staff %}
+                <div class="bg-white border border-surface-container rounded-2xl p-4 flex items-center gap-3">
+                    <div class="relative shrink-0">
+                        {% if member.photo %}<img src="{{ member.photo.url }}" class="w-11 h-11 rounded-full object-cover" alt="{{ member.nom }}">{% else %}<div class="w-11 h-11 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center"><span class="material-symbols-outlined text-lg">person</span></div>{% endif %}
+                        <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white {% if member.is_online %}bg-emerald-500{% else %}bg-zinc-400{% endif %}" title="{% if member.is_online %}En ligne{% else %}Hors ligne{% endif %}"></span>
+                    </div>
+                    <div class="min-w-0"><p class="font-black text-sm text-on-surface truncate">{{ member.prenom }} {{ member.nom }}</p><p class="text-[10px] font-bold text-on-surface-variant/50 uppercase">Serveur confirmé · {% if member.is_online %}En ligne{% else %}Hors ligne{% endif %}</p></div>
+                </div>
+                {% empty %}<p class="text-sm text-on-surface-variant/50">Aucun serveur confirmé.</p>{% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
 
     <!-- Staff Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for member in staff %}
+        {% for member in serveur_staff %}
         <div class="bg-surface-container-lowest p-6 rounded-2xl executive-shadow border-t-4 border-surface-container group hover:translate-y-[-4px] transition-all">
             <div class="flex flex-col items-center text-center">
                 <!-- Avatar -->
                 <div class="relative mb-4">
-                    {% if member.photo_profil %}
-                    <img src="{{ member.photo_profil.url }}" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg" alt="{{ member.nom }}">
+                    {% if member.photo %}
+                    <img src="{{ member.photo.url }}" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg" alt="{{ member.nom }}">
                     {% else %}
                     <div class="w-20 h-20 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center border-4 border-white shadow-lg">
                         <span class="material-symbols-outlined text-3xl">person</span>
                     </div>
                     {% endif %}
-                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center {% if member.is_online %}bg-emerald-500{% else %}bg-zinc-400{% endif %}"></div>
+                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center {% if member.is_online %}bg-emerald-500{% else %}bg-zinc-400{% endif %}" title="{% if member.is_online %}En ligne{% else %}Hors ligne{% endif %}"></div>
                 </div>
 
                 <h3 class="text-lg font-black text-on-surface">{{ member.prenom }} {{ member.nom }}</h3>
-                <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest mt-1">{{ member.get_role_display }}</p>
+                <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest mt-1">Serveur confirmé{% if member.performance_rank %} · Rang #{{ member.performance_rank }}{% endif %} · {% if member.is_online %}En ligne{% else %}Hors ligne{% endif %}</p>
                 
                 <div class="mt-6 w-full grid grid-cols-2 gap-4 pt-6 border-t border-surface-container">
                     <div>
                         <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Tables Gérées</p>
-                        <p class="text-lg font-black text-on-surface">12</p>
+                        <p class="text-lg font-black text-on-surface">{{ member.tables_managed|default:0 }}</p>
                     </div>
                     <div>
                         <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Impact CA</p>
-                        <p class="text-lg font-black text-on-surface">$1,240</p>
+                        <p class="text-lg font-black text-on-surface">{% if member.impact_cdf %}{{ member.impact_cdf|floatformat:0 }} FC{% else %}${{ member.impact_usd|default:0|floatformat:0 }}{% endif %}</p>
                     </div>
                 </div>
-                
-                <div class="mt-6 flex w-full gap-2">
-                    <button class="flex-1 py-2 bg-surface-container text-on-surface-variant text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-surface-container-high transition-all">Détails</button>
-                    <button class="flex-1 py-2 bg-white border border-surface-container text-error text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-error/5 transition-all">Retirer</button>
+
+                {% if read_only_interface %}
+                <div class="mt-4 w-full grid grid-cols-2 gap-3 pt-4 border-t border-surface-container">
+                    <div class="bg-white rounded-xl p-3 border border-surface-container">
+                        <p class="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest">Moy. commande</p>
+                        <p class="text-sm font-black text-on-surface">${{ member.avg_order_usd|floatformat:2 }}</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-3 border border-surface-container">
+                        <p class="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest">Dettes ouvertes</p>
+                        <p class="text-sm font-black {% if member.open_debt_usd or member.open_debt_cdf %}text-red-600{% else %}text-emerald-600{% endif %}">${{ member.open_debt_usd|floatformat:2 }} / {{ member.open_debt_cdf|floatformat:0 }} FC</p>
+                    </div>
                 </div>
+                {% endif %}
+
+                {% if not read_only_interface %}<div class="w-full grid grid-cols-1 gap-3 pt-6 border-t border-surface-container">
+                    <div class="grid grid-cols-3 gap-2">
+                        <form method="post" action="{% url 'team_access_action' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="server_profile_id" value="{{ member.id }}">
+                            <input type="hidden" name="permission" value="inventory">
+                            <input type="hidden" name="enabled" value="{% if member and member.inventory_access_granted %}0{% else %}1{% endif %}">
+                            <button type="submit" class="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if member and member.inventory_access_granted %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-white border border-surface-container text-on-surface-variant{% endif %}">Inventaire</button>
+                        </form>
+                        <form method="post" action="{% url 'team_access_action' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="server_profile_id" value="{{ member.id }}">
+                            <input type="hidden" name="permission" value="tables">
+                            <input type="hidden" name="enabled" value="{% if member and member.tables_access_granted %}0{% else %}1{% endif %}">
+                            <button type="submit" class="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if member and member.tables_access_granted %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-white border border-surface-container text-on-surface-variant{% endif %}">Tables</button>
+                        </form>
+                        <form method="post" action="{% url 'team_access_action' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="server_profile_id" value="{{ member.id }}">
+                            <input type="hidden" name="permission" value="reports">
+                            <input type="hidden" name="enabled" value="{% if member and member.reports_access_granted %}0{% else %}1{% endif %}">
+                            <button type="submit" class="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if member and member.reports_access_granted %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-white border border-surface-container text-on-surface-variant{% endif %}">Rapports</button>
+                        </form>
+                    </div>
+                </div>{% endif %}
             </div>
         </div>
         {% empty %}
+        {% if not pending_requests and not read_only_interface %}
         <div class="col-span-full py-24 text-center">
             <h2 class="text-xl font-black text-on-surface">Vous êtes seul pour le moment</h2>
             <p class="text-on-surface-variant/60 max-w-xs mx-auto mt-2">Invitez vos serveurs à rejoindre BarPilote via leur application mobile.</p>
@@ -94,6 +225,7 @@
                 </a>
             </div>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
 </div>
