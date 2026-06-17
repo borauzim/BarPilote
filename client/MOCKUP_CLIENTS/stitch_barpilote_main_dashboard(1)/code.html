@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BarPilote - Executive Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "on-primary-fixed-variant": "#7f2b00",
+                  "surface-bright": "#f9f9fb",
+                  "on-background": "#1a1c1d",
+                  "secondary-container": "#fd8d5f",
+                  "inverse-surface": "#2f3132",
+                  "on-secondary-fixed": "#370e00",
+                  "primary-fixed": "#ffdbce",
+                  "error": "#ba1a1a",
+                  "secondary-fixed-dim": "#ffb599",
+                  "on-surface-variant": "#5b4137",
+                  "on-primary": "#ffffff",
+                  "tertiary-container": "#0097fb",
+                  "surface-tint": "#a63b00",
+                  "surface-container-high": "#e8e8ea",
+                  "on-secondary-container": "#732600",
+                  "background": "#f9f9fb",
+                  "on-error": "#ffffff",
+                  "primary-fixed-dim": "#ffb599",
+                  "tertiary": "#0061a4",
+                  "surface-container-low": "#f3f3f5",
+                  "surface-container-lowest": "#ffffff",
+                  "surface-variant": "#e2e2e4",
+                  "surface-dim": "#d9dadc",
+                  "secondary": "#9c431c",
+                  "on-tertiary-fixed-variant": "#00497d",
+                  "secondary-fixed": "#ffdbce",
+                  "on-tertiary": "#ffffff",
+                  "on-primary-fixed": "#370e00",
+                  "outline": "#8f7065",
+                  "surface-container-highest": "#e2e2e4",
+                  "on-tertiary-fixed": "#001d36",
+                  "primary-container": "#ff5e00",
+                  "inverse-on-surface": "#f0f0f2",
+                  "outline-variant": "#e4bfb1",
+                  "on-error-container": "#93000a",
+                  "error-container": "#ffdad6",
+                  "tertiary-fixed": "#d1e4ff",
+                  "on-secondary-fixed-variant": "#7d2d04",
+                  "on-secondary": "#ffffff",
+                  "surface": "#f9f9fb",
+                  "on-tertiary-container": "#002d51",
+                  "on-primary-container": "#531900",
+                  "primary": "#a63b00",
+                  "tertiary-fixed-dim": "#9fcaff",
+                  "inverse-primary": "#ffb599",
+                  "surface-container": "#eeeef0",
+                  "on-surface": "#1a1c1d"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "16px",
+                  "xl": "24px",
+                  "full": "9999px"
+          },
+          "fontFamily": {
+                  "headline": ["Inter", "sans-serif"],
+                  "display": ["Inter", "sans-serif"],
+                  "body": ["Inter", "sans-serif"],
+                  "label": ["Inter", "sans-serif"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .bounce-short {
+      animation: bounce 0.5s ease-in-out 1;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .glass {
+      background: rgba(249, 249, 251, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .executive-shadow {
+      box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+    }
+    .gradient-primary {
+      background: linear-gradient(145deg, #FF5E00 0%, #A63B00 100%);
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed-dim min-h-screen pb-32">
+<header class="fixed top-0 w-full z-50 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-sm dark:shadow-none flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden executive-shadow bg-surface-container">
+<img alt="Jean's Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpEiGZs_UmUPWTRZe2_tbvvbCbUpG-aqdU-2vhkP6Aoj-yadHhlpcTbUM2xFhM3KKwuzqKvG0R9b8ZflgwpXEHbJWrrqFg0ewqvvhDzTn9SBxslQ8BWkEmDSBzQZbz5p31BK5p35E-40fINEUmZYFr3IilxxUyLS96XPObbw02GD0Cd60PlWgFCJbObAFuK3rlmV-iLNVtUuBdkqbCmbkkCYyOzy9CiHKRzzEh_TLOkqllcIt4NIgJYSOVT57c639qsCxyQtwJulNS"/>
+</div>
+<span class="font-['SF_Pro_Rounded'] font-semibold text-zinc-900 dark:text-zinc-100 text-lg">Menu</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 transition-all duration-300 ease-out text-zinc-500 dark:text-zinc-400">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<div class="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">BarPilote</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-7xl mx-auto">
+<section class="mb-10">
+<div class="flex flex-col gap-1">
+<span class="text-[0.6875rem] font-bold tracking-[0.05em] text-on-surface-variant uppercase">Premium Selection</span>
+<h1 class="text-[2.75rem] font-extrabold leading-tight tracking-tight text-on-surface">Curated Drinks</h1>
+</div>
+</section>
+<section class="mb-12 overflow-x-auto hide-scrollbar -mx-6 px-6">
+<div class="flex gap-4">
+<button class="px-6 py-2.5 rounded-full bg-primary-container text-on-primary-container font-semibold executive-shadow whitespace-nowrap">All Items</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-medium transition-colors whitespace-nowrap">Beers</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-medium transition-colors whitespace-nowrap">Whisky</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-medium transition-colors whitespace-nowrap">Wine</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-medium transition-colors whitespace-nowrap">Cocktails</button>
+</div>
+</section>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+<div class="group relative bg-surface-container-lowest rounded-xl executive-shadow transition-transform duration-300 hover:-translate-y-1">
+<div class="aspect-square w-full rounded-t-xl overflow-hidden bg-surface-container p-8 flex items-center justify-center">
+<img alt="Heineken 33cl Bottle" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcykvX3lY8amjP9wfL-CEIaboxfiZzhwgBAwRZBLP6uvzzs8zCjKttg7pvrcoDAPLschpmNurIZ_yrItENpA7aaM9ppGjjP_loqfTjiDItW7Ix3nHzgsWBAPpBGGSsRRH5TTlqyIll_x9CwqiXROERwc8fHVgQw3RhPN8_iNksH4vnEQj5L2yYO-licEwgMcpbmgS7I6_QHESGO6UsqmDbZcpXInf4SA0cMriqmDZri3hSD_DwSDvrXVgGK8Tz9xDarxWHw9vmO01M"/>
+<button class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-primary executive-shadow hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+</div>
+<div class="p-6">
+<h3 class="text-lg font-semibold text-on-surface leading-snug">Heineken 33cl</h3>
+<div class="flex items-center justify-between mt-2">
+<span class="text-xl font-bold text-primary">4,500 FC</span>
+<span class="text-[0.6875rem] font-bold text-on-surface-variant tracking-wider uppercase bg-surface-container-high px-2 py-0.5 rounded">In Stock</span>
+</div>
+</div>
+</div>
+<div class="group relative bg-surface-container-lowest rounded-xl executive-shadow transition-transform duration-300 hover:-translate-y-1">
+<div class="aspect-square w-full rounded-t-xl overflow-hidden bg-surface-container p-8 flex items-center justify-center">
+<img alt="Johnnie Walker Black Label glass with ice" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6TXIDnZrhZ9s8c3WzfZB4p90_j3ibbTiWVi4CC9QcV0QYVotHo2KMn57774FjaBOUrtMdqXxLsSJa3A_Cl4xNeNpiDyrl8HWHIEbdJIi63ITklAQTGedrIOctAxugeGV2Pa6z_3EYAzpKkpmekpVxEQU77yTgUOPgiIXQyApw-m8nG6KHUjjNKaQq_YzDld6orhfMXTZf1c2I2uip1lXySzJNtfr9YyZFMWyFwvG6VCpfhohSDfM5ZgOMbHMr-LMdnedTNIkKdNj9"/>
+<button class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-primary executive-shadow hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+</div>
+<div class="p-6">
+<h3 class="text-lg font-semibold text-on-surface leading-snug">JW Black Label</h3>
+<div class="flex items-center justify-between mt-2">
+<span class="text-xl font-bold text-primary">12,000 FC</span>
+<span class="text-[0.6875rem] font-bold text-on-surface-variant tracking-wider uppercase bg-surface-container-high px-2 py-0.5 rounded">Premium</span>
+</div>
+</div>
+</div>
+<div class="group relative bg-surface-container-lowest rounded-xl executive-shadow transition-transform duration-300 hover:-translate-y-1">
+<div class="aspect-square w-full rounded-t-xl overflow-hidden bg-surface-container p-8 flex items-center justify-center">
+<img alt="Glass of chilled white wine" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxzBTlDdWodfUXnFHlB7ehJYQLHrueXZdZr3OqQVIT0Cg-_aDMU6JTv656a1dFPMD4tYf0tSOLcqpgWj1GyoWs4ae9a0TShdWAYfOQPud2hCY9kcYd1irXqgGP1yU3m_xmw2V54uF45hcHPryBXccbOhuq9eqgUCIfOHLzTTZz0bOXMZjS39QyvnWtLzH_0SXG_g5lcNgSWvt3OSHqrWOa7vdnPsh9-f3NCq4d_YH0HQNbA9dcrcoexPxMGBAO_bLXtOBwSTZ5-wNk"/>
+<button class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-primary executive-shadow hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+</div>
+<div class="p-6">
+<h3 class="text-lg font-semibold text-on-surface leading-snug">White Wine</h3>
+<div class="flex items-center justify-between mt-2">
+<span class="text-xl font-bold text-primary">8,500 FC</span>
+<span class="text-[0.6875rem] font-bold text-on-surface-variant tracking-wider uppercase bg-surface-container-high px-2 py-0.5 rounded">Cold</span>
+</div>
+</div>
+</div>
+</div>
+<section class="mt-16 mb-8">
+<div class="bg-primary-container rounded-xl p-8 relative overflow-hidden executive-shadow text-white">
+<div class="relative z-10 max-w-md">
+<span class="text-[0.6875rem] font-bold tracking-[0.1em] uppercase opacity-80">Sommelier's Tip</span>
+<h2 class="text-2xl font-bold mt-2 mb-4 leading-tight">Elevate your evening with our vintage spirit collection.</h2>
+<button class="px-8 py-3 bg-white text-primary font-bold rounded-full hover:bg-surface-container-lowest transition-colors active:scale-95">Explore Spirits</button>
+</div>
+<div class="absolute -right-16 -bottom-16 w-64 h-64 bg-on-primary-container rounded-full opacity-10 blur-3xl"></div>
+<div class="absolute -right-8 top-0 w-48 h-48 border-[20px] border-white/5 rounded-full"></div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 w-full z-50 rounded-t-[32px] bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-[0_-10px_30px_rgba(26,28,29,0.04)] flex justify-around items-center px-4 pb-8 pt-4">
+<a class="flex flex-col items-center justify-center text-orange-600 dark:text-orange-500 bg-orange-50 dark:bg-orange-950/30 rounded-2xl px-4 py-1 animate-bounce-short" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="local_bar">local_bar</span>
+<span class="font-['SF_Pro_Rounded'] text-[11px] font-medium tracking-wide">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-orange-400 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="favorite">favorite</span>
+<span class="font-['SF_Pro_Rounded'] text-[11px] font-medium tracking-wide">Favorites</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-orange-400 transition-colors active:scale-90 duration-200 relative" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="shopping_basket">shopping_basket</span>
+<span class="font-['SF_Pro_Rounded'] text-[11px] font-medium tracking-wide">Tray</span>
+<div class="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white font-bold">2</div>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-orange-400 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="person">person</span>
+<span class="font-['SF_Pro_Rounded'] text-[11px] font-medium tracking-wide">Profile</span>
+</a>
+</nav>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.group');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          card.style.transition = 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 100);
+      });
+    });
+
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        let x = e.clientX - e.target.offsetLeft;
+        let y = e.clientY - e.target.offsetTop;
+        let ripples = document.createElement('span');
+        ripples.style.left = x + 'px';
+        ripples.style.top = y + 'px';
+        this.appendChild(ripples);
+        setTimeout(() => ripples.remove(), 1000);
+      });
+    });
+  </script>
+</body></html>

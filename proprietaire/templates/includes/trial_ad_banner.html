@@ -1,0 +1,34 @@
+{% if show_banner %}
+<div id="{{ banner_key }}" class="trial-ad-banner mb-3 rounded-2xl border border-amber-200 bg-amber-50/85 px-3 py-2 shadow-sm backdrop-blur-sm">
+    <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+            <span class="material-symbols-outlined text-[20px]">{{ icon }}</span>
+        </div>
+        <div class="min-w-0 flex-1">
+            <p class="text-[9px] font-black uppercase tracking-[.18em] text-amber-700">Essai gratuit · {{ audience_label }}</p>
+            <p class="truncate text-xs font-bold text-neutral-900">{{ headline }}</p>
+            <p class="truncate text-[11px] font-medium text-neutral-600">{{ days_left }} jour{{ days_left|pluralize }} restan{{ days_left|pluralize:'t,ts' }} - {{ message }}</p>
+        </div>
+        <button type="button" data-banner-close class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-500 hover:bg-white hover:text-neutral-900" aria-label="Masquer la publicité">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+    </div>
+</div>
+<script>
+(function(){
+    const root = document.getElementById('{{ banner_key }}');
+    if (!root) return;
+    const storageKey = '{{ banner_key }}-hidden';
+    if (localStorage.getItem(storageKey) === '1') {
+        root.remove();
+        return;
+    }
+    const btn = root.querySelector('[data-banner-close]');
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+        localStorage.setItem(storageKey, '1');
+        root.remove();
+    });
+})();
+</script>
+{% endif %}

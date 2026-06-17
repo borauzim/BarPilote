@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Commande en Attente - THE DIGITAL SOMMELIER</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eeeef0",
+                        "surface-dim": "#d9dadc",
+                        "on-surface-variant": "#5b4137",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "surface-tint": "#a63b00",
+                        "on-secondary-fixed-variant": "#7d2d04",
+                        "on-background": "#1a1c1d",
+                        "surface-variant": "#e2e2e4",
+                        "inverse-primary": "#ffb599",
+                        "on-secondary-fixed": "#370e00",
+                        "on-primary-fixed": "#370e00",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f0f0f2",
+                        "surface-container-highest": "#e2e2e4",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "outline": "#8f7065",
+                        "primary-fixed": "#ffdbce",
+                        "surface-container-low": "#f3f3f5",
+                        "on-tertiary-container": "#002d51",
+                        "primary": "#a63b00",
+                        "on-tertiary-fixed": "#001d36",
+                        "on-secondary-container": "#732600",
+                        "background": "#f9f9fb",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#d1e4ff",
+                        "surface-bright": "#f9f9fb",
+                        "surface": "#f9f9fb",
+                        "secondary-fixed": "#ffdbce",
+                        "tertiary-fixed-dim": "#9fcaff",
+                        "surface-container-high": "#e8e8ea",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-primary-container": "#531900",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#ff5e00",
+                        "secondary": "#9c431c",
+                        "tertiary": "#0061a4",
+                        "on-tertiary-fixed-variant": "#00497d",
+                        "tertiary-container": "#0097fb",
+                        "primary-fixed-dim": "#ffb599",
+                        "on-surface": "#1a1c1d",
+                        "outline-variant": "#e4bfb1",
+                        "inverse-surface": "#2f3132",
+                        "secondary-container": "#fd8d5f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        @keyframes subtle-rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-subtle-rotate {
+            animation: subtle-rotate 3s linear infinite;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .glass-banner {
+            background: rgba(255, 249, 196, 0.9);
+            backdrop-filter: blur(12px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-[#F5F5F7] text-on-surface min-h-screen flex flex-col overflow-hidden">
+<!-- Offline Status Banner -->
+<div class="fixed top-0 left-0 w-full z-[100] px-4 py-3 transform transition-transform duration-500 ease-out translate-y-0">
+<div class="max-w-xl mx-auto glass-banner border border-[#E4BFB1]/20 rounded-2xl px-6 py-3 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#A63B00] animate-subtle-rotate" data-icon="sync">sync</span>
+<span class="text-[0.875rem] font-medium tracking-tight text-[#531900]">En attente du réseau... votre commande est sauvegardée</span>
+</div>
+<div class="hidden sm:block h-1.5 w-1.5 rounded-full bg-[#FF5E00] animate-pulse"></div>
+</div>
+</div>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center p-6 text-center">
+<!-- Center Aesthetic Visual -->
+<div class="relative w-full max-w-lg mb-12">
+<!-- Background Atmospheric Layer -->
+<div class="absolute inset-0 -z-10 opacity-40">
+
+</div>
+<!-- Focus Card -->
+<div class="bg-surface-container-lowest rounded-[32px] executive-shadow p-10 flex flex-col items-center">
+<div class="mb-8 relative">
+<div class="w-24 h-24 bg-surface-container-low rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[48px] text-primary" data-icon="wine_bar">wine_bar</span>
+</div>
+<!-- Secondary Sync Indicator -->
+<div class="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-md">
+<span class="material-symbols-outlined text-[20px] text-[#FF5E00] animate-subtle-rotate" data-icon="autorenew">autorenew</span>
+</div>
+</div>
+<div class="space-y-4">
+<h1 class="text-[2.75rem] font-bold leading-tight tracking-tighter text-on-surface">
+                        Prêt pour le service
+                    </h1>
+<p class="text-[1.125rem] font-medium text-zinc-500 max-w-sm mx-auto">
+                        Votre boisson vous sera servie sous peu. L'équipe prépare déjà votre sélection.
+                    </p>
+</div>
+<!-- Stock/Progress Bar -->
+<div class="w-full mt-10 space-y-2">
+<div class="flex justify-between items-end mb-1">
+<span class="text-[0.6875rem] font-bold uppercase tracking-widest text-zinc-400">Statut de la Synchronisation</span>
+<span class="text-[0.6875rem] font-bold text-primary">LOCAL</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[85%] rounded-full transition-all duration-1000 ease-in-out"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Asymmetric Detail Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+<!-- Order Summary Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-6 flex items-start gap-4 text-left executive-shadow">
+<div class="bg-primary/5 p-3 rounded-xl">
+<span class="material-symbols-outlined text-primary" data-icon="receipt_long">receipt_long</span>
+</div>
+<div>
+<h3 class="text-[0.75rem] font-bold uppercase tracking-wider text-zinc-400 mb-1">Détails Locaux</h3>
+<p class="text-[0.875rem] font-semibold text-on-surface">Commande #8821 — En attente</p>
+<p class="text-[0.75rem] text-zinc-500 mt-1">Sera transmise automatiquement dès reconnexion.</p>
+</div>
+</div>
+<!-- Assurance Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-6 flex items-start gap-4 text-left executive-shadow">
+<div class="bg-primary/5 p-3 rounded-xl">
+<span class="material-symbols-outlined text-primary" data-icon="verified_user">verified_user</span>
+</div>
+<div>
+<h3 class="text-[0.75rem] font-bold uppercase tracking-wider text-zinc-400 mb-1">Priorité Client</h3>
+<p class="text-[0.875rem] font-semibold text-on-surface">Service Garanti</p>
+<p class="text-[0.75rem] text-zinc-500 mt-1">Votre place dans la file d'attente est réservée.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Branding Footer (Anchor) -->
+<footer class="pb-10 pt-4 flex flex-col items-center">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="wine_bar">wine_bar</span>
+<span class="font-black text-[0.75rem] tracking-tighter text-on-surface">THE DIGITAL SOMMELIER</span>
+</div>
+<p class="text-[0.625rem] text-zinc-400 font-medium tracking-[0.05em] uppercase">Executive Management Interface v2.4</p>
+</footer>
+<!-- Image for Context (Hidden but prompt-filled) -->
+<div class="sr-only">
+<img data-alt="A macro close-up photograph of a luxury cocktail being prepared with orange zest in a high-end, minimalist bar setting. The lighting is soft and cinematic, highlighting the vibrant amber hues of the liquid and the crisp edges of the glassware. The background is a sophisticated blur of light greys and brushed metals, maintaining a premium Apple-style aesthetic. The atmosphere is calm, refined, and evokes a sense of artisanal craftsmanship and digital hospitality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaUpSbhACxchpcT6jIBj-tkTv8i707LVoR4AUYv0rT-11m6kGJf_NzwR0hfMO33XUpftlYbNpOyRC71bd3Ij52C7APXES4qfVbNlnxB6bYOtiFHDJ_yG65p_KiBxQrGvZGnkMB4_hML5y_GC9Nx5szeqEj4QJTDZItozMZNcmeGVavoJt3kxHHTBBCRCHX3Y_5Zi82ntDZ1E2b7XiQxc_y7enbFDb7XdQ4ZVnbbCohWsKI0ZIFsq5rzG-vSAJlq8g9pRF__18nkOUD"/>
+</div>
+<script>
+        // Micro-interaction for the "Local" status to keep user engaged
+        document.addEventListener('DOMContentLoaded', () => {
+            const progressBar = document.querySelector('.bg-primary-container');
+            let width = 85;
+            
+            setInterval(() => {
+                // Subtle breathing effect on progress bar
+                width = width === 85 ? 88 : 85;
+                progressBar.style.width = width + '%';
+            }, 3000);
+
+            // Re-check internet connection simulation
+            window.addEventListener('online', () => {
+                const banner = document.querySelector('.glass-banner');
+                banner.classList.remove('bg-[#FFF9C4]/90');
+                banner.classList.add('bg-[#E8F5E9]/90');
+                banner.querySelector('span:last-child').textContent = 'Connexion rétablie. Synchronisation...';
+                banner.querySelector('.material-symbols-outlined').style.color = '#2E7D32';
+                
+                setTimeout(() => {
+                    document.querySelector('.fixed.top-0').style.transform = 'translateY(-100%)';
+                }, 2000);
+            });
+        });
+    </script>
+</body></html>

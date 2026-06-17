@@ -1,0 +1,69 @@
+{% load static %}
+{% load currency_tags %}
+{% load trial_ads %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BarPilote - Historique client</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>body{font-family:Inter,sans-serif;background:#fbfbfc;color:#171717}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 650,'GRAD' 0,'opsz' 24}</style>
+</head>
+<body>
+<main class="mx-auto min-h-screen max-w-3xl px-4 pb-28 pt-4">
+    {% trial_ad_banner table.bar "client" %}
+    <header class="sticky top-0 z-30 -mx-4 border-b border-neutral-200/70 bg-white/90 px-4 py-3 backdrop-blur-xl">
+        <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+                <p class="text-[10px] font-black uppercase tracking-[.18em] text-orange-600">{{ table.nom }} · {{ bar.nom }}</p>
+                <h1 class="truncate text-2xl font-black tracking-tight text-neutral-950">Historique</h1>
+            </div>
+            <a href="{% url 'client_menu' table.id %}" class="flex h-11 w-11 items-center justify-center rounded-full bg-neutral-100 text-neutral-900" aria-label="Produits"><span class="material-symbols-outlined">add</span></a>
+        </div>
+    </header>
+
+    {% if active_order %}
+    <a href="{% url 'client_track_order' active_order.id %}" class="mt-4 flex items-center justify-between rounded-3xl bg-neutral-950 px-4 py-4 text-white shadow-xl shadow-neutral-950/10">
+        <div><p class="text-[10px] font-black uppercase tracking-widest text-orange-300">En cours</p><p class="mt-1 text-sm font-black">Suivre la commande #{{ active_order.id.hex|slice:':6'|upper }}</p></div>
+        <span class="material-symbols-outlined">arrow_forward</span>
+    </a>
+    {% endif %}
+
+    <section class="mt-4 space-y-3">
+        {% for order in orders %}
+        <article class="rounded-[28px] border border-neutral-200 bg-white p-4 shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-[10px] font-black uppercase tracking-[.18em] text-neutral-400">{{ order.date_creation|date:'d/m/Y H:i' }}</p>
+                    <h2 class="mt-1 text-base font-black text-neutral-950">Ticket #{{ order.id.hex|slice:':6'|upper }}</h2>
+                    <p class="mt-1 text-xs font-bold text-neutral-500">{{ order.items.count }} article(s) · {{ order.get_statut_display }}</p>
+                </div>
+                <span class="rounded-full px-3 py-1 text-[10px] font-black uppercase {% if order.statut == 'PAID' %}bg-emerald-50 text-emerald-700{% elif order.statut == 'CANCELLED' %}bg-red-50 text-red-700{% else %}bg-orange-50 text-orange-700{% endif %}">{{ order.get_statut_display }}</span>
+            </div>
+            <div class="mt-3 flex items-center justify-between rounded-2xl bg-neutral-50 px-3 py-2">
+                <span class="text-xs font-black text-neutral-500">Total</span>
+                <span class="text-sm font-black text-orange-700">{% display_price order.total_usd order.total_cdf %}</span>
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+                <a href="{% url 'client_track_order' order.id %}" class="flex h-11 items-center justify-center gap-2 rounded-2xl bg-neutral-950 text-xs font-black text-white"><span class="material-symbols-outlined text-base">visibility</span>Voir</a>
+                <a href="{% url 'client_invoice_download' order.id %}" class="flex h-11 items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white text-xs font-black text-neutral-900"><span class="material-symbols-outlined text-base">download</span>Facture</a>
+            </div>
+        </article>
+        {% empty %}
+        <div class="rounded-[28px] border border-dashed border-neutral-300 bg-white p-8 text-center">
+            <span class="material-symbols-outlined text-5xl text-neutral-300">history</span>
+            <h2 class="mt-3 text-xl font-black">Aucune commande ici</h2>
+            <p class="mt-2 text-sm font-bold text-neutral-500">Vos prochaines commandes depuis ce QR apparaîtront dans cet historique.</p>
+        </div>
+        {% endfor %}
+    </section>
+</main>
+{% include 'client/_client_nav.html' with table=table active_order=active_order active_tab='history' %}
+<script>window.BARPILOTE_CURRENCY_KEY = 'barpilote_currency_{{ bar.id }}'; window.BARPILOTE_INITIAL_CURRENCY = localStorage.getItem('barpilote_client_currency_{{ bar.id }}') || 'USD'; window.BARPILOTE_EXCHANGE_RATE = {{ bar.taux_change_usd_to_cdf|default:2800 }};</script>
+<script src="{% static 'js/barpilote-currency.js' %}"></script>
+    <script src="{% static 'js/barpilote-theme.js' %}"></script>
+</body>
+</html>

@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.db.models import Sum, Count, Max, F
 from django.db.models.functions import ExtractHour
 from datetime import timedelta
-from .models import Bar, PilotProfile, Table, Category, MasterProduct, StockItem, Sale, StockSupply, Order, OrderItem, StaffShift
+from .models import Bar, PilotProfile, Table, Category, MasterProduct, StockItem, Sale, StockSupply, Order, OrderItem, StaffShift, grant_trial_if_eligible, record_owner_audit
 from .serializers import (
     BarSerializer, PilotProfileSerializer, TableSerializer, CategorySerializer, 
     MasterProductSerializer, StockItemSerializer, SaleSerializer, StockSupplySerializer,
@@ -75,8 +75,8 @@ class BarViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Un propriétaire ne voit que ses bars
-        return Bar.objects.filter(proprietaires__user=self.request.user)
+        # Un propriétaire ne voit que les bars qu'il possède
+        return Bar.objects.filter(owners__user=self.request.user).distinct()
 
     def perform_create(self, serializer):
         # Sauvegarde le bar
@@ -88,6 +88,9 @@ class BarViewSet(viewsets.ModelViewSet):
         profile.bar = bar
         profile.role = 'PROPRIETAIRE'
         profile.save()
+        profile.owned_bars.add(bar)
+        trial_granted = grant_trial_if_eligible(profile, bar)
+        record_owner_audit(profile, bar, 'TRIAL_GRANTED' if trial_granted else 'TRIAL_DENIED', request=self.request, details={'bar_created_via_api': True, 'trial_granted': trial_granted})
 
     @action(detail=False, methods=['post'], url_path='join/(?P<code>[^/.]+)')
     def join(self, request, code=None):
@@ -115,7 +118,7 @@ class BarViewSet(viewsets.ModelViewSet):
             from rest_framework.exceptions import NotFound
             raise NotFound("Ce code d'invitation est invalide.")
             
-        proprietaire = bar.proprietaires.first()
+        proprietaire = bar.owners.first() or bar.proprietaires.first()
         proprietaire_nom = f"{proprietaire.prenom} {proprietaire.nom}" if proprietaire else "Propriétaire BarPilote"
         
         return Response({
@@ -650,7 +653,7 @@ class StaffManagementViewSet(viewsets.ViewSet):
             active_tables_count = Order.objects.filter(
                 bar=bar, 
                 serveur=server, 
-                statut__in=['PENDING', 'PREPARING', 'SERVED']
+                statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']
             ).values('table').distinct().count()
             
             # Temps d'activité

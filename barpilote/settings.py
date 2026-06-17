@@ -11,9 +11,25 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def _load_local_env():
+    env_path = BASE_DIR / '.env'
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+_load_local_env()
 
 
 # Quick-start development settings - unsuitable for production
@@ -31,14 +47,17 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'proprietaire',
     'serveur',  # Nouvelle application serveur
+    'client',
     'authentification',
     
     # Auth & API
@@ -146,6 +165,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'barpilote.wsgi.application'
+ASGI_APPLICATION = 'barpilote.asgi.application'
     
 # Session Settings
 SESSION_COOKIE_AGE = 86400 * 30  # 30 jours
@@ -214,7 +234,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
@@ -236,3 +256,40 @@ ACCOUNT_LOGOUT_ON_GET = True  # Déconnexion immédiate sans page de confirmatio
 
 # Google Maps Configuration
 GOOGLE_MAPS_API_KEY = 'AIzaSyASTWqTlQeuJL90FEwiuluw675kqSaW-A8'
+
+
+# AI Advisor Configuration
+AI_ADVISOR_PROVIDER = os.environ.get('AI_ADVISOR_PROVIDER', 'local').lower()
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
+GEMINI_REQUEST_TIMEOUT = int(os.environ.get('GEMINI_REQUEST_TIMEOUT', '20'))
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-5.5')
+OPENAI_REQUEST_TIMEOUT = int(os.environ.get('OPENAI_REQUEST_TIMEOUT', '20'))
+
+
+# Realtime / Push notifications
+REDIS_URL = os.environ.get('REDIS_URL', '')
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [REDIS_URL]},
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        }
+    }
+
+FCM_SERVICE_ACCOUNT_FILE = os.environ.get('FCM_SERVICE_ACCOUNT_FILE', '')
+FCM_SERVICE_ACCOUNT_JSON = os.environ.get('FCM_SERVICE_ACCOUNT_JSON', '')
+FCM_WEB_API_KEY = os.environ.get('FCM_WEB_API_KEY', '')
+FCM_WEB_AUTH_DOMAIN = os.environ.get('FCM_WEB_AUTH_DOMAIN', '')
+FCM_WEB_PROJECT_ID = os.environ.get('FCM_WEB_PROJECT_ID', '')
+FCM_WEB_STORAGE_BUCKET = os.environ.get('FCM_WEB_STORAGE_BUCKET', '')
+FCM_WEB_MESSAGING_SENDER_ID = os.environ.get('FCM_WEB_MESSAGING_SENDER_ID', '')
+FCM_WEB_APP_ID = os.environ.get('FCM_WEB_APP_ID', '')
+FCM_WEB_VAPID_KEY = os.environ.get('FCM_WEB_VAPID_KEY', '')

@@ -1,0 +1,252 @@
+<div class="relative" id="notificationCenter" data-api-url="{% if is_server_interface %}{% url 'serveur_notifications_api' %}{% else %}{% url 'notifications_api' %}{% endif %}">
+    <button type="button" id="notificationToggle" onclick="toggleNotificationPanel()" class="relative flex items-center justify-center p-2 rounded-full hover:bg-surface-container transition-colors active:scale-95 duration-200" title="Notifications">
+        <span class="material-symbols-outlined text-on-surface">notifications</span>
+        <span id="notificationBadge" class="hidden absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-[10px] font-black items-center justify-center border-2 border-white">0</span>
+    </button>
+
+    <div id="notificationPanel" class="hidden absolute right-0 top-12 w-[min(92vw,420px)] bg-white rounded-3xl executive-shadow border border-surface-container-high overflow-hidden z-[80]">
+        <div class="px-5 py-4 border-b border-surface-container flex items-center justify-between gap-3 bg-surface-container-lowest">
+            <div>
+                <h3 class="text-sm font-black text-on-surface tracking-tight">Notifications</h3>
+                <p id="notificationSummary" class="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">Chargement</p>
+            </div>
+            <button type="button" onclick="markAllNotificationsRead()" class="px-3 py-2 rounded-xl bg-surface-container text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:bg-orange-50 hover:text-orange-600 transition-colors">Tout lu</button>
+        </div>
+        <div id="notificationList" class="max-h-[420px] overflow-y-auto divide-y divide-surface-container">
+            <div class="p-6 text-center text-xs font-bold text-on-surface-variant/50">Chargement des notifications...</div>
+        </div>
+    </div>
+</div>
+
+<div id="notificationToast" class="fixed right-4 top-20 z-[120] hidden w-[min(92vw,360px)] translate-y-2 rounded-3xl border border-orange-100 bg-white p-4 opacity-0 executive-shadow transition-all duration-200">
+    <div class="flex items-start gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
+            <span class="material-symbols-outlined text-lg">notifications_active</span>
+        </div>
+        <div class="min-w-0 flex-1">
+            <p id="notificationToastTitle" class="text-sm font-black leading-tight text-on-surface">Nouvelle notification</p>
+            <p id="notificationToastMessage" class="mt-1 text-xs font-bold leading-snug text-on-surface-variant/70"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    if (window.__barPiloteNotificationsReady) return;
+    window.__barPiloteNotificationsReady = true;
+
+    let knownNotificationIds = new Set();
+    let firstNotificationLoad = true;
+    let notificationRequestInFlight = false;
+    let notificationSocket = null;
+
+    const categoryIcons = {
+        ORDER: 'room_service',
+        DEBT: 'receipt_long',
+        TABLE: 'table_bar',
+        TEAM: 'badge',
+        SYSTEM: 'info'
+    };
+
+    function getNotificationRoot() {
+        return document.getElementById('notificationCenter');
+    }
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"]/g, function (char) {
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[char];
+        });
+    }
+
+    function showNotificationToast(item) {
+        const toast = document.getElementById('notificationToast');
+        const title = document.getElementById('notificationToastTitle');
+        const message = document.getElementById('notificationToastMessage');
+        if (!toast || !title || !message || !item) return;
+        title.textContent = item.title || 'Nouvelle notification';
+        message.textContent = item.message || '';
+        toast.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-y-2', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+        });
+        clearTimeout(window.__barPiloteNotificationToastTimer);
+        window.__barPiloteNotificationToastTimer = setTimeout(() => {
+            toast.classList.add('translate-y-2', 'opacity-0');
+            toast.classList.remove('translate-y-0', 'opacity-100');
+            setTimeout(() => toast.classList.add('hidden'), 220);
+        }, 3500);
+    }
+
+
+    function upsertNotificationFromSocket(item) {
+        if (!item || !item.id) return;
+        const badge = document.getElementById('notificationBadge');
+        const summary = document.getElementById('notificationSummary');
+        const list = document.getElementById('notificationList');
+        if (!badge || !summary || !list) return;
+
+        const unreadCount = Number(badge.textContent === '99+' ? 100 : badge.textContent || 0) + 1;
+        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
+        summary.textContent = `${unreadCount} non lue(s)`;
+
+        const icon = categoryIcons[item.category] || categoryIcons.SYSTEM;
+        const html = `
+                <a href="${escapeHtml(item.url || '#')}" onclick="markNotificationRead('${item.id}')" class="flex gap-3 p-4 bg-orange-50/70 hover:bg-surface-container-lowest transition-colors">
+                    <div class="w-10 h-10 rounded-2xl bg-white border border-surface-container flex items-center justify-center text-orange-600 shrink-0">
+                        <span class="material-symbols-outlined text-lg">${icon}</span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <p class="text-sm font-black text-on-surface leading-tight">${escapeHtml(item.title || 'Nouvelle notification')}</p>
+                            <span class="w-2 h-2 rounded-full bg-orange-600 shrink-0 mt-2"></span>
+                        </div>
+                        <p class="text-xs font-medium text-on-surface-variant/70 mt-1 leading-snug">${escapeHtml(item.message || '')}</p>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mt-2">${escapeHtml(item.created_at || '')}</p>
+                    </div>
+                </a>`;
+        if (!firstNotificationLoad && !knownNotificationIds.has(item.id)) {
+            list.insertAdjacentHTML('afterbegin', html);
+            knownNotificationIds.add(item.id);
+            showNotificationToast(item);
+        }
+    }
+    function renderNotifications(data) {
+        const badge = document.getElementById('notificationBadge');
+        const summary = document.getElementById('notificationSummary');
+        const list = document.getElementById('notificationList');
+        if (!badge || !summary || !list) return;
+
+        const unread = Number(data.unread_count || 0);
+        badge.textContent = unread > 99 ? '99+' : unread;
+        badge.classList.toggle('hidden', unread === 0);
+        badge.classList.toggle('flex', unread > 0);
+        summary.textContent = unread ? `${unread} non lue(s)` : 'Aucune non lue';
+
+        const notifications = data.notifications || [];
+        if (!firstNotificationLoad) {
+            const fresh = notifications
+                .filter(item => item && item.id && !knownNotificationIds.has(item.id) && !item.is_read)
+                .reverse();
+            fresh.forEach(showNotificationToast);
+        }
+        knownNotificationIds = new Set(notifications.filter(item => item && item.id).map(item => item.id));
+        firstNotificationLoad = false;
+
+        if (!notifications.length) {
+            list.innerHTML = '<div class="p-8 text-center text-xs font-bold text-on-surface-variant/50">Aucune notification pour le moment.</div>';
+            return;
+        }
+
+        list.innerHTML = notifications.map(function (item) {
+            const icon = categoryIcons[item.category] || categoryIcons.SYSTEM;
+            const unreadClass = item.is_read ? 'bg-white' : 'bg-orange-50/70';
+            const dot = item.is_read ? '' : '<span class="w-2 h-2 rounded-full bg-orange-600 shrink-0 mt-2"></span>';
+            const url = item.url || '#';
+            return `
+                <a href="${escapeHtml(url)}" onclick="markNotificationRead('${item.id}')" class="flex gap-3 p-4 ${unreadClass} hover:bg-surface-container-lowest transition-colors">
+                    <div class="w-10 h-10 rounded-2xl bg-white border border-surface-container flex items-center justify-center text-orange-600 shrink-0">
+                        <span class="material-symbols-outlined text-lg">${icon}</span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <p class="text-sm font-black text-on-surface leading-tight">${escapeHtml(item.title)}</p>
+                            ${dot}
+                        </div>
+                        <p class="text-xs font-medium text-on-surface-variant/70 mt-1 leading-snug">${escapeHtml(item.message)}</p>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mt-2">${escapeHtml(item.created_at)}</p>
+                    </div>
+                </a>`;
+        }).join('');
+    }
+
+    window.loadNotifications = function () {
+        const root = getNotificationRoot();
+        if (!root || notificationRequestInFlight) return Promise.resolve();
+        notificationRequestInFlight = true;
+        return fetch(root.dataset.apiUrl, {
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            cache: 'no-store'
+        })
+            .then(res => res.ok ? res.json() : Promise.reject(res))
+            .then(renderNotifications)
+            .catch(() => {})
+            .finally(() => { notificationRequestInFlight = false; });
+    };
+
+    function connectNotificationSocket() {
+        if (notificationSocket && (notificationSocket.readyState === WebSocket.OPEN || notificationSocket.readyState === WebSocket.CONNECTING)) {
+            return;
+        }
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        notificationSocket = new WebSocket(`${protocol}://${window.location.host}/ws/notifications/`);
+        notificationSocket.onmessage = function (event) {
+            const payload = JSON.parse(event.data || '{}');
+            if (payload.type !== 'notification' || !payload.notification) return;
+            upsertNotificationFromSocket(payload.notification);
+        };
+        notificationSocket.onclose = function () {
+            setTimeout(connectNotificationSocket, 3000);
+        };
+    }
+
+    window.toggleNotificationPanel = function () {
+        const panel = document.getElementById('notificationPanel');
+        if (!panel) return;
+        panel.classList.toggle('hidden');
+        window.loadNotifications();
+    };
+
+    window.markNotificationRead = function (id) {
+        const root = getNotificationRoot();
+        if (!root || !id) return;
+        const body = new URLSearchParams();
+        body.append('notification_id', id);
+        fetch(root.dataset.apiUrl, {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
+            body: body.toString()
+        }).then(() => window.loadNotifications());
+    };
+
+    window.markAllNotificationsRead = function () {
+        const root = getNotificationRoot();
+        if (!root) return;
+        const body = new URLSearchParams();
+        body.append('action', 'mark_all_read');
+        fetch(root.dataset.apiUrl, {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
+            body: body.toString()
+        }).then(() => window.loadNotifications());
+    };
+
+    document.addEventListener('click', function (event) {
+        const root = getNotificationRoot();
+        const panel = document.getElementById('notificationPanel');
+        if (root && panel && !panel.classList.contains('hidden') && !root.contains(event.target)) {
+            panel.classList.add('hidden');
+        }
+    });
+
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) window.loadNotifications();
+    });
+
+    window.addEventListener('focus', window.loadNotifications);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        window.loadNotifications();
+        connectNotificationSocket();
+    });
+})();
+</script>

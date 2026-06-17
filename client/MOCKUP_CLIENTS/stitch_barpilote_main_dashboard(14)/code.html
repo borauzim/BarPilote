@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#e2e2e4",
+                    "on-tertiary-fixed-variant": "#00497d",
+                    "on-tertiary-container": "#002d51",
+                    "surface-container-highest": "#e2e2e4",
+                    "secondary": "#9c431c",
+                    "error": "#ba1a1a",
+                    "surface-container": "#eeeef0",
+                    "secondary-container": "#fd8d5f",
+                    "inverse-on-surface": "#f0f0f2",
+                    "tertiary": "#0061a4",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#9fcaff",
+                    "surface-container-high": "#e8e8ea",
+                    "on-tertiary-fixed": "#001d36",
+                    "surface-dim": "#d9dadc",
+                    "tertiary-fixed": "#d1e4ff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "surface": "#f9f9fb",
+                    "primary": "#a63b00",
+                    "outline-variant": "#e4bfb1",
+                    "outline": "#8f7065",
+                    "primary-container": "#ff5e00",
+                    "on-secondary-container": "#732600",
+                    "on-secondary-fixed": "#370e00",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#370e00",
+                    "on-secondary-fixed-variant": "#7d2d04",
+                    "on-background": "#1a1c1d",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#531900",
+                    "background": "#f9f9fb",
+                    "surface-container-low": "#f3f3f5",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-error-container": "#93000a",
+                    "on-surface-variant": "#5b4137",
+                    "tertiary-container": "#0097fb",
+                    "primary-fixed-dim": "#ffb599",
+                    "surface-bright": "#f9f9fb",
+                    "on-surface": "#1a1c1d",
+                    "secondary-fixed-dim": "#ffb599",
+                    "inverse-primary": "#ffb599",
+                    "surface-tint": "#a63b00",
+                    "inverse-surface": "#2f3132",
+                    "primary-fixed": "#ffdbce",
+                    "secondary-fixed": "#ffdbce"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "display": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .receipt-shadow { box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04); }
+        .ticket-edge {
+            background-image: radial-gradient(circle at 10px 0, rgba(0,0,0,0) 10px, white 11px);
+            background-size: 20px 10px;
+            background-position: bottom;
+            background-repeat: repeat-x;
+        }
+        .grain-overlay {
+            background-image: url("https://www.transparenttextures.com/patterns/p6.png");
+            opacity: 0.03;
+            pointer-events: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-6 antialiased">
+<div class="grain-overlay absolute inset-0 z-0"></div>
+<div class="w-full max-w-md flex flex-col items-center gap-8 z-10">
+<!-- Brand Header (TopAppBar Context) -->
+<header class="flex flex-col items-center gap-4 text-center">
+<div class="w-16 h-16 bg-primary-container/10 rounded-full flex items-center justify-center text-primary-container animate-bounce-subtle">
+<span class="material-symbols-outlined !text-4xl" data-icon="wine_bar">wine_bar</span>
+</div>
+<div class="space-y-1">
+<h2 class="text-xs font-bold tracking-[0.15em] text-on-surface-variant uppercase">THE DIGITAL SOMMELIER</h2>
+<p class="text-lg font-medium text-on-surface/60">Salut, Jean</p>
+</div>
+</header>
+<!-- Digital Ticket Card -->
+<main class="w-full bg-surface-container-lowest rounded-[32px] receipt-shadow overflow-hidden flex flex-col relative">
+<!-- Decorative Tear Line (Top) -->
+<div class="h-1 bg-primary-container w-full opacity-20"></div>
+<div class="p-8 md:p-10 flex flex-col items-center">
+<!-- Order Metadata -->
+<div class="w-full flex justify-between items-start mb-10">
+<div class="flex flex-col">
+<span class="text-[0.6875rem] font-bold tracking-widest text-on-surface-variant uppercase mb-1">Commande</span>
+<span class="text-lg font-bold font-display">#8291</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[0.6875rem] font-bold tracking-widest text-on-surface-variant uppercase mb-1">Date</span>
+<span class="text-sm font-medium">Aujourd'hui</span>
+</div>
+</div>
+<!-- Total Amount -->
+<div class="text-center mb-10 group cursor-default">
+<span class="text-[0.6875rem] font-bold tracking-widest text-primary uppercase mb-2 block">Total à régler</span>
+<h1 class="text-6xl font-black tracking-tighter text-on-surface group-hover:scale-105 transition-transform duration-500">42,50€</h1>
+</div>
+<!-- Instruction Section -->
+<div class="w-full bg-surface-container rounded-2xl p-5 flex items-center gap-4 mb-8">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined !text-xl" data-icon="payments">payments</span>
+</div>
+<p class="text-sm font-semibold text-on-surface-variant leading-tight">
+                        Payable en espèces à votre serveur
+                    </p>
+</div>
+<!-- Dotted Line -->
+<div class="w-full border-t border-dashed border-outline-variant/30 mb-8"></div>
+<!-- Gratitude Message -->
+<div class="text-center italic text-on-surface-variant/80 font-medium mb-2">
+                    "Merci d'avoir piloté avec BarPilote"
+                </div>
+</div>
+<!-- Bottom Action Cluster -->
+<footer class="p-8 pt-0 flex flex-col gap-3 w-full">
+<button class="w-full bg-primary-container text-white font-bold py-4 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 group" onclick="window.print()">
+<span class="material-symbols-outlined !text-xl" data-icon="download">download</span>
+                    Enregistrer dans Photos
+                </button>
+<a class="w-full text-center text-on-surface-variant text-sm font-semibold py-3 hover:text-primary transition-colors flex items-center justify-center gap-1 group" href="#">
+                    Détails de la commande
+                    <span class="material-symbols-outlined !text-sm group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</a>
+</footer>
+<!-- Texture/Material Finish -->
+<div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-surface-container-lowest to-transparent pointer-events-none"></div>
+</main>
+<!-- Footer Help -->
+<p class="text-[0.6875rem] text-on-surface-variant font-bold tracking-widest uppercase">
+            Besoin d'aide ? Contactez le bar
+        </p>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        // Simple subtle entrance animation
+        document.addEventListener('DOMContentLoaded', () => {
+            const card = document.querySelector('main');
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.8s cubic-bezier(0.22, 1, 0.36, 1)';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+<!-- Visual Enhancements for Background -->
+<div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none opacity-40">
+<div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary-container/5 rounded-full blur-[120px]"></div>
+<div class="absolute top-[60%] -right-[10%] w-[50%] h-[50%] bg-tertiary-container/5 rounded-full blur-[120px]"></div>
+</div>
+</body></html>

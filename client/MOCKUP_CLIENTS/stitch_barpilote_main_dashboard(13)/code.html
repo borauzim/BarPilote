@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Évaluer votre Vigie - The Digital Sommelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e2e2e4",
+                        "on-tertiary-fixed-variant": "#00497d",
+                        "on-tertiary-container": "#002d51",
+                        "surface-container-highest": "#e2e2e4",
+                        "secondary": "#9c431c",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eeeef0",
+                        "secondary-container": "#fd8d5f",
+                        "inverse-on-surface": "#f0f0f2",
+                        "tertiary": "#0061a4",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#9fcaff",
+                        "surface-container-high": "#e8e8ea",
+                        "on-tertiary-fixed": "#001d36",
+                        "surface-dim": "#d9dadc",
+                        "tertiary-fixed": "#d1e4ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f9f9fb",
+                        "primary": "#a63b00",
+                        "outline-variant": "#e4bfb1",
+                        "outline": "#8f7065",
+                        "primary-container": "#ff5e00",
+                        "on-secondary-container": "#732600",
+                        "on-secondary-fixed": "#370e00",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#370e00",
+                        "on-secondary-fixed-variant": "#7d2d04",
+                        "on-background": "#1a1c1d",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#531900",
+                        "background": "#f9f9fb",
+                        "surface-container-low": "#f3f3f5",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#5b4137",
+                        "tertiary-container": "#0097fb",
+                        "primary-fixed-dim": "#ffb599",
+                        "surface-bright": "#f9f9fb",
+                        "on-surface": "#1a1c1d",
+                        "secondary-fixed-dim": "#ffb599",
+                        "inverse-primary": "#ffb599",
+                        "surface-tint": "#a63b00",
+                        "inverse-surface": "#2f3132",
+                        "primary-fixed": "#ffdbce",
+                        "secondary-fixed": "#ffdbce"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "16px",
+                        "xl": "24px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F7;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .star-active {
+            font-variation-settings: 'FILL' 1;
+            color: #FF5E00;
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .primary-gradient {
+            background: linear-gradient(145deg, #FF5E00 0%, #A63B00 100%);
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        /* Custom scrollbar for minimalist feel */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e2e4; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 glass-header executive-shadow">
+<div class="flex items-center justify-between px-6 py-4 w-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#FF5E00]" data-icon="wine_bar">wine_bar</span>
+<span class="font-black tracking-tighter text-[#FF5E00] uppercase text-[0.6875rem]">THE DIGITAL SOMMELIER</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-100 transition-colors active:scale-90 duration-200">
+<span class="material-symbols-outlined text-zinc-400" data-icon="close">close</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center px-6 pt-24 pb-12">
+<div class="w-full max-w-lg space-y-12 text-center">
+<!-- Hero Header Section -->
+<section class="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+<div class="relative inline-block">
+<div class="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden mx-auto">
+<img alt="Tshala" class="w-full h-full object-cover" data-alt="A professional and warm portrait of a young woman with a friendly smile, captured in soft, natural window lighting. She is positioned in a sophisticated, minimalist lounge setting with warm wooden textures and high-end bar elements in the blurred background. The photographic style is clean and premium, aligning with an executive lifestyle aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsQC3EWkeBsw0hKqanNdyQ8GPGZLIBCTu_L7OZ8SR1yu8k_VV_thtwA26Ye17VY97B46MOhVQ-72x-qO-L0udjzDGOBDXOYnHrSzqTtTTOoOduvub8TY4aNYXFBheKtA2RahzBdB7dE3CrgqbNCkAfCxF1b1dc8NIlig0ViVdrasZMSbeAKIuIrJ1NZEwbn2PdBw5wBTMpj3GKYAwNfwnLI-iHcF9PQ8i0YGFL5VVer36H31Q9P64e6Gx-ZEjHQtMa3WDDalAOzjJf"/>
+</div>
+<div class="absolute -bottom-1 -right-1 bg-primary-container text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div>
+<h1 class="text-[1.5rem] font-bold tracking-tight text-on-background">Évaluer votre Vigie</h1>
+<p class="text-zinc-500 font-medium text-[0.875rem] mt-1">Comment s'est passé votre service avec Tshala ?</p>
+</div>
+</section>
+<!-- Star Rating Section -->
+<section class="flex flex-col items-center gap-6">
+<div class="flex items-center gap-3" id="star-container">
+<button class="star-btn p-2 transition-transform active:scale-75 hover:scale-110 duration-200" data-value="1">
+<span class="material-symbols-outlined text-4xl text-zinc-300 pointer-events-none" data-icon="star">star</span>
+</button>
+<button class="star-btn p-2 transition-transform active:scale-75 hover:scale-110 duration-200" data-value="2">
+<span class="material-symbols-outlined text-4xl text-zinc-300 pointer-events-none" data-icon="star">star</span>
+</button>
+<button class="star-btn p-2 transition-transform active:scale-75 hover:scale-110 duration-200" data-value="3">
+<span class="material-symbols-outlined text-4xl text-zinc-300 pointer-events-none" data-icon="star">star</span>
+</button>
+<button class="star-btn p-2 transition-transform active:scale-75 hover:scale-110 duration-200" data-value="4">
+<span class="material-symbols-outlined text-4xl text-zinc-300 pointer-events-none" data-icon="star">star</span>
+</button>
+<button class="star-btn p-2 transition-transform active:scale-75 hover:scale-110 duration-200" data-value="5">
+<span class="material-symbols-outlined text-4xl text-zinc-300 pointer-events-none" data-icon="star">star</span>
+</button>
+</div>
+<p class="text-[0.6875rem] font-bold uppercase tracking-[0.05em] text-[#FF5E00] h-4 opacity-0 transition-opacity" id="rating-label">Veuillez sélectionner une note</p>
+</section>
+<!-- Review Details Section -->
+<section class="w-full space-y-6">
+<div class="relative group">
+<textarea class="w-full bg-surface-container-low border-none rounded-xl p-5 text-[0.875rem] placeholder-zinc-400 focus:ring-0 focus:bg-white focus:shadow-[0_10px_30px_rgba(26,28,29,0.04)] transition-all resize-none" id="review-text" placeholder="Ajouter une note rapide (ex: Excellent !)..." rows="4"></textarea>
+</div>
+<!-- Tags / Quick Feedback -->
+<div class="flex flex-wrap justify-center gap-2">
+<button class="px-4 py-2 rounded-full bg-surface-container text-zinc-600 text-[0.75rem] font-semibold hover:bg-[#FF5E00]/10 hover:text-[#FF5E00] transition-colors">Service Rapide</button>
+<button class="px-4 py-2 rounded-full bg-surface-container text-zinc-600 text-[0.75rem] font-semibold hover:bg-[#FF5E00]/10 hover:text-[#FF5E00] transition-colors">Très Professionnel</button>
+<button class="px-4 py-2 rounded-full bg-surface-container text-zinc-600 text-[0.75rem] font-semibold hover:bg-[#FF5E00]/10 hover:text-[#FF5E00] transition-colors">Ponctuel</button>
+</div>
+</section>
+<!-- Action Section -->
+<section class="pt-6">
+<button class="w-full primary-gradient text-white font-bold py-4 rounded-full executive-shadow active:scale-[0.98] transition-transform duration-200" id="submit-btn">
+                    Envoyer l'avis
+                </button>
+<p class="text-[0.75rem] text-zinc-400 mt-6 px-8">
+                    Votre avis aide Jean à maintenir un standard d'excellence pour toute la communauté.
+                </p>
+</section>
+</div>
+</main>
+<!-- Footer Space -->
+<div class="h-24 md:hidden"></div>
+<script>
+        // Interactive Star Rating Logic
+        const stars = document.querySelectorAll('.star-btn');
+        const ratingLabel = document.getElementById('rating-label');
+        const labels = {
+            1: "Décevant",
+            2: "Passable",
+            3: "Bien",
+            4: "Très Bien",
+            5: "Exceptionnel"
+        };
+
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                const value = parseInt(star.getAttribute('data-value'));
+                updateStars(value);
+                showLabel(value);
+            });
+
+            star.addEventListener('mouseenter', () => {
+                const value = parseInt(star.getAttribute('data-value'));
+                previewStars(value);
+            });
+
+            star.addEventListener('mouseleave', () => {
+                resetStars();
+            });
+        });
+
+        let currentRating = 0;
+
+        function updateStars(rating) {
+            currentRating = rating;
+            stars.forEach(s => {
+                const sValue = parseInt(s.getAttribute('data-value'));
+                const icon = s.querySelector('span');
+                if (sValue <= rating) {
+                    icon.classList.add('star-active');
+                } else {
+                    icon.classList.remove('star-active');
+                }
+            });
+        }
+
+        function previewStars(rating) {
+            stars.forEach(s => {
+                const sValue = parseInt(s.getAttribute('data-value'));
+                const icon = s.querySelector('span');
+                if (sValue <= rating) {
+                    icon.style.color = '#FF5E00';
+                    icon.style.opacity = '0.7';
+                } else {
+                    icon.style.color = '#d1d5db';
+                    icon.style.opacity = '1';
+                }
+            });
+        }
+
+        function resetStars() {
+            stars.forEach(s => {
+                const sValue = parseInt(s.getAttribute('data-value'));
+                const icon = s.querySelector('span');
+                icon.style.opacity = '1';
+                if (sValue <= currentRating) {
+                    icon.classList.add('star-active');
+                    icon.style.color = '#FF5E00';
+                } else {
+                    icon.classList.remove('star-active');
+                    icon.style.color = '#d1d5db';
+                }
+            });
+        }
+
+        function showLabel(value) {
+            ratingLabel.innerText = labels[value];
+            ratingLabel.style.opacity = '1';
+        }
+
+        // Tag Toggle Simulation
+        const tags = document.querySelectorAll('button.rounded-full.bg-surface-container');
+        tags.forEach(tag => {
+            tag.addEventListener('click', () => {
+                tag.classList.toggle('bg-[#FF5E00]/10');
+                tag.classList.toggle('text-[#FF5E00]');
+                tag.classList.toggle('bg-surface-container');
+                tag.classList.toggle('text-zinc-600');
+            });
+        });
+
+        // Submit Button Interaction
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.addEventListener('click', () => {
+            if (currentRating === 0) {
+                ratingLabel.innerText = "Veuillez choisir une note";
+                ratingLabel.style.opacity = '1';
+                ratingLabel.classList.add('text-error');
+                return;
+            }
+            
+            submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin" data-icon="progress_activity">progress_activity</span>';
+            setTimeout(() => {
+                submitBtn.innerHTML = 'Merci !';
+                submitBtn.classList.replace('primary-gradient', 'bg-zinc-800');
+                alert('Merci pour votre retour ! Votre avis a été enregistré.');
+            }, 1500);
+        });
+    </script>
+</body></html>

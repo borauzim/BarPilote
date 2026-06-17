@@ -1,0 +1,64 @@
+{% load static %}
+{% load trial_ads %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BarPilote - Factures client</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>body{font-family:Inter,sans-serif;background:#fbfbfc;color:#171717}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 650,'GRAD' 0,'opsz' 24}</style>
+</head>
+<body>
+<main class="mx-auto min-h-screen max-w-3xl px-4 pb-28 pt-4">
+    {% trial_ad_banner table.bar "client" %}
+    <header class="sticky top-0 z-30 -mx-4 border-b border-neutral-200/70 bg-white/90 px-4 py-3 backdrop-blur-xl">
+        <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+                <p class="text-[10px] font-black uppercase tracking-[.18em] text-orange-600">{{ table.nom }} · {{ bar.nom }}</p>
+                <h1 class="truncate text-2xl font-black tracking-tight text-neutral-950">Factures</h1>
+            </div>
+            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-orange-50 text-orange-700"><span class="material-symbols-outlined">receipt_long</span></span>
+        </div>
+    </header>
+
+    <section class="mt-4 rounded-[28px] bg-neutral-950 p-5 text-white shadow-xl shadow-neutral-950/10">
+        <p class="text-[10px] font-black uppercase tracking-widest text-orange-300">Coffre client</p>
+        <h2 class="mt-2 text-2xl font-black tracking-tight">Téléchargements PDF</h2>
+        <p class="mt-2 text-sm font-semibold leading-6 text-white/60">Les factures gardent le même format que l'espace propriétaire.</p>
+    </section>
+
+    <section class="mt-4 space-y-3">
+        {% for facture in factures %}
+        <article class="rounded-[28px] border border-neutral-200 bg-white p-4 shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-[10px] font-black uppercase tracking-[.18em] text-neutral-400">{{ facture.date_emission|date:'d/m/Y H:i' }}</p>
+                    <h2 class="mt-1 truncate text-base font-black text-neutral-950">{{ facture.numero }}</h2>
+                    <p class="mt-1 truncate text-xs font-bold text-neutral-500">{{ facture.client_fournisseur }}</p>
+                </div>
+                <span class="rounded-full px-3 py-1 text-[10px] font-black uppercase {% if facture.statut == 'PAYEE' %}bg-emerald-50 text-emerald-700{% else %}bg-orange-50 text-orange-700{% endif %}">{{ facture.get_statut_display }}</span>
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-2 rounded-2xl bg-neutral-50 p-2">
+                <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">USD</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_usd|floatformat:2 }} $</p></div>
+                <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">CDF</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_cdf|floatformat:0 }} FC</p></div>
+            </div>
+            {% with order=facture.orders.first %}{% if order %}
+            <a href="{% url 'client_invoice_download' order.id %}" class="mt-3 flex h-12 items-center justify-center gap-2 rounded-2xl bg-orange-600 text-sm font-black text-white"><span class="material-symbols-outlined text-base">download</span>Télécharger</a>
+            {% endif %}{% endwith %}
+        </article>
+        {% empty %}
+        <div class="rounded-[28px] border border-dashed border-neutral-300 bg-white p-8 text-center">
+            <span class="material-symbols-outlined text-5xl text-neutral-300">receipt_long</span>
+            <h2 class="mt-3 text-xl font-black">Aucune facture</h2>
+            <p class="mt-2 text-sm font-bold text-neutral-500">Les factures des commandes passées depuis ce QR seront listées ici.</p>
+        </div>
+        {% endfor %}
+    </section>
+</main>
+{% include 'client/_client_nav.html' with table=table active_order=active_order active_tab='invoices' %}
+    <script src="{% static 'js/barpilote-theme.js' %}"></script>
+</body>
+</html>

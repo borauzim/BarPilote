@@ -3,6 +3,18 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('barpilote_theme_mode') || 'system';
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var resolved = stored === 'dark' || stored === 'light' ? stored : (prefersDark ? 'dark' : 'light');
+                document.documentElement.classList.toggle('dark', resolved === 'dark');
+                document.documentElement.style.colorScheme = resolved;
+                document.documentElement.dataset.theme = resolved;
+            } catch (error) {}
+        })();
+    </script>
     <title>{% block title %}BarPilote{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -63,5 +75,6 @@
         {% endblock %}
     </main>
     {% block extra_body %}{% endblock %}
+    <script src="{% static 'js/barpilote-theme.js' %}"></script>
 </body>
 </html>

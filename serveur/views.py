@@ -331,7 +331,7 @@ def tables_read_only(request):
         return error_response
 
     tables = Table.objects.filter(bar=profile.bar).order_by('nom')
-    occupied_table_ids = set(Order.objects.filter(bar=profile.bar, statut__in=['PENDING', 'PREPARING', 'SERVED']).values_list('table_id', flat=True))
+    occupied_table_ids = set(Order.objects.filter(bar=profile.bar, statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']).values_list('table_id', flat=True))
     payload = []
     for table in tables:
         payload.append({

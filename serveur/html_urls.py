@@ -1,8 +1,9 @@
 from django.urls import path
+from proprietaire.html_views import AdvisorAPIView, NotificationsAPIView
 from .html_views import (
     ServeurDashboardView, ServeurScanQRView, ServeurProfilSetupView,
     ServeurWelcomeView, ServeurCommandeDetailView, ServeurMissionView,
-    ServeurShiftActionView, ServeurWaitingConfirmationView, ServeurJoinView, ServeurLogoutView, ServeurToggleCurrencyView, ServeurClientHistoryView, ServeurUpdateOrderStatusView, ServeurTakeOrderView, ServeurInventoryView, ServeurFinanceView, ServeurClientsView, ServeurTeamView, ServeurTablesView, ServeurReportView, ServeurRecordLossView
+    ServeurShiftActionView, ServeurWaitingConfirmationView, ServeurJoinView, ServeurLogoutView, ServeurToggleCurrencyView, ServeurClientHistoryView, ServeurClientOrderActionView, ServeurUpdateOrderStatusView, ServeurTakeOrderView, ServeurInventoryView, ServeurFinanceView, ServeurClientsView, ServeurTeamView, ServeurTablesView, ServeurTableActionView, ServeurReportView, ServeurRecordLossView
 )
 
 urlpatterns = [
@@ -12,6 +13,9 @@ urlpatterns = [
     path('toggle-currency/', ServeurToggleCurrencyView.as_view(), name='serveur_toggle_currency'),
     path('api/client-history/', ServeurClientHistoryView.as_view(), name='serveur_client_history'),
     path('api/update-order-status/', ServeurUpdateOrderStatusView.as_view(), name='serveur_update_order_status'),
+    path('api/client-order-action/', ServeurClientOrderActionView.as_view(), name='serveur_client_order_action'),
+    path('api/notifications/', NotificationsAPIView.as_view(), name='serveur_notifications_api'),
+    path('api/advisor/', AdvisorAPIView.as_view(), name='serveur_advisor_api'),
     path('join/<str:code>/', ServeurJoinView.as_view(), name='serveur_join'),
     path('setup/', ServeurProfilSetupView.as_view(), name='serveur_setup'),
     path('welcome/', ServeurWelcomeView.as_view(), name='serveur_welcome'),
@@ -22,6 +26,7 @@ urlpatterns = [
     path('clients/', ServeurClientsView.as_view(), name='serveur_clients'),
     path('team/', ServeurTeamView.as_view(), name='serveur_team'),
     path('tables/', ServeurTablesView.as_view(), name='serveur_tables'),
+    path('tables/action/', ServeurTableActionView.as_view(), name='serveur_table_action'),
     path('reports/', ServeurReportView.as_view(), name='serveur_report'),
     path('commande/<uuid:order_id>/', ServeurCommandeDetailView.as_view(), name='serveur_commande_detail'),
     path('mission/<uuid:order_id>/', ServeurMissionView.as_view(), name='serveur_mission'),

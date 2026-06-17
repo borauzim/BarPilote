@@ -4,7 +4,8 @@ from .html_views import (
     InventoryView, FinanceView, TeamView, TeamRequestActionView, TeamAccessActionView, TablesView, EstablishmentDetailsView, TableSetupView,
     TableActionView, TableDownloadQRView, EstablishmentReadyView, StaffInvitationPDFView,
     RecordLossView, MixedCaseArrivalView, ToggleCurrencyView, FactureActionView, TakeOrderView,
-    LiveOrdersAPIView, UpdateOrderStatusView, DownloadFacturePDFView, DownloadAllFacturesView, ClientHistoryAPIView, ClientManagementView
+    SwitchEstablishmentView,
+    LiveOrdersAPIView, UpdateOrderStatusView, DownloadFacturePDFView, DownloadAllFacturesView, ClientHistoryAPIView, ClientManagementView, NotificationsAPIView, AdvisorAPIView, FCMConfigAPIView, FCMTokenAPIView
 )
 
 urlpatterns = [
@@ -18,6 +19,7 @@ urlpatterns = [
     path('team/access-action/', TeamAccessActionView.as_view(), name='team_access_action'),
     path('tables/', TablesView.as_view(), name='tables_html'),
     path('setup-bar/details/', EstablishmentDetailsView.as_view(), name='establishment_details'),
+    path('switch-bar/', SwitchEstablishmentView.as_view(), name='switch_establishment'),
     path('setup-bar/tables/', TableSetupView.as_view(), name='table_setup'),
     path('setup-bar/ready/', EstablishmentReadyView.as_view(), name='establishment_ready'),
     path('tables/action/', TableActionView.as_view(), name='table_action'),
@@ -34,4 +36,8 @@ urlpatterns = [
     path('api/update-order-status/', UpdateOrderStatusView.as_view(), name='api_update_order_status'),
     path('api/client-history/', ClientHistoryAPIView.as_view(), name='api_client_history'),
     path('clients/', ClientManagementView.as_view(), name='clients_html'),
+    path('api/notifications/', NotificationsAPIView.as_view(), name='notifications_api'),
+    path('api/advisor/', AdvisorAPIView.as_view(), name='advisor_api'),
+    path('api/fcm/config/', FCMConfigAPIView.as_view(), name='fcm_config_api'),
+    path('api/fcm/token/', FCMTokenAPIView.as_view(), name='fcm_token_api'),
 ]

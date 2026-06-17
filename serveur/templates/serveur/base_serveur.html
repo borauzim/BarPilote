@@ -1,8 +1,22 @@
+{% load static %}
+{% load trial_ads %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('barpilote_theme_mode') || 'system';
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var resolved = stored === 'dark' || stored === 'light' ? stored : (prefersDark ? 'dark' : 'light');
+                document.documentElement.classList.toggle('dark', resolved === 'dark');
+                document.documentElement.style.colorScheme = resolved;
+                document.documentElement.dataset.theme = resolved;
+            } catch (error) {}
+        })();
+    </script>
     <title>{% block title %}BarPilote Dashboard{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -72,6 +86,8 @@
         }
     </script>
     <style>
+        :root { color-scheme: light; }
+        html.dark { color-scheme: dark; }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f5f5f7;
@@ -79,6 +95,10 @@
             min-height: max(884px, 100dvh);
             overflow-x: hidden;
         }
+        html.dark body { background-color: #0b0d10; color: #f4f4f5; }
+        html.dark .glass-nav { background-color: rgba(17, 24, 39, 0.82); }
+        html.dark .executive-shadow { box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28); }
+        html.dark .citrus-gradient { background: linear-gradient(145deg, #ff7a1a 0%, #c14a08 100%); }
         *, *::before, *::after {
             box-sizing: border-box;
         }
@@ -166,46 +186,36 @@
             </nav>
 
             <div class="flex items-center gap-2">
-                <!-- Currency Toggle (AJAX) -->
                 <div class="mr-2">
                     <button onclick="toggleCurrency()" id="currencyToggleBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container hover:bg-orange-50 hover:text-orange-600 transition-all active:scale-90 group relative overflow-hidden">
-                        <span id="labelUSD" class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300 {% if pref_currency == 'USD' %}text-orange-600{% else %}text-gray-400{% endif %}">USD</span>
+                        <span id="labelUSD" class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300 {% if profile.preferred_currency == 'USD' %}text-orange-600{% else %}text-gray-400{% endif %}">USD</span>
                         <div class="w-9 h-5 bg-gray-200 rounded-full relative p-1 transition-colors duration-300 group-hover:bg-orange-100">
-                            <div id="toggleCircle" class="absolute top-1 w-3 h-3 rounded-full citrus-gradient shadow-sm transition-all duration-300 ease-out {% if pref_currency == 'USD' %}left-1{% else %}left-5{% endif %}"></div>
+                            <div id="toggleCircle" class="absolute top-1 w-3 h-3 rounded-full citrus-gradient shadow-sm transition-all duration-300 ease-out {% if profile.preferred_currency == 'USD' %}left-1{% else %}left-5{% endif %}"></div>
                         </div>
-                        <span id="labelCDF" class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300 {% if pref_currency == 'CDF' %}text-orange-600{% else %}text-gray-400{% endif %}">CDF</span>
+                        <span id="labelCDF" class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300 {% if profile.preferred_currency == 'CDF' %}text-orange-600{% else %}text-gray-400{% endif %}">CDF</span>
                     </button>
                 </div>
 
                 <script>
+                    window.BARPILOTE_CURRENCY_KEY = 'barpilote_currency_{{ profile.bar.id|default:user.id }}';
+                    window.BARPILOTE_INITIAL_CURRENCY = '{{ profile.preferred_currency|default:"USD" }}';
+                    window.BARPILOTE_EXCHANGE_RATE = {{ profile.bar.taux_change_usd_to_cdf|default:2800 }};
+                </script>
+                <script>
                     function toggleCurrency() {
-                        const btn = document.getElementById('currencyToggleBtn');
-                        const circle = document.getElementById('toggleCircle');
-                        const labelUSD = document.getElementById('labelUSD');
-                        const labelCDF = document.getElementById('labelCDF');
-                        
-                        // Optimistic UI update
-                        const isUSD = circle.classList.contains('left-1');
-                        if (isUSD) {
-                            circle.classList.replace('left-1', 'left-5');
-                            labelUSD.classList.replace('text-orange-600', 'text-gray-400');
-                            labelCDF.classList.replace('text-gray-400', 'text-orange-600');
-                        } else {
-                            circle.classList.replace('left-5', 'left-1');
-                            labelUSD.classList.replace('text-gray-400', 'text-orange-600');
-                            labelCDF.classList.replace('text-orange-600', 'text-gray-400');
-                        }
-
-                        // AJAX call to server
                         fetch("{% url 'serveur_toggle_currency' %}", {
                             method: 'POST',
                             headers: {
-                                'X-CSRFToken': '{{ csrf_token }}',
+                                'X-CSRFToken': window.BarPiloteCurrency ? window.BarPiloteCurrency.getCsrfToken() : '{{ csrf_token }}',
+                                'Accept': 'application/json',
                                 'Content-Type': 'application/json'
                             }
-                        }).then(() => {
-                            // Reload to apply template tags
-                            window.location.reload();
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (window.BarPiloteCurrency) {
+                                window.BarPiloteCurrency.setCurrency(data.currency || 'USD', { persist: true, broadcast: true });
+                            }
                         });
                     }
                 </script>
@@ -213,14 +223,13 @@
                 <a href="{% url 'serveur_logout' %}" class="flex items-center justify-center p-2 rounded-full hover:bg-surface-container text-gray-400 hover:text-error transition-colors active:scale-95 duration-200" title="Déconnexion">
                     <span class="material-symbols-outlined">logout</span>
                 </a>
-                <button class="flex items-center justify-center p-2 rounded-full hover:bg-surface-container transition-colors active:scale-95 duration-200">
-                    <span class="material-symbols-outlined text-on-surface">notifications</span>
-                </button>
+                {% include 'includes/notification_center.html' with is_server_interface=True %}
             </div>
         </div>
     </header>
 
     <main class="pt-24 pb-12 px-8 w-full max-w-none mx-0 overflow-x-hidden">
+        {% trial_ad_banner profile.bar 'server' %}
         {% block content %}
         {% endblock %}
     </main>
@@ -253,6 +262,10 @@
         </a>
     </nav>
 
+    <script src="{% static 'js/barpilote-currency.js' %}"></script>
+    <script src="{% static 'js/barpilote-live-actions.js' %}"></script>
+    <script src="{% static 'js/barpilote-notifications.js' %}"></script>
     {% block extra_body %}{% endblock %}
+    <script src="{% static 'js/barpilote-theme.js' %}"></script>
 </body>
 </html>

@@ -1,11 +1,15 @@
 from django.views.generic import TemplateView, View
+from django.contrib import messages
+import json
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 import os
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum, Q, Count, F
 from django.utils import timezone
 from datetime import timedelta
 from django.http import HttpResponse, FileResponse, JsonResponse
+from decimal import Decimal
 from django.conf import settings
 import qrcode
 import io
@@ -16,8 +20,80 @@ from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
 import uuid
-from .models import PilotProfile, Order, Table, Bar, StockItem, OrderItem, Category, Facture, Client
+from .models import PilotProfile, Order, Table, Bar, StockItem, OrderItem, Category, Facture, Client, Notification, grant_trial_if_eligible, record_owner_audit
 from .order_services import take_order_for_profile
+from .notifications import ensure_daily_debt_reminders, notify_bar_owners, notify_bar_servers, notify_debt_created, notify_order_created, notify_order_status, notify_user
+from .advisor import generate_advisor_response
+
+
+def _expects_json(request):
+    accept = request.headers.get('Accept', '')
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in accept
+
+
+def _live_payload(request, payload, status=200):
+    if _expects_json(request):
+        return JsonResponse(payload, status=status)
+    return None
+
+
+
+
+class AdvisorAPIView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        profile = PilotProfile.objects.filter(user=request.user).select_related('bar').first()
+        if not profile or not profile.bar:
+            return JsonResponse({'error': 'Profil incomplet.'}, status=400)
+
+        question = request.POST.get('question', '').strip()
+        if not question:
+            return JsonResponse({'error': 'Question vide.'}, status=400)
+
+        history = []
+        raw_history = request.POST.get('history', '[]')
+        try:
+            parsed_history = json.loads(raw_history)
+            if isinstance(parsed_history, list):
+                history = parsed_history
+        except json.JSONDecodeError:
+            history = []
+
+        return JsonResponse(generate_advisor_response(profile, question, history))
+
+class NotificationsAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        ensure_daily_debt_reminders(request.user)
+        qs = Notification.objects.filter(recipient=request.user).select_related('bar', 'actor').order_by('-created_at')
+        unread_count = qs.filter(read_at__isnull=True).count()
+        items = []
+        for notification in qs[:30]:
+            actor_name = ''
+            if notification.actor:
+                actor_name = notification.actor.get_full_name() or notification.actor.get_username()
+            items.append({
+                'id': str(notification.id),
+                'category': notification.category,
+                'title': notification.title,
+                'message': notification.message,
+                'url': notification.url,
+                'is_read': notification.is_read,
+                'actor': actor_name,
+                'created_at': timezone.localtime(notification.created_at).strftime('%d/%m %H:%M'),
+            })
+        return JsonResponse({'unread_count': unread_count, 'notifications': items})
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        if action == 'mark_all_read':
+            Notification.objects.filter(recipient=request.user, read_at__isnull=True).update(read_at=timezone.now())
+            return JsonResponse({'success': True})
+
+        notification_id = request.POST.get('notification_id')
+        if notification_id:
+            Notification.objects.filter(id=notification_id, recipient=request.user, read_at__isnull=True).update(read_at=timezone.now())
+            return JsonResponse({'success': True})
+
+        return JsonResponse({'error': 'Action invalide.'}, status=400)
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/dashboard.html'
@@ -99,7 +175,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 # Active Tables
                 active_tables_ids = Order.objects.filter(
                     bar=bar, 
-                    statut__in=['PENDING', 'PREPARING']
+                    statut__in=['PENDING', 'ACCEPTEE', 'PREPARING']
                 ).values_list('table_id', flat=True).distinct()
                 
                 context['tables_actives'] = active_tables_ids.count()
@@ -109,7 +185,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 # Orders in flight
                 context['active_orders'] = Order.objects.filter(
                     bar=bar, 
-                    statut__in=['PENDING', 'PREPARING']
+                    statut__in=['PENDING', 'ACCEPTEE', 'PREPARING']
                 ).count()
                 
                 # Recent Transactions
@@ -144,12 +220,14 @@ class TakeOrderView(LoginRequiredMixin, View):
     """Permet au propriétaire de prendre une commande directement."""
     def post(self, request):
         profile = PilotProfile.objects.get(user=request.user)
-        take_order_for_profile(
+        order = take_order_for_profile(
             bar=profile.bar,
             pilot_profile=profile,
             table_id=request.POST.get('table_id'),
             items_raw=request.POST.getlist('items[]'),
         )
+        if order:
+            notify_order_created(order, actor=request.user)
         return redirect('dashboard_html')
 
 class EstablishmentSetupView(LoginRequiredMixin, TemplateView):
@@ -175,13 +253,19 @@ class EstablishmentDetailsView(LoginRequiredMixin, TemplateView):
         name = request.POST.get('name')
         address = request.POST.get('address')
         bar_type = request.session.get('setup_bar_type', 'BAR')
+        monthly_price_per_table_usd = request.POST.get('monthly_price_per_table_usd', 2.5)
+        try:
+            monthly_price_per_table_usd = Decimal(str(monthly_price_per_table_usd or 2.5))
+        except Exception:
+            monthly_price_per_table_usd = Decimal('2.50')
         
         if name:
             # Create the bar
             new_bar = Bar.objects.create(
                 nom=name, 
                 adresse=address,
-                type_etablissement=bar_type
+                type_etablissement=bar_type,
+                prix_mensuel_par_table_usd=monthly_price_per_table_usd,
             )
             
             if 'logo' in request.FILES:
@@ -189,10 +273,19 @@ class EstablishmentDetailsView(LoginRequiredMixin, TemplateView):
             
             new_bar.save()
             
-            # Link to profile
+            # Link to profile and keep the active bar on the new establishment
             profile = PilotProfile.objects.get(user=request.user)
             profile.bar = new_bar
-            profile.save()
+            profile.save(update_fields=['bar'])
+            profile.owned_bars.add(new_bar)
+            trial_granted = grant_trial_if_eligible(profile, new_bar)
+            record_owner_audit(
+                profile,
+                new_bar,
+                'TRIAL_GRANTED' if trial_granted else 'TRIAL_DENIED',
+                request=request,
+                details={'bar_created': True, 'trial_granted': trial_granted, 'bar_name': new_bar.nom},
+            )
             
             # Nettoyage session
             if 'setup_bar_type' in request.session:
@@ -201,6 +294,43 @@ class EstablishmentDetailsView(LoginRequiredMixin, TemplateView):
             return redirect('table_setup')
             
         return self.get(request, *args, **kwargs)
+
+class SwitchEstablishmentView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        profile = get_object_or_404(PilotProfile, user=request.user)
+        bar_id = request.POST.get('bar_id')
+        next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or reverse('dashboard_html')
+        if not bar_id:
+            payload = {'success': False, 'error': 'Etablissement manquant.'}
+            live_response = _live_payload(request, payload, status=400)
+            if live_response is not None:
+                return live_response
+            return redirect(next_url)
+
+        bar = profile.owned_bars.filter(id=bar_id).first()
+        if not bar:
+            payload = {'success': False, 'error': 'Vous ne possedez pas cet etablissement.'}
+            live_response = _live_payload(request, payload, status=403)
+            if live_response is not None:
+                return live_response
+            return redirect(next_url)
+
+        profile.bar = bar
+        profile.save(update_fields=['bar'])
+        record_owner_audit(profile, bar, 'BAR_SWITCHED', request=request, details={'bar_name': bar.nom})
+        messages.success(request, f'Etablissement active: {bar.nom}')
+
+        payload = {
+            'success': True,
+            'message': f'Etablissement bascule vers {bar.nom}.',
+            'redirect_url': next_url,
+            'current_bar': {'id': str(bar.id), 'nom': bar.nom, 'exchange_rate': float(bar.taux_change_usd_to_cdf or 2800)},
+        }
+        live_response = _live_payload(request, payload)
+        if live_response is not None:
+            return live_response
+        return redirect(next_url)
+
 
 class TableSetupView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/table_setup.html'
@@ -312,8 +442,20 @@ class FinanceView(LoginRequiredMixin, TemplateView):
             rate = request.POST.get('taux')
             if rate:
                 bar.taux_change_usd_to_cdf = Decimal(rate)
-                bar.save()
-                messages.success(request, f"Taux de change mis à jour : 1$ = {rate} FC")
+                bar.save(update_fields=['taux_change_usd_to_cdf'])
+                payload = {
+                    'success': True,
+                    'message': f"Taux de change mis à jour : 1$ = {rate} FC",
+                    'exchange_rate': float(bar.taux_change_usd_to_cdf or 2800),
+                    'dispatch_event': {
+                        'type': 'barpilote:exchange-rate-changed',
+                        'detail': {'exchange_rate': float(bar.taux_change_usd_to_cdf or 2800)},
+                    },
+                }
+                live = _live_payload(request, payload)
+                if live is not None:
+                    return live
+                messages.success(request, payload['message'])
         
         return redirect('finance_html')
 
@@ -512,7 +654,7 @@ class FactureActionView(LoginRequiredMixin, View):
             montant_cdf = request.POST.get('montant_cdf', 0)
             type_f = request.POST.get('type_facture', 'CLIENT')
             
-            Facture.objects.create(
+            facture = Facture.objects.create(
                 bar=profile.bar,
                 numero=f"FAC-{uuid.uuid4().hex[:6].upper()}",
                 client_fournisseur=client,
@@ -521,21 +663,57 @@ class FactureActionView(LoginRequiredMixin, View):
                 type_facture=type_f,
                 statut='IMPAYEE'
             )
-            messages.success(request, "Facture enregistrée.")
+            if facture.type_facture == 'CLIENT':
+                notify_debt_created(facture, actor=request.user)
+            payload = {
+                'success': True,
+                'message': "Facture enregistrée.",
+                'dispatch_event': {'type': 'barpilote:finance-changed', 'detail': {'facture_id': str(facture.id), 'action': 'create'}},
+            }
+            live = _live_payload(request, payload)
+            if live is not None:
+                return live
+            messages.success(request, payload['message'])
             
         elif action == 'pay':
             facture_id = request.POST.get('facture_id')
             facture = Facture.objects.get(id=facture_id, bar=profile.bar)
             facture.statut = 'PAYEE'
             facture.date_paiement = timezone.now()
-            facture.save()
-            messages.success(request, f"Facture {facture.numero} marquée comme payée.")
+            facture.save(update_fields=['statut', 'date_paiement'])
+            notify_bar_owners(
+                profile.bar,
+                actor=request.user,
+                category='DEBT',
+                title=f"Dette réglée - {facture.client_fournisseur}",
+                message=f"La facture {facture.numero} a été marquée comme payée.",
+                url='/proprietaire/finance/',
+            )
+            payload = {
+                'success': True,
+                'message': f"Facture {facture.numero} marquée comme payée.",
+                'text_updates': {f'#facture-status-{facture.id}': 'PAYEE'},
+                'dispatch_event': {'type': 'barpilote:finance-changed', 'detail': {'facture_id': str(facture.id), 'action': 'pay'}},
+            }
+            live = _live_payload(request, payload)
+            if live is not None:
+                return live
+            messages.success(request, payload['message'])
             
         elif action == 'delete':
             facture_id = request.POST.get('facture_id')
             facture = Facture.objects.get(id=facture_id, bar=profile.bar)
             facture.delete()
-            messages.success(request, "Facture supprimée.")
+            payload = {
+                'success': True,
+                'message': 'Facture supprimée.',
+                'remove_selectors': [f'#facture-row-{facture_id}'],
+                'dispatch_event': {'type': 'barpilote:finance-changed', 'detail': {'facture_id': str(facture_id), 'action': 'delete'}},
+            }
+            live = _live_payload(request, payload)
+            if live is not None:
+                return live
+            messages.success(request, payload['message'])
 
         return redirect('finance_html')
 
@@ -566,7 +744,15 @@ class RecordLossView(LoginRequiredMixin, View):
         item.quantite_actuelle = max(0, item.quantite_actuelle - quantite)
         item.save()
         
-        messages.success(request, f"Perte de {quantite} x {item.produit.nom} enregistrée. Stock mis à jour.")
+        payload = {
+            'success': True,
+            'message': f"Perte de {quantite} x {item.produit.nom} enregistrée. Stock mis à jour.",
+            'dispatch_event': {'type': 'barpilote:inventory-changed', 'detail': {'item_id': str(item.id), 'quantite': quantite}},
+        }
+        live = _live_payload(request, payload)
+        if live is not None:
+            return live
+        messages.success(request, payload['message'])
         
         if profile.role == 'SERVEUR':
             return redirect('serveur_dashboard')
@@ -581,15 +767,67 @@ class TeamView(LoginRequiredMixin, TemplateView):
         context['bar'] = profile.bar
         if profile.bar:
             from serveur.models import ServeurProfile
+
             context['staff'] = PilotProfile.objects.filter(bar=profile.bar).exclude(role='PROPRIETAIRE')
-            serveur_staff = list(ServeurProfile.objects.filter(
-                bar=profile.bar,
-                confirmation_status='CONFIRMED',
-                actif=True,
-            ).select_related('user').order_by('prenom', 'nom'))
+            serveur_staff = list(
+                ServeurProfile.objects.filter(
+                    bar=profile.bar,
+                    confirmation_status='CONFIRMED',
+                    actif=True,
+                ).select_related('user').order_by('date_embauche', 'prenom', 'nom')
+            )
+
+            rate = Decimal(profile.bar.taux_change_usd_to_cdf or 2800)
             for member in serveur_staff:
                 member_pilot = PilotProfile.objects.filter(user=member.user, bar=profile.bar).first()
                 member.is_online = bool(member_pilot and member_pilot.is_online)
+                member.hierarchy_level = 3
+                if member.tables_access_granted:
+                    member.hierarchy_level = 2
+                if member.reports_access_granted:
+                    member.hierarchy_level = 1
+                if member.inventory_access_granted:
+                    member.hierarchy_level = min(member.hierarchy_level, 2)
+
+                paid_orders = Order.objects.filter(bar=profile.bar, serveur=member_pilot, statut='PAID') if member_pilot else Order.objects.none()
+                served_orders = Order.objects.filter(bar=profile.bar, serveur=member_pilot, statut__in=['SERVED', 'PAID']) if member_pilot else Order.objects.none()
+                member.tables_managed = served_orders.values('table_id').distinct().count()
+                member.orders_served = served_orders.count()
+                member.paid_orders_count = paid_orders.count()
+                totals = paid_orders.aggregate(total_usd=Sum('total_usd'), total_cdf=Sum('total_cdf'))
+                member.impact_usd = totals['total_usd'] or 0
+                member.impact_cdf = totals['total_cdf'] or 0
+                member.impact_total_usd = Decimal(member.impact_usd or 0) + (Decimal(member.impact_cdf or 0) / rate)
+                member.avg_order_usd = (member.impact_total_usd / member.paid_orders_count) if member.paid_orders_count else Decimal('0')
+                open_debt = Facture.objects.filter(bar=profile.bar, orders__serveur=member_pilot, type_facture='CLIENT', statut='IMPAYEE').distinct() if member_pilot else Facture.objects.none()
+                debt_totals = open_debt.aggregate(total_usd=Sum('montant_usd'), total_cdf=Sum('montant_cdf'))
+                member.open_debt_usd = debt_totals['total_usd'] or 0
+                member.open_debt_cdf = debt_totals['total_cdf'] or 0
+
+                # Note composite: on privilégie les volumes payés, le panier moyen, puis on pénalise les impayés.
+                debt_penalty = Decimal(member.open_debt_usd or 0) + (Decimal(member.open_debt_cdf or 0) / rate)
+                member.team_rating_score = float(
+                    (Decimal(member.impact_total_usd or 0) * Decimal('0.55'))
+                    + (Decimal(member.avg_order_usd or 0) * Decimal('0.30'))
+                    + (Decimal(member.paid_orders_count or 0) * Decimal('1.5'))
+                    + (Decimal(member.orders_served or 0) * Decimal('0.5'))
+                    - (debt_penalty * Decimal('0.25'))
+                )
+                member.team_rating_label = max(0.0, min(100.0, member.team_rating_score))
+                member.is_current_server = member.user_id == self.request.user.id
+
+            def _team_sort_key(member):
+                return (
+                    member.hierarchy_level,
+                    -float(member.team_rating_label),
+                    member.date_embauche or timezone.now().date(),
+                    member.prenom or '',
+                    member.nom or '',
+                )
+
+            serveur_staff.sort(key=_team_sort_key)
+            for index, member in enumerate(serveur_staff, start=1):
+                member.performance_rank = index
             context['serveur_staff'] = serveur_staff
             context['pending_requests'] = ServeurProfile.objects.filter(
                 bar=profile.bar,
@@ -631,15 +869,53 @@ class TeamRequestActionView(LoginRequiredMixin, View):
             pilot_profile.telephone = server_profile.telephone
             pilot_profile.save()
 
-            messages.success(request, f"{server_profile.prenom} {server_profile.nom} a ete ajoute a votre equipe.")
+            notify_user(
+                server_profile.user,
+                actor=request.user,
+                bar=profile.bar,
+                category='TEAM',
+                title='Vous avez été ajouté à l’équipe',
+                message=f"Votre accès à {profile.bar.nom} est confirmé.",
+                url='/serveur/dashboard/',
+            )
+            notify_bar_owners(
+                profile.bar,
+                actor=request.user,
+                category='TEAM',
+                title='Serveur ajouté',
+                message=f"{server_profile.prenom} {server_profile.nom} a rejoint l’équipe.",
+                url='/proprietaire/team/',
+            )
+            message = f"{server_profile.prenom} {server_profile.nom} a ete ajoute a votre equipe."
         elif action == 'reject':
             server_profile.confirmation_status = 'REJECTED'
             server_profile.actif = False
             server_profile.save(update_fields=['confirmation_status', 'actif', 'updated_at'])
-            messages.success(request, f"La demande de {server_profile.prenom} {server_profile.nom} a ete rejetee.")
+            notify_user(
+                server_profile.user,
+                actor=request.user,
+                bar=profile.bar,
+                category='TEAM',
+                title='Demande serveur rejetée',
+                message=f"Votre demande pour {profile.bar.nom} a été rejetée.",
+                url='/serveur/scan/',
+            )
+            message = f"La demande de {server_profile.prenom} {server_profile.nom} a ete rejetee."
         else:
-            messages.error(request, "Action invalide.")
+            message = "Action invalide."
 
+        payload = {
+            'success': action in {'approve', 'reject'},
+            'message': message,
+            'remove_selectors': [f'#pending-request-{server_profile.id}'] if action in {'approve', 'reject'} else [],
+        }
+        live = _live_payload(request, payload)
+        if live is not None:
+            return live
+        if action in {'approve', 'reject'}:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
         return redirect('team_html')
 
 
@@ -678,7 +954,31 @@ class TeamAccessActionView(LoginRequiredMixin, View):
             'reports': 'rapports',
         }
         state = 'accordé' if enabled else 'retiré'
-        messages.success(request, f"Accès {labels[permission]} {state} pour {server_profile.prenom} {server_profile.nom}.")
+        notify_user(
+            server_profile.user,
+            actor=request.user,
+            bar=profile.bar,
+            category='TEAM',
+            title=f"Accès {labels[permission]} {state}",
+            message=f"Votre accès {labels[permission]} a été {state}.",
+            url='/serveur/dashboard/',
+        )
+        payload = {
+            'success': True,
+            'message': f"Accès {labels[permission]} {state} pour {server_profile.prenom} {server_profile.nom}.",
+            'dispatch_event': {
+                'type': 'barpilote:team-permission-changed',
+                'detail': {
+                    'server_profile_id': str(server_profile.id),
+                    'permission': permission,
+                    'enabled': enabled,
+                },
+            },
+        }
+        live = _live_payload(request, payload)
+        if live is not None:
+            return live
+        messages.success(request, payload['message'])
         return redirect('team_html')
 
 
@@ -696,7 +996,7 @@ class TablesView(LoginRequiredMixin, TemplateView):
             # Identifier les tables occupées (commandes non payées/annulées)
             active_orders = Order.objects.filter(
                 bar=bar,
-                statut__in=['PENDING', 'PREPARING', 'SERVED']
+                statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']
             ).select_related('table')
             
             occupied_tables = {}
@@ -744,38 +1044,41 @@ class TableActionView(LoginRequiredMixin, View):
         action = request.POST.get('action')
         table_id = request.POST.get('table_id')
         profile = PilotProfile.objects.get(user=request.user)
+        payload = {'success': False}
         
         if action == 'rename' and table_id:
             new_name = request.POST.get('name')
             if new_name:
                 table = Table.objects.get(id=table_id, bar=profile.bar)
                 table.nom = new_name
-                table.save()
-                messages.success(request, f"Table renommée en {new_name}.")
+                table.save(update_fields=['nom'])
+                notify_bar_servers(profile.bar, actor=request.user, category='TABLE', title='Table renommée', message=f"Une table a été renommée en {new_name}.", url='/serveur/tables/')
+                notify_bar_owners(profile.bar, actor=request.user, category='TABLE', title='Table renommée', message=f"Une table a été renommée en {new_name}.", url='/proprietaire/tables/')
+                payload = {'success': True, 'message': f"Table renommée en {new_name}.", 'text_updates': {f'#table-name-{table.id}': new_name}, 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table.id), 'action': 'rename'}}}
         
         elif action == 'liberate' and table_id:
-            # On passe toutes les commandes actives de cette table à PAID
-            updated = Order.objects.filter(
-                bar=profile.bar,
-                table_id=table_id,
-                statut__in=['PENDING', 'PREPARING', 'SERVED']
-            ).update(statut='PAID', date_maj=timezone.now())
-            messages.success(request, f"La table a été libérée. {updated} commande(s) clôturée(s).")
+            orders_to_close = list(Order.objects.filter(bar=profile.bar, table_id=table_id, statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']))
+            now = timezone.now()
+            updated = Order.objects.filter(id__in=[order.id for order in orders_to_close]).update(statut='PAID', date_maj=now)
+            if orders_to_close:
+                try:
+                    from client.models import ClientOrderMeta
+                    ClientOrderMeta.objects.filter(order__in=orders_to_close).update(payment_requested=False, payment_confirmed_at=now, table_released_at=now, updated_at=now)
+                except Exception:
+                    pass
+            payload = {'success': True, 'message': f"La table a été libérée. {updated} commande(s) clôturée(s).", 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table_id), 'action': 'liberate', 'updated_orders': updated}}}
 
         elif action == 'delete' and table_id:
-            # Vérifier si la table est occupée avant de supprimer
-            has_active_orders = Order.objects.filter(
-                bar=profile.bar,
-                table_id=table_id,
-                statut__in=['PENDING', 'PREPARING', 'SERVED']
-            ).exists()
-            
+            has_active_orders = Order.objects.filter(bar=profile.bar, table_id=table_id, statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']).exists()
             if has_active_orders:
-                messages.error(request, "Impossible de supprimer une table occupée. Libérez-la d'abord.")
+                payload = {'success': False, 'message': "Impossible de supprimer une table occupée. Libérez-la d'abord."}
             else:
                 table = Table.objects.get(id=table_id, bar=profile.bar)
+                table_name = table.nom
                 table.delete()
-                messages.success(request, "La table a été supprimée avec succès.")
+                notify_bar_servers(profile.bar, actor=request.user, category='TABLE', title='Table supprimée', message=f"{table_name} a été retirée du plan de salle.", url='/serveur/tables/')
+                notify_bar_owners(profile.bar, actor=request.user, category='TABLE', title='Table supprimée', message=f"{table_name} a été retirée du plan de salle.", url='/proprietaire/tables/')
+                payload = {'success': True, 'message': 'La table a été supprimée avec succès.', 'remove_selectors': [f'#table-card-{table_id}'], 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table_id), 'action': 'delete'}}}
 
         elif action == 'add':
             count = request.POST.get('count', 0)
@@ -784,9 +1087,7 @@ class TableActionView(LoginRequiredMixin, View):
             except ValueError:
                 count = 0
                 
-            profile = PilotProfile.objects.get(user=request.user)
             if profile.bar and count > 0:
-                # Trouver le numéro max actuel de manière robuste
                 tables = Table.objects.filter(bar=profile.bar, nom__startswith="Table ")
                 max_num = 0
                 for t in tables:
@@ -796,16 +1097,25 @@ class TableActionView(LoginRequiredMixin, View):
                             max_num = num
                     except (IndexError, ValueError):
                         continue
-                
                 start_index = max_num + 1
-                
+                created_names = []
+                created_ids = []
                 for i in range(start_index, start_index + count):
-                    Table.objects.create(
-                        bar=profile.bar,
-                        nom=f"Table {i}",
-                        est_active=True
-                    )
+                    table = Table.objects.create(bar=profile.bar, nom=f"Table {i}", est_active=True)
+                    created_names.append(table.nom)
+                    created_ids.append(str(table.id))
+                if created_names:
+                    notify_bar_servers(profile.bar, actor=request.user, category='TABLE', title='Nouvelles tables ajoutées', message=f"{len(created_names)} table(s) ajoutée(s): {', '.join(created_names[:4])}.", url='/serveur/tables/')
+                    notify_bar_owners(profile.bar, actor=request.user, category='TABLE', title='Nouvelles tables ajoutées', message=f"{len(created_names)} table(s) ajoutée(s): {', '.join(created_names[:4])}.", url='/proprietaire/tables/')
+                    payload = {'success': True, 'message': f"{len(created_names)} table(s) ajoutée(s).", 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_ids': created_ids, 'action': 'add'}}}
         
+        live = _live_payload(request, payload)
+        if live is not None:
+            return live
+        if payload.get('success'):
+            messages.success(request, payload.get('message', 'Action effectuée.'))
+        else:
+            messages.error(request, payload.get('message', 'Action invalide.'))
         return redirect('tables_html')
 
 class TableDownloadQRView(LoginRequiredMixin, View):
@@ -892,7 +1202,7 @@ class TableDownloadQRView(LoginRequiredMixin, View):
         c.roundRect(qr_x - padding, y_pos - padding, qr_size + padding*2, qr_size + padding*2, 12*mm, stroke=1, fill=0)
         
         # QR Code Generation
-        qr_url = f"{settings.SITE_URL}/serveur/table/{table.id}/" if hasattr(settings, 'SITE_URL') else f"https://barpilote.com/table/{table.id}/"
+        qr_url = table.client_menu_url
         qr = qrcode.QRCode(version=1, box_size=10, border=0)
         qr.add_data(qr_url)
         qr.make(fit=True)
@@ -1159,12 +1469,12 @@ class MixedCaseArrivalView(LoginRequiredMixin, TemplateView):
 class ToggleCurrencyView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         profile = PilotProfile.objects.get(user=request.user)
-        if profile.preferred_currency == 'USD':
-            profile.preferred_currency = 'CDF'
-        else:
-            profile.preferred_currency = 'USD'
-        profile.save()
-        return redirect(request.META.get('HTTP_REFERER', '/proprietaire/dashboard/'))
+        profile.preferred_currency = 'CDF' if profile.preferred_currency == 'USD' else 'USD'
+        profile.save(update_fields=['preferred_currency'])
+        return JsonResponse({
+            'currency': profile.preferred_currency,
+            'exchange_rate': float(profile.bar.taux_change_usd_to_cdf or 2800) if profile.bar else 2800,
+        })
 
 class LiveOrdersAPIView(LoginRequiredMixin, View):
     """API pour récupérer les commandes actives (En attente / En préparation) pour le dashboard propriétaire"""
@@ -1177,7 +1487,7 @@ class LiveOrdersAPIView(LoginRequiredMixin, View):
                 
             active_orders = Order.objects.filter(
                 bar=bar, 
-                statut__in=['PENDING', 'PREPARING', 'SERVED']
+                statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']
             ).order_by('date_creation')
             
             orders_data = []
@@ -1185,6 +1495,7 @@ class LiveOrdersAPIView(LoginRequiredMixin, View):
                 items_data = []
                 for item in order.items.all():
                     items_data.append({
+                        'id': str(item.product_item_id),
                         'name': item.product_item.produit.nom,
                         'qty': item.quantite,
                         'price': float(item.prix_unitaire),
@@ -1293,6 +1604,11 @@ class UpdateOrderStatusView(LoginRequiredMixin, View):
                     notes="\n".join(notes_lines)
                 )
                 facture.orders.set(orders)
+                if facture.statut == 'IMPAYEE':
+                    notify_debt_created(facture, actor=request.user)
+
+            for order in orders:
+                notify_order_status(order, actor=request.user, status_label=order.get_statut_display())
             
             return JsonResponse({'success': True, 'new_status': new_status})
         except PilotProfile.DoesNotExist:
@@ -1663,7 +1979,26 @@ class ClientManagementView(LoginRequiredMixin, View):
         elif action == 'delete':
             client_id = request.POST.get('client_id')
             client = get_object_or_404(Client, id=client_id, bar=bar)
+            client_name = client.nom
+            is_whitelisted = client.dette_autorisee
             client.delete()
+            payload = {
+                'success': True,
+                'message': f'Client {client_name} retiré.',
+                'remove_selectors': [f'#client-row-{client_id}'],
+                'text_updates': {
+                    '#clientsTotalCount': str(Client.objects.filter(bar=bar).count()),
+                },
+                'dispatch_event': {
+                    'type': 'barpilote:clients-changed',
+                    'detail': {'client_id': str(client_id), 'action': 'delete'},
+                },
+            }
+            if is_whitelisted:
+                payload['text_updates']['#statWhitelistedCount'] = str(max(0, Client.objects.filter(bar=bar, dette_autorisee=True).count()))
+            live_response = _live_payload(request, payload)
+            if live_response is not None:
+                return live_response
             return redirect('clients_html')
             
         elif action == 'update_threshold':
@@ -1680,3 +2015,86 @@ class ClientManagementView(LoginRequiredMixin, View):
             return redirect('clients_html')
             
         return redirect('clients_html')
+
+
+class FCMConfigAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({
+            'apiKey': settings.FCM_WEB_API_KEY,
+            'authDomain': settings.FCM_WEB_AUTH_DOMAIN,
+            'projectId': settings.FCM_WEB_PROJECT_ID,
+            'storageBucket': settings.FCM_WEB_STORAGE_BUCKET,
+            'messagingSenderId': settings.FCM_WEB_MESSAGING_SENDER_ID,
+            'appId': settings.FCM_WEB_APP_ID,
+            'vapidKey': settings.FCM_WEB_VAPID_KEY,
+        })
+
+
+class FCMTokenAPIView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            payload = json.loads(request.body.decode() or '{}')
+        except json.JSONDecodeError:
+            payload = request.POST
+        token = (payload.get('token') or '').strip()
+        if not token:
+            return JsonResponse({'error': 'Token FCM manquant.'}, status=400)
+        from .models import FCMDeviceToken
+        device, _ = FCMDeviceToken.objects.update_or_create(
+            token=token,
+            defaults={
+                'user': request.user,
+                'platform': payload.get('platform') or 'web',
+                'user_agent': request.META.get('HTTP_USER_AGENT', '')[:1000],
+                'is_active': True,
+            },
+        )
+        return JsonResponse({'success': True, 'device_id': str(device.id)})
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            payload = json.loads(request.body.decode() or '{}')
+        except json.JSONDecodeError:
+            payload = {}
+        token = (payload.get('token') or '').strip()
+        if token:
+            from .models import FCMDeviceToken
+            FCMDeviceToken.objects.filter(user=request.user, token=token).update(is_active=False)
+        return JsonResponse({'success': True})
+
+
+class FirebaseMessagingServiceWorkerView(View):
+    def get(self, request, *args, **kwargs):
+        config = {
+            'apiKey': settings.FCM_WEB_API_KEY,
+            'authDomain': settings.FCM_WEB_AUTH_DOMAIN,
+            'projectId': settings.FCM_WEB_PROJECT_ID,
+            'storageBucket': settings.FCM_WEB_STORAGE_BUCKET,
+            'messagingSenderId': settings.FCM_WEB_MESSAGING_SENDER_ID,
+            'appId': settings.FCM_WEB_APP_ID,
+        }
+        script = f"""
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
+
+firebase.initializeApp({json.dumps(config)});
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {{
+  const title = payload.notification?.title || payload.data?.title || 'BarPilote';
+  const options = {{
+    body: payload.notification?.body || payload.data?.body || '',
+    icon: '/static/logo_orange.png',
+    badge: '/static/logo_orange.png',
+    data: payload.data || {{}},
+  }};
+  self.registration.showNotification(title, options);
+}});
+
+self.addEventListener('notificationclick', (event) => {{
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(clients.openWindow(url));
+}});
+"""
+        return HttpResponse(script, content_type='application/javascript')

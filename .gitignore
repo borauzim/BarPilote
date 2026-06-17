@@ -1,0 +1,5 @@
+.env
+__pycache__/
+*.py[cod]
+db.sqlite3
+barpilote-2026-firebase-adminsdk-fbsvc-4a3bab6bf5.json

@@ -109,12 +109,13 @@
 
         <div class="shrink-0 flex flex-col items-center gap-2">
             <div class="text-center">
-                <p class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase mb-2">Offre de Lancement • -10% Annuel</p>
-                <div class="flex items-baseline gap-1">
-                    <span class="text-2xl font-black text-on-surface">{{ bar.prix_mensuel_estime|floatformat:2 }}$</span>
-                    <span class="text-[10px] font-bold text-on-surface-variant/40">/ mois</span>
+                <p class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase mb-2">SaaS par table • -10% Annuel</p>
+                <div class="flex items-baseline gap-1 justify-center">
+                    <span class="text-2xl font-black text-on-surface">{{ bar.prix_table_mensuel_usd|floatformat:2 }}$</span>
+                    <span class="text-[10px] font-bold text-on-surface-variant/40">/ table / mois</span>
                 </div>
-                <p class="text-[9px] text-on-surface-variant/60 font-medium">Facturé {{ bar.prix_mensuel_estime|mul:12|mul:0.9|floatformat:0 }}$ annuellement</p>
+                <p class="text-[9px] text-on-surface-variant/60 font-medium">{{ bar.tables_facturables_count }} table(s) × {{ bar.prix_table_mensuel_usd|floatformat:2 }}$ = {{ bar.prix_mensuel_estime|floatformat:2 }}$ / mois</p>
+                <p class="text-[9px] text-on-surface-variant/60 font-medium">Facturé {{ bar.prix_annuel_estime|floatformat:0 }}$ annuellement</p>
             </div>
             <button class="w-full px-6 py-3 bg-on-surface text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95 shadow-lg shadow-on-surface/10">
                 S'abonner maintenant
@@ -139,7 +140,7 @@
                     <h2 class="text-sm font-bold text-on-surface-variant/60 uppercase mb-1">Revenu du Jour</h2>
                     <div class="flex items-end gap-4">
                         <h1 class="text-6xl md:text-7xl font-black tracking-tighter text-on-surface leading-none">
-                            {% display_price total_revenue_usd total_revenue_cdf %}
+                            <span id="todayRevenueValue">{% display_price total_revenue_usd total_revenue_cdf %}</span>
                         </h1>
                         <div class="mb-2">
                             {% if revenue_growth_percent >= 0 %}
@@ -267,8 +268,8 @@
                             <div class="hidden sm:flex items-center gap-2">
                                 {% if order.statut == 'PENDING' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>
-                                <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter</button>
-                                {% elif order.statut == 'PREPARING' %}
+                                <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'ACCEPTEE')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter</button>
+                                {% elif order.statut == 'ACCEPTEE' or order.statut == 'PREPARING' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>
                                 <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>
                                 {% elif order.statut == 'SERVED' %}
@@ -282,7 +283,7 @@
                             </div>
                             <div class="flex items-center gap-3">
                                 <div class="text-right">
-                                    <p class="text-xl font-black text-on-surface">{% display_price order.total_usd order.total_cdf %}</p>
+                                    <p class="text-xl font-black text-on-surface">{% order_total order.total_usd order.total_cdf %}</p>
                                 </div>
                                 <button type="button" onclick="event.stopPropagation(); toggleInlineOrderDetails('ownerOrderDetails-{{ order.id }}', this)" class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-orange-600 hover:bg-orange-50 transition-all">
                                     <span data-toggle-icon class="material-symbols-outlined text-sm transition-transform duration-300">expand_more</span>
@@ -302,7 +303,7 @@
                                     <p class="text-xs font-black text-on-surface truncate">{{ item.product_item.produit.nom }}</p>
                                     <p class="text-[9px] font-bold text-on-surface-variant/50 uppercase">{{ item.unite_vente }} x{{ item.quantite }}</p>
                                 </div>
-                                <span class="text-[10px] font-black text-on-surface-variant shrink-0">{{ item.prix_unitaire|floatformat:2 }} {{ item.devise }}</span>
+                                <span class="text-[10px] font-black text-on-surface-variant shrink-0">{% money_amount item.prix_unitaire item.devise %}</span>
                             </div>
                             {% empty %}
                             <p class="text-xs text-on-surface-variant/50 font-bold text-center py-4">Aucun produit trouvé.</p>
@@ -727,7 +728,6 @@
 
         // --- Reception Mode Logic ---
         let receptionModeActive = false;
-        let liveOrderInterval = null;
 
         function toggleReceptionMode() {
             receptionModeActive = !receptionModeActive;
@@ -738,14 +738,11 @@
                 thumb.classList.add('translate-x-6');
                 toggle.classList.remove('bg-surface-container-highest');
                 toggle.classList.add('bg-orange-600');
-                // Start polling every 10 seconds
-                fetchLiveOrders(); // immediate fetch
-                liveOrderInterval = setInterval(fetchLiveOrders, 10000);
+                fetchLiveOrders(); // chargement initial uniquement
             } else {
                 thumb.classList.remove('translate-x-6');
                 toggle.classList.add('bg-surface-container-highest');
                 toggle.classList.remove('bg-orange-600');
-                if (liveOrderInterval) clearInterval(liveOrderInterval);
             }
         }
 
@@ -764,6 +761,54 @@
             return cookieValue;
         }
 
+
+        function formatRealtimeMoney(usd, cdf) {
+            const parts = [];
+            if (Number(usd || 0)) parts.push(Number(usd || 0).toFixed(2) + ' $');
+            if (Number(cdf || 0)) parts.push(Math.floor(Number(cdf || 0)).toLocaleString('fr-FR') + ' FC');
+            return parts.length ? parts.join(' + ') : '0.00 $';
+        }
+
+        function connectOwnerDashboardSocket() {
+            const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+            const socket = new WebSocket(`${protocol}://${location.host}/ws/proprietaire/dashboard/`);
+            socket.onmessage = (event) => {
+                const payload = JSON.parse(event.data || '{}');
+                if (payload.type !== 'proprietaire.commande_accepted' || !payload.commande) return;
+                const commande = payload.commande;
+                const audio = new Audio('/static/sounds/notification.mp3');
+                audio.volume = 0.85;
+                audio.play().catch(() => {});
+                if (payload.dashboard) {
+                    const revenueEl = document.getElementById('chiffre-affaires');
+                    if (revenueEl) {
+                        revenueEl.textContent = formatRealtimeMoney(payload.dashboard.today_revenue_usd, payload.dashboard.today_revenue_cdf);
+                    }
+                }
+                const list = document.getElementById('liste-commandes-actives');
+                if (list) {
+                    const card = document.createElement('article');
+                    card.className = 'rounded-xl border border-orange-100 bg-white p-4 shadow-sm';
+                    card.dataset.orderId = commande.id;
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-black text-on-surface">Table ${commande.table_nom || 'Comptoir'}</p>
+                                <p class="text-xs font-semibold text-on-surface-variant">${commande.server || 'Serveur'} </p>
+                            </div>
+                            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase text-emerald-700">Acceptée</span>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between text-xs font-bold text-on-surface-variant">
+                            <span>Commande ${commande.id.slice(0, 8)}</span>
+                            <span>${Number(commande.total_euros || commande.total_usd || 0).toFixed(2)} €</span>
+                        </div>`;
+                    list.prepend(card);
+                }
+            };
+            socket.onclose = () => setTimeout(connectOwnerDashboardSocket, 3000);
+        }
+        connectOwnerDashboardSocket();
+
         function updateOrderStatus(orderId, newStatus) {
             fetch('/proprietaire/api/update-order-status/', {
                 method: 'POST',
@@ -777,8 +822,7 @@
             .then(data => {
                 if(data.success) {
                     // Instantly refetch or just reload page for simplicity if reception mode isn't on
-                    if (receptionModeActive) fetchLiveOrders();
-                    else window.location.reload();
+                    fetchLiveOrders();
                 }
             });
         }
@@ -826,7 +870,7 @@
                         orders: [],
                         total_usd: 0,
                         total_cdf: 0,
-                        items: {}, // key: item.name, value: item object
+                        items: {}, // key: product/unit/currency/price, value: merged line
                         timestamp: o.timestamp
                     };
                 }
@@ -841,31 +885,37 @@
                 // Merge items
                 if (o.items) {
                     o.items.forEach(item => {
-                        if (group.items[item.name]) {
-                            group.items[item.name].qty += item.qty;
+                        const itemKey = [
+                            item.id || item.name,
+                            item.unit || 'BOUTEILLE',
+                            item.devise || 'USD',
+                            Number(item.price || 0).toFixed(2)
+                        ].join('|');
+                        if (group.items[itemKey]) {
+                            group.items[itemKey].qty += Number(item.qty || 0);
                         } else {
-                            group.items[item.name] = { ...item };
+                            group.items[itemKey] = { ...item, qty: Number(item.qty || 0) };
                         }
                     });
                 }
             });
 
             // 2. Render each group
-            Object.values(groupedOrders).sort((a, b) => b.timestamp - a.timestamp).forEach(group => {
+            Object.values(groupedOrders).sort((a, b) => b.timestamp - a.timestamp).forEach((group, index) => {
                 let statusBadge = '';
                 let actionBtn = '';
                 
                 const hasPending = group.orders.some(o => o.statut === 'PENDING');
-                const hasPreparing = group.orders.some(o => o.statut === 'PREPARING');
+                const hasPreparing = group.orders.some(o => o.statut === 'ACCEPTEE' || o.statut === 'PREPARING');
                 const groupItemsJson = encodeURIComponent(JSON.stringify(Object.values(group.items)));
                 
                 if (hasPending) {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>';
                     const pendingIds = group.orders.filter(o => o.statut === 'PENDING').map(o => o.id).join(',');
-                    actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${pendingIds}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter tournée</button>`;
+                    actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${pendingIds}', 'ACCEPTEE')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter tournée</button>`;
                 } else if (hasPreparing) {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>';
-                    const preparingIds = group.orders.filter(o => o.statut === 'PREPARING').map(o => o.id).join(',');
+                    const preparingIds = group.orders.filter(o => o.statut === 'ACCEPTEE' || o.statut === 'PREPARING').map(o => o.id).join(',');
                     actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${preparingIds}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>`;
                 } else {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Servi</span>';
@@ -875,7 +925,7 @@
 
                 // Chronometer Logic
                 let chronoHtml = '';
-                const activeUnservedOrders = group.orders.filter(o => o.statut === 'PENDING' || o.statut === 'PREPARING');
+                const activeUnservedOrders = group.orders.filter(o => o.statut === 'PENDING' || o.statut === 'ACCEPTEE' || o.statut === 'PREPARING');
                 if (activeUnservedOrders.length > 0) {
                     // Find the oldest active unserved order
                     let oldestTime = Infinity;
@@ -921,17 +971,16 @@
                 const diffSeconds = Math.floor(Date.now()/1000) - group.timestamp;
                 let timeStr = diffSeconds < 60 ? 'maintenant' : Math.floor(diffSeconds/60) + ' min ago';
 
-                // Price display check
-                const prefCurrency = '{{ pref_currency }}';
-                const rate = {{ profile.bar.taux_change_usd_to_cdf|default:2800 }};
-                let displayPrice = '';
-                if (prefCurrency === 'USD') {
-                    let val = group.total_usd > 0 ? group.total_usd : (group.total_cdf / rate);
-                    displayPrice = val.toFixed(2) + ' $';
-                } else {
-                    let val = group.total_cdf > 0 ? group.total_cdf : (group.total_usd * rate);
-                    displayPrice = Math.floor(val).toLocaleString() + ' FC';
+                const priceParts = [];
+                const totalUsd = Number(group.total_usd || 0);
+                const totalCdf = Number(group.total_cdf || 0);
+                if (totalUsd) {
+                    priceParts.push(totalUsd.toFixed(2) + ' $');
                 }
+                if (totalCdf) {
+                    priceParts.push(Math.floor(totalCdf).toLocaleString('fr-FR') + ' FC');
+                }
+                const displayPrice = priceParts.length ? priceParts.join(' + ') : '0.00 $';
 
                 // Inline Products Display
                 let itemsArr = Object.values(group.items);
@@ -1026,17 +1075,17 @@
 
         function formatOrderDetailsPrice(amount, currency) {
             const value = Number(amount || 0);
-            if (currency === 'CDF') return Math.floor(value).toLocaleString() + ' FC';
+            if (currency === 'CDF') return Math.floor(value).toLocaleString('fr-FR') + ' FC';
             return value.toFixed(2) + ' $';
         }
 
         function formatOrderDetailsTotal(totalUsd, totalCdf) {
-            const prefCurrency = '{{ pref_currency }}';
-            const rate = {{ profile.bar.taux_change_usd_to_cdf|default:2800 }};
-            if (prefCurrency === 'USD') {
-                return (Number(totalUsd || 0) + (Number(totalCdf || 0) / rate)).toFixed(2) + ' $';
-            }
-            return Math.floor(Number(totalCdf || 0) + (Number(totalUsd || 0) * rate)).toLocaleString() + ' FC';
+            const parts = [];
+            const usd = Number(totalUsd || 0);
+            const cdf = Number(totalCdf || 0);
+            if (usd) parts.push(usd.toFixed(2) + ' $');
+            if (cdf) parts.push(Math.floor(cdf).toLocaleString('fr-FR') + ' FC');
+            return parts.length ? parts.join(' + ') : '0.00 $';
         }
 
         function openOrderDetailsPopover(tableName, statusLabel, itemsJsonStr, totalUsd, totalCdf) {
@@ -1235,7 +1284,7 @@
                     if (typeof fetchLiveOrders === 'function') {
                         fetchLiveOrders();
                     } else {
-                        location.reload();
+                        fetchLiveOrders();
                     }
                 } else {
                     alert("Erreur lors de l'enregistrement de la dette : " + (data.error || 'inconnue'));
@@ -1291,8 +1340,9 @@
             
             let html = '';
             items.forEach(item => {
+                const lineTotal = Number(item.price || 0) * Number(item.qty || 0);
                 const isUSD = item.devise === 'USD';
-                const priceDisplay = isUSD ? `${item.price} $` : `${item.price.toLocaleString()} FC`;
+                const priceDisplay = isUSD ? `${lineTotal.toFixed(2)} $` : `${Math.floor(lineTotal).toLocaleString()} FC`;
                 html += `
                 <div class="flex justify-between items-center text-sm">
                     <span class="font-bold text-on-surface"><span class="text-on-surface-variant mr-1">${item.qty}x</span> ${item.name}</span>
@@ -1301,17 +1351,11 @@
             });
             container.innerHTML = html;
 
-            // Display total based on preferred currency
-            const prefCurrency = '{{ pref_currency }}';
-            const rate = {{ profile.bar.taux_change_usd_to_cdf|default:2800 }};
-            let totalDisplay = '';
-            if (prefCurrency === 'USD') {
-                let val = totalUsd > 0 ? totalUsd : (totalCdf / rate);
-                totalDisplay = val.toFixed(2) + ' $';
-            } else {
-                let val = totalCdf > 0 ? totalCdf : (totalUsd * rate);
-                totalDisplay = Math.floor(val).toLocaleString() + ' FC';
-            }
+            // Display real order totals without converting currencies.
+            const totalParts = [];
+            if (Number(totalUsd || 0)) totalParts.push(Number(totalUsd || 0).toFixed(2) + ' $');
+            if (Number(totalCdf || 0)) totalParts.push(Math.floor(Number(totalCdf || 0)).toLocaleString('fr-FR') + ' FC');
+            let totalDisplay = totalParts.length ? totalParts.join(' + ') : '0.00 $';
             document.getElementById('paymentOrderTotal').innerText = totalDisplay;
 
             // Show Modal
@@ -1360,8 +1404,7 @@
             .then(data => {
                 if(data.success) {
                     closePaymentModal();
-                    if (receptionModeActive) fetchLiveOrders();
-                    else window.location.reload();
+                    fetchLiveOrders();
                 } else {
                     alert("Erreur lors du paiement");
                 }
@@ -1470,7 +1513,7 @@
                     displayPriceStr = (p * item.qty).toFixed(2) + ' $';
                 } else {
                     let p = item.currency === 'CDF' ? itemPrice : itemPrice * exchangeRate;
-                    displayPriceStr = (p * item.qty).toLocaleString() + ' FC';
+                    displayPriceStr = Math.floor(p * item.qty).toLocaleString('fr-FR') + ' FC';
                 }
                 
                 const div = document.createElement('div');
@@ -1503,7 +1546,7 @@
                 totalDisplay.innerText = finalTotal.toFixed(2) + ' $';
             } else {
                 let finalTotal = totalCDF + (totalUSD * exchangeRate);
-                totalDisplay.innerText = finalTotal.toLocaleString() + ' FC';
+                totalDisplay.innerText = Math.floor(finalTotal).toLocaleString('fr-FR') + ' FC';
             }
         }
 
@@ -1525,10 +1568,36 @@
             }
         }
 
-        function appendMessage(text, isUser = false) {
+        const advisorApiUrl = "{% url 'advisor_api' %}";
+        const advisorHistory = [];
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return '';
+        }
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"]/g, function (char) {
+                return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[char];
+            });
+        }
+
+        function formatAdvisorText(text) {
+            return escapeHtml(text).replace(/\n/g, '<br>');
+        }
+
+        function appendMessage(text, isUser = false, options = {}) {
             const container = document.getElementById('chatMessages');
             const msg = document.createElement('div');
             msg.className = `flex ${isUser ? 'justify-end' : ''} gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300`;
+            if (options.loading) msg.dataset.loading = 'true';
+            const body = isUser ? escapeHtml(text) : formatAdvisorText(text);
+            if (!options.loading) {
+                advisorHistory.push({ role: isUser ? 'user' : 'assistant', text: String(text || '').slice(0, 600) });
+                if (advisorHistory.length > 10) advisorHistory.splice(0, advisorHistory.length - 10);
+            }
             
             if (!isUser) {
                 msg.innerHTML = `
@@ -1536,38 +1605,49 @@
                         <span class="material-symbols-outlined text-sm">smart_toy</span>
                     </div>
                     <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-surface-container-high text-sm text-on-surface leading-relaxed shadow-sm">
-                        ${text}
+                        ${body}
                     </div>
                 `;
             } else {
                 msg.innerHTML = `
                     <div class="bg-on-surface text-white p-4 rounded-2xl rounded-tr-none text-sm leading-relaxed max-w-[85%] shadow-lg">
-                        ${text}
+                        ${body}
                     </div>
                 `;
             }
             
             container.appendChild(msg);
             container.scrollTop = container.scrollHeight;
+            return msg;
         }
 
         function askAI(topic) {
-            if (!topic) return;
-            appendMessage(topic, true);
-            
-            setTimeout(() => {
-                let response = "";
-                if (topic.includes('stock')) {
-                    response = "D'après mes calculs, vous vendez beaucoup de <strong>Primus</strong> aujourd'hui. Il vous reste seulement 5 bouteilles en réserve. Je vous conseille d'en commander un casier avant 19h.";
-                } else if (topic.includes('Revenu') || topic.includes('ventes')) {
-                    response = "Votre panier moyen est de <strong>{{ avg_basket_usd|floatformat:2 }}$</strong>. Pour l'augmenter, vous pourriez proposer un 'Happy Hour' sur les Softs entre 16h et 18h.";
-                } else if (topic.includes('Staff') || topic.includes('équipe')) {
-                    response = "Jean est votre meilleur vendeur ce soir, mais les commandes de la Table 4 prennent du retard. Un petit coup de main en salle serait utile.";
-                } else {
-                    response = "C'est une excellente question. Je vais continuer d'analyser vos données pour vous donner la meilleure réponse stratégique.";
-                }
-                appendMessage(response);
-            }, 1000);
+            const question = (topic || '').trim();
+            if (!question) return;
+            appendMessage(question, true);
+            const loading = appendMessage('Analyse des données en cours...', false, { loading: true });
+            const body = new URLSearchParams();
+            body.append('question', question);
+            body.append('history', JSON.stringify(advisorHistory.slice(-8)));
+
+            fetch(advisorApiUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: body.toString()
+            })
+            .then(res => res.ok ? res.json() : Promise.reject(res))
+            .then(data => {
+                loading.remove();
+                appendMessage(data.answer || 'Je n’ai pas assez de données pour répondre précisément.');
+            })
+            .catch(() => {
+                loading.remove();
+                appendMessage('Impossible de joindre le conseiller pour le moment. Réessayez dans quelques secondes.');
+            });
         }
 
         function sendMessage() {

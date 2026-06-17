@@ -2,28 +2,39 @@ from django.views.generic import TemplateView, DetailView
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q, Count, Sum, F
 from django.contrib import messages
 from django.contrib.auth import logout
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from datetime import timedelta
 import uuid
 
 from proprietaire.models import PilotProfile, StockItem, Order, OrderItem, Table, Bar, Category, Perte, Facture, Client
 from proprietaire.order_services import take_order_for_profile
+from proprietaire.notifications import notify_bar_owners, notify_debt_created, notify_order_created, notify_order_status, notify_user
 from serveur.models import ServeurProfile, Shift
+from client.models import ClientOrderMeta
 from serveur.invitations import InvitationError, attach_user_to_bar
+
+
+def _expects_json(request):
+    accept = request.headers.get('Accept', '')
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in accept
+
+
+def _live_payload(request, payload, status=200):
+    if _expects_json(request):
+        return JsonResponse(payload, status=status)
+    return None
 
 
 def _server_base_context(profile, pilot_profile=None):
     bar = profile.bar
+    # L'interface serveur travaille toujours en dollars.
     pref_currency = 'USD'
-    if pilot_profile and pilot_profile.preferred_currency:
-        pref_currency = pilot_profile.preferred_currency
-    elif hasattr(profile.user, 'pilot_profile') and profile.user.pilot_profile.preferred_currency:
-        pref_currency = profile.user.pilot_profile.preferred_currency
 
     return {
         'profile': profile,
@@ -39,6 +50,35 @@ def _server_base_context(profile, pilot_profile=None):
 
 def _server_display_name(profile):
     return f"{profile.prenom} {profile.nom}".strip()
+
+
+def _payment_currency(value):
+    return value if value in {'USD', 'CDF'} else 'CDF'
+
+
+def _convert_payment_amount(bar, total_usd, total_cdf, currency):
+    currency = _payment_currency(currency)
+    rate = Decimal(bar.taux_change_usd_to_cdf or 2800)
+    total_usd = Decimal(total_usd or 0)
+    total_cdf = Decimal(total_cdf or 0)
+    if currency == 'USD':
+        amount = total_usd + (total_cdf / rate)
+        return amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP), rate
+    amount = total_cdf + (total_usd * rate)
+    return amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP), rate
+
+
+def _payment_label(amount, currency):
+    if currency == 'CDF':
+        return f"{amount:,.0f} FC".replace(',', ' ')
+    return f"{amount:.2f} $"
+
+
+def _order_payment_currency(order, fallback='CDF'):
+    try:
+        return _payment_currency(order.client_meta.payment_currency)
+    except ClientOrderMeta.DoesNotExist:
+        return _payment_currency(fallback)
 
 
 def _server_loss_queryset(profile, pilot_profile=None):
@@ -185,7 +225,7 @@ class ServeurDashboardView(LoginRequiredMixin, TemplateView):
         context['profile'] = profile
         context['bar'] = bar
         context['is_pending_confirmation'] = profile.confirmation_status == 'PENDING'
-        owner = bar.proprietaires.first() if bar else None
+        owner = (bar.owners.first() or bar.proprietaires.first()) if bar else None
         context['owner_name'] = f"{owner.prenom} {owner.nom}".strip() if owner else "the owner"
 
         if bar and profile.confirmation_status == 'PENDING':
@@ -214,7 +254,7 @@ class ServeurDashboardView(LoginRequiredMixin, TemplateView):
             own_orders = Order.objects.filter(bar=bar, serveur=pilot_profile) if pilot_profile else Order.objects.none()
             own_today_orders = own_orders.filter(date_creation__date=today)
             own_paid_today = own_today_orders.filter(statut='PAID')
-            active_own_orders = own_orders.filter(statut__in=['PENDING', 'PREPARING', 'SERVED']).select_related('table').prefetch_related('items__product_item__produit').order_by('-date_creation')
+            active_own_orders = own_orders.filter(statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']).select_related('table').prefetch_related('items__product_item__produit').order_by('-date_creation')
 
             revenue_today = own_paid_today.aggregate(
                 total_usd=Sum('total_usd'),
@@ -255,7 +295,7 @@ class ServeurDashboardView(LoginRequiredMixin, TemplateView):
 
             occupied_table_ids = Order.objects.filter(
                 bar=bar,
-                statut__in=['PENDING', 'PREPARING', 'SERVED']
+                statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']
             ).values_list('table_id', flat=True).distinct()
             total_tables = Table.objects.filter(bar=bar).count()
             tables_actives = occupied_table_ids.count()
@@ -269,7 +309,13 @@ class ServeurDashboardView(LoginRequiredMixin, TemplateView):
 
             context['active_orders'] = active_own_orders.count()
             context['active_orders_list'] = active_own_orders
-            context['recent_orders'] = own_orders.select_related('table').prefetch_related('items').order_by('-date_creation')[:10]
+            context['pilot_profile'] = pilot_profile
+            context['recent_orders'] = (
+                Order.objects.filter(bar=bar)
+                .select_related('table', 'serveur')
+                .prefetch_related('items__product_item__produit')
+                .order_by('-date_creation')
+            )
             context['personal_orders_today'] = own_today_orders.count()
             context['personal_served_today'] = own_today_orders.filter(statut__in=['SERVED', 'PAID']).count()
 
@@ -387,8 +433,13 @@ class ServeurFinanceView(ServeurOwnerStyleSectionMixin, TemplateView):
         context['start_date'] = start_date.strftime('%Y-%m-%d')
         context['end_date'] = end_date.strftime('%Y-%m-%d')
 
-        orders = Order.objects.filter(bar=bar, serveur=pilot_profile, statut='PAID', date_creation__range=(start_date, end_date))
-        revenue_data = orders.aggregate(total_usd=Sum('total_usd'), total_cdf=Sum('total_cdf'), count=Count('id'))
+        own_paid_orders = Order.objects.filter(
+            bar=bar,
+            serveur=pilot_profile,
+            statut='PAID',
+            date_creation__range=(start_date, end_date),
+        )
+        revenue_data = own_paid_orders.aggregate(total_usd=Sum('total_usd'), total_cdf=Sum('total_cdf'), count=Count('id'))
         context['revenue_usd'] = revenue_data['total_usd'] or 0
         context['revenue_cdf'] = revenue_data['total_cdf'] or 0
         context['total_orders'] = revenue_data['count'] or 0
@@ -405,7 +456,11 @@ class ServeurFinanceView(ServeurOwnerStyleSectionMixin, TemplateView):
         context['total_perte_cdf'] = loss_cdf
         context['pertes_par_produit'] = pertes_par_produit
 
-        personal_factures = Facture.objects.filter(bar=bar, orders__serveur=pilot_profile).filter(
+        # Factures liées uniquement aux commandes servies par ce serveur.
+        personal_factures = Facture.objects.filter(
+            bar=bar,
+            orders__serveur=pilot_profile,
+        ).filter(
             Q(date_emission__range=(start_date, end_date)) | Q(statut='IMPAYEE')
         ).order_by('-date_emission').distinct()
         context['factures'] = personal_factures
@@ -416,11 +471,11 @@ class ServeurFinanceView(ServeurOwnerStyleSectionMixin, TemplateView):
         context['personal_debt_count'] = unpaid_data['count'] or 0
         context['total_perte_usd'] += context['personal_debt_usd']
         context['total_perte_cdf'] += context['personal_debt_cdf']
-        context['report_orders'] = Order.objects.filter(bar=bar, serveur=pilot_profile).select_related('table').order_by('-date_creation')[:20]
+        context['report_orders'] = own_paid_orders.select_related('table').order_by('-date_creation')[:20]
         context['inventory_items'] = StockItem.objects.filter(bar=bar).select_related('produit')
 
         from django.db import models as django_models
-        order_items = OrderItem.objects.filter(order__in=orders).select_related('product_item')
+        order_items = OrderItem.objects.filter(order__in=own_paid_orders).select_related('product_item')
         profit_usd, profit_cdf = _profit_summary(order_items)
         context['gross_profit_usd'] = profit_usd
         context['gross_profit_cdf'] = profit_cdf
@@ -469,13 +524,18 @@ class ServeurClientsView(ServeurOwnerStyleSectionMixin, TemplateView):
             context['clients'] = []
             return context
 
-        own_orders = Order.objects.filter(bar=bar, serveur=pilot_profile).exclude(Q(client_name__isnull=True) & Q(client_phone__isnull=True))
         rate = Decimal(bar.taux_change_usd_to_cdf or 2800)
+        own_orders = Order.objects.filter(
+            bar=bar,
+            serveur=pilot_profile,
+        ).exclude(Q(client_name__isnull=True) & Q(client_phone__isnull=True))
+
         clients = {}
         for order in own_orders:
             key = (order.client_phone or '').strip() or (order.client_name or '').strip().lower()
             if not key:
                 continue
+
             if key not in clients:
                 client = Client.objects.filter(bar=bar).filter(Q(telephone__iexact=order.client_phone) | Q(nom__iexact=order.client_name)).first()
                 clients[key] = {
@@ -487,16 +547,29 @@ class ServeurClientsView(ServeurOwnerStyleSectionMixin, TemplateView):
                     'debt_usd': Decimal('0'),
                     'debt_cdf': Decimal('0'),
                     'orders_count': 0,
+                    'paid_orders_count': 0,
+                    'unpaid_orders_count': 0,
                     'last_order_at': None,
                     'eligible': False,
                 }
-            clients[key]['orders_count'] += 1
-            if not clients[key]['last_order_at'] or order.date_creation > clients[key]['last_order_at']:
-                clients[key]['last_order_at'] = order.date_creation
-            if order.statut == 'PAID':
-                clients[key]['total_spent_cdf'] += Decimal(order.total_cdf or 0) + (Decimal(order.total_usd or 0) * rate)
 
-        debt_factures = Facture.objects.filter(bar=bar, orders__serveur=pilot_profile, type_facture='CLIENT', statut='IMPAYEE').distinct()
+            client_data = clients[key]
+            client_data['orders_count'] += 1
+            if not client_data['last_order_at'] or order.date_creation > client_data['last_order_at']:
+                client_data['last_order_at'] = order.date_creation
+
+            if order.statut == 'PAID':
+                client_data['paid_orders_count'] += 1
+                client_data['total_spent_cdf'] += Decimal(order.total_cdf or 0) + (Decimal(order.total_usd or 0) * rate)
+            else:
+                client_data['unpaid_orders_count'] += 1
+
+        debt_factures = Facture.objects.filter(
+            bar=bar,
+            orders__serveur=pilot_profile,
+            type_facture='CLIENT',
+            statut='IMPAYEE',
+        ).distinct()
         for facture in debt_factures.prefetch_related('orders'):
             matched_order = facture.orders.filter(serveur=pilot_profile).exclude(Q(client_name__isnull=True) & Q(client_phone__isnull=True)).first()
             if not matched_order:
@@ -508,9 +581,13 @@ class ServeurClientsView(ServeurOwnerStyleSectionMixin, TemplateView):
 
         for client_data in clients.values():
             client_data['eligible'] = client_data['dette_autorisee'] or client_data['total_spent_cdf'] >= Decimal(bar.seuil_dette_eligible or 0)
+            client_data['payment_status_label'] = 'Impayé' if (client_data['debt_usd'] or client_data['debt_cdf'] or client_data['unpaid_orders_count']) else 'Payé'
+            client_data['payment_status_class'] = 'bg-red-50 text-red-700 border-red-100' if client_data['payment_status_label'] == 'Impayé' else 'bg-emerald-50 text-emerald-700 border-emerald-100'
+
         context['clients'] = sorted(clients.values(), key=lambda c: (c['debt_cdf'] + c['debt_usd'] * rate, c['total_spent_cdf']), reverse=True)
         context['personal_clients_count'] = len(clients)
         context['personal_debt_clients_count'] = sum(1 for c in clients.values() if c['debt_usd'] or c['debt_cdf'])
+        context['personal_paid_clients_count'] = sum(1 for c in clients.values() if not (c['debt_usd'] or c['debt_cdf'] or c['unpaid_orders_count']))
         return context
 
 
@@ -522,8 +599,8 @@ class ServeurTeamView(ServeurOwnerStyleSectionMixin, TemplateView):
         profile = self.serveur_profile
         context.update(_server_base_context(profile, self.pilot_profile))
         bar = profile.bar
-        owner_profile = bar.proprietaires.first() if bar else None
-        serveur_staff = list(ServeurProfile.objects.filter(bar=bar, confirmation_status='CONFIRMED', actif=True).select_related('user')) if bar else []
+        owner_profile = (bar.owners.first() or bar.proprietaires.first()) if bar else None
+        serveur_staff = list(ServeurProfile.objects.filter(bar=bar, confirmation_status='CONFIRMED', actif=True).select_related('user').order_by('date_embauche', 'prenom', 'nom')) if bar else []
         rate = Decimal(bar.taux_change_usd_to_cdf or 2800) if bar else Decimal('2800')
         for member in serveur_staff:
             member_pilot = PilotProfile.objects.filter(user=member.user, bar=bar).first()
@@ -543,7 +620,36 @@ class ServeurTeamView(ServeurOwnerStyleSectionMixin, TemplateView):
             member.open_debt_cdf = debt_totals['total_cdf'] or 0
             member.is_current_server = member.user_id == self.request.user.id
             member.is_online = bool(member_pilot and member_pilot.is_online)
-        serveur_staff.sort(key=lambda m: (m.impact_total_usd, m.avg_order_usd, m.orders_served), reverse=True)
+
+            member.hierarchy_level = 3
+            member.hierarchy_label = 'Opérationnel'
+            if member.tables_access_granted:
+                member.hierarchy_level = 2
+                member.hierarchy_label = 'Autonomie tables'
+            if member.reports_access_granted:
+                member.hierarchy_level = 1
+                member.hierarchy_label = 'Responsable'
+            if member.inventory_access_granted and member.hierarchy_level > 2:
+                member.hierarchy_level = 2
+                member.hierarchy_label = 'Autonomie inventaire'
+
+            debt_penalty = Decimal(member.open_debt_usd or 0) + (Decimal(member.open_debt_cdf or 0) / rate)
+            member.team_rating_score = float(
+                (Decimal(member.impact_total_usd or 0) * Decimal('0.55'))
+                + (Decimal(member.avg_order_usd or 0) * Decimal('0.30'))
+                + (Decimal(member.paid_orders_count or 0) * Decimal('1.5'))
+                + (Decimal(member.orders_served or 0) * Decimal('0.5'))
+                - (debt_penalty * Decimal('0.25'))
+            )
+            member.team_rating_label = max(0.0, min(100.0, member.team_rating_score))
+
+        serveur_staff.sort(key=lambda m: (
+            m.hierarchy_level,
+            -float(m.team_rating_label),
+            m.date_embauche or timezone.now().date(),
+            m.prenom or '',
+            m.nom or '',
+        ))
         for index, member in enumerate(serveur_staff, start=1):
             member.performance_rank = index
         context['owner_profile'] = owner_profile
@@ -563,7 +669,7 @@ class ServeurTablesView(ServeurOwnerStyleSectionMixin, TemplateView):
         context.update(_server_base_context(profile, self.pilot_profile))
         bar = profile.bar
         tables = Table.objects.filter(bar=bar).order_by('nom') if bar else Table.objects.none()
-        active_orders = Order.objects.filter(bar=bar, statut__in=['PENDING', 'PREPARING', 'SERVED']).select_related('table', 'serveur') if bar else Order.objects.none()
+        active_orders = Order.objects.filter(bar=bar, statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']).select_related('table', 'serveur') if bar else Order.objects.none()
         occupied_tables = {}
         for order in active_orders.order_by('-date_creation'):
             if order.table_id in occupied_tables:
@@ -600,6 +706,46 @@ class ServeurTablesView(ServeurOwnerStyleSectionMixin, TemplateView):
         return context
 
 
+class ServeurTableActionView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        profile = get_object_or_404(ServeurProfile, user=request.user, actif=True)
+        pilot_profile = PilotProfile.objects.filter(user=request.user, bar=profile.bar, role='SERVEUR').first()
+        action = request.POST.get('action')
+        table_id = request.POST.get('table_id')
+
+        if action != 'liberate' or not table_id:
+            payload = {'success': False, 'message': 'Action invalide.'}
+            live = _live_payload(request, payload, status=400)
+            if live is not None:
+                return live
+            messages.error(request, payload['message'])
+            return redirect('serveur_tables')
+
+        table = get_object_or_404(Table, id=table_id, bar=profile.bar)
+        orders_to_close = list(Order.objects.filter(bar=profile.bar, table=table, statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']))
+        now = timezone.now()
+        updated = Order.objects.filter(id__in=[order.id for order in orders_to_close]).update(statut='PAID', date_maj=now)
+
+        if orders_to_close:
+            ClientOrderMeta.objects.filter(order__in=orders_to_close).update(payment_requested=False, payment_confirmed_by=pilot_profile, payment_confirmed_at=now, table_released_at=now, updated_at=now)
+            notify_bar_owners(profile.bar, actor=request.user, category='TABLE', title=f'Table libérée - {table.nom}', message=f'{profile.prenom} {profile.nom} a libéré {table.nom}. {updated} commande(s) clôturée(s).', url=reverse('tables_html'))
+            for order in orders_to_close:
+                notify_order_status(order, actor=request.user, status_label='Payé')
+
+        payload = {
+            'success': True,
+            'message': f"{table.nom} libérée. {updated} commande(s) clôturée(s).",
+            'remove_selectors': [f'#table-card-{table.id}'],
+            'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table.id), 'action': 'liberate', 'updated_orders': updated}},
+        }
+        live = _live_payload(request, payload)
+        if live is not None:
+            return live
+
+        messages.success(request, payload['message'])
+        return redirect('serveur_tables')
+
+
 class ServeurReportView(ServeurFinanceView):
     pass
 
@@ -618,7 +764,7 @@ class ServeurScanQRView(LoginRequiredMixin, View):
             messages.success(request, f"Vous êtes déjà confirmé pour {bar.nom}.")
             return redirect('serveur_dashboard')
 
-        owner = bar.proprietaires.first()
+        owner = bar.owners.first() or bar.proprietaires.first()
         owner_name = f"{owner.prenom} {owner.nom}".strip() if owner else "the owner"
         messages.success(
             request,
@@ -837,12 +983,13 @@ class ServeurCommandeDetailView(LoginRequiredMixin, View):
         diff = timezone.now() - order.date_creation
         minutes = int(diff.total_seconds() // 60)
         
-        context = {
-            'profile': profile,
+        pilot_profile = PilotProfile.objects.filter(user=request.user, role='SERVEUR', bar=profile.bar).first()
+        context = _server_base_context(profile, pilot_profile)
+        context.update({
             'order': order,
             'minutes_ago': minutes,
             'items': order.items.all().select_related('product_item__produit')
-        }
+        })
         return render(request, self.template_name, context)
 
 class ServeurMissionView(LoginRequiredMixin, View):
@@ -861,37 +1008,39 @@ class ServeurShiftActionView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         profile = get_object_or_404(ServeurProfile, user=request.user)
         action = request.POST.get('action')
+        payload = {'success': False}
         
         if action == 'end_shift':
-            shift = Shift.objects.filter(
-                serveur=profile,
-                status__in=['ACTIVE', 'BREAK']
-            ).first()
+            shift = Shift.objects.filter(serveur=profile, status__in=['ACTIVE', 'BREAK']).first()
             if shift:
                 shift.end_time = timezone.now()
                 shift.status = 'ENDED'
-                shift.save()
-                messages.success(request, "Quart de travail terminé avec succès.")
-            return redirect('serveur_welcome')
+                shift.save(update_fields=['end_time', 'status'])
+                payload = {'success': True, 'message': 'Quart de travail terminé avec succès.', 'dispatch_event': {'type': 'barpilote:shift-ended', 'detail': {'shift_id': str(shift.id)}}}
             
-        elif action == 'deliver' or action == 'serve':
+        elif action in {'deliver', 'serve'}:
             order_id = request.POST.get('order_id')
             order = get_object_or_404(Order, id=order_id, bar=profile.bar)
             order.statut = 'SERVED'
             order.date_service = timezone.now()
-            order.save()
-            messages.success(request, f"La commande pour {order.table.nom} est marquée comme servie.")
-            return redirect('serveur_dashboard')
+            order.save(update_fields=['statut', 'date_service', 'date_maj'])
+            notify_order_status(order, actor=request.user, status_label=order.get_statut_display())
+            payload = {'success': True, 'message': f"La commande pour {order.table.nom} est marquée comme servie.", 'dispatch_event': {'type': 'barpilote:order-changed', 'detail': {'order_id': str(order.id), 'action': 'serve', 'status': 'SERVED'}}}
             
         elif action == 'pay':
             order_id = request.POST.get('order_id')
             order = get_object_or_404(Order, id=order_id, bar=profile.bar)
             order.statut = 'PAID'
-            order.save()
-            messages.success(request, f"La commande pour {order.table.nom} a été payée.")
-            return redirect('serveur_dashboard')
+            order.save(update_fields=['statut', 'date_maj'])
+            notify_order_status(order, actor=request.user, status_label=order.get_statut_display())
+            payload = {'success': True, 'message': f"La commande pour {order.table.nom} a été payée.", 'dispatch_event': {'type': 'barpilote:order-changed', 'detail': {'order_id': str(order.id), 'action': 'pay', 'status': 'PAID'}}}
 
-        return redirect('serveur_dashboard')
+        live = _live_payload(request, payload)
+        if live is not None:
+            return live
+        if payload.get('success'):
+            messages.success(request, payload['message'])
+        return redirect('serveur_dashboard' if action != 'end_shift' else 'serveur_welcome')
 
 
 
@@ -908,6 +1057,52 @@ class ServeurClientHistoryView(LoginRequiredMixin, View):
         return JsonResponse(data)
 
 
+
+class ServeurClientOrderActionView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        profile = get_object_or_404(ServeurProfile, user=request.user, confirmation_status='CONFIRMED', actif=True)
+        pilot_profile = get_object_or_404(PilotProfile, user=request.user, role='SERVEUR', bar=profile.bar)
+        order = get_object_or_404(Order, id=request.POST.get('order_id'), bar=profile.bar)
+
+        if order.serveur_id and order.serveur_id != pilot_profile.id:
+            return JsonResponse({'error': 'Cette commande est assignée à un autre serveur.'}, status=403)
+        if not order.serveur_id:
+            order.serveur = pilot_profile
+            order.save(update_fields=['serveur', 'date_maj'])
+
+        meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
+        action = request.POST.get('action')
+
+        if action == 'confirm_cash':
+            currency = _payment_currency(request.POST.get('payment_currency') or 'USD')
+            amount, rate = _convert_payment_amount(order.bar, order.total_usd, order.total_cdf, currency)
+            order.statut = 'PAID'
+            order.save(update_fields=['statut', 'date_maj'])
+            meta.payment_currency = currency
+            meta.payment_amount = amount
+            meta.payment_rate = rate
+            meta.payment_confirmed_by = pilot_profile
+            meta.payment_confirmed_at = timezone.now()
+            meta.payment_requested = False
+            meta.save(update_fields=['payment_currency', 'payment_amount', 'payment_rate', 'payment_confirmed_by', 'payment_confirmed_at', 'payment_requested', 'updated_at'])
+            notify_order_status(order, actor=request.user, status_label=f'Payée cash - {_payment_label(amount, currency)}')
+            return JsonResponse({'success': True})
+
+        if action == 'cancel':
+            if order.statut == 'PAID':
+                return JsonResponse({'error': 'Commande déjà payée.'}, status=400)
+            reason = request.POST.get('reason', '').strip()
+            order.statut = 'CANCELLED'
+            order.save(update_fields=['statut', 'date_maj'])
+            meta.cancelled_by = 'SERVEUR'
+            meta.cancellation_reason = reason[:500]
+            meta.save(update_fields=['cancelled_by', 'cancellation_reason', 'updated_at'])
+            notify_bar_owners(profile.bar, actor=request.user, category='ORDER', title=f'Commande annulée - {order.table.nom}', message=f'Motif serveur: {reason or "Non précisé"}', url=reverse('dashboard_html'))
+            return JsonResponse({'success': True})
+
+        return JsonResponse({'error': 'Action invalide.'}, status=400)
+
+
 class ServeurUpdateOrderStatusView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         profile = get_object_or_404(ServeurProfile, user=request.user, confirmation_status='CONFIRMED', actif=True)
@@ -918,14 +1113,21 @@ class ServeurUpdateOrderStatusView(LoginRequiredMixin, View):
         client_phone = request.POST.get('client_phone', '').strip()
         deferred = request.POST.get('deferred') == 'true'
         server_guarantee = request.POST.get('server_guarantee') == 'true'
+        requested_payment_currency = _payment_currency(request.POST.get('payment_currency')) if request.POST.get('payment_currency') else None
 
-        if not order_ids_raw or new_status not in {'SERVED', 'PAID'}:
+        if not order_ids_raw or new_status not in {'ACCEPTEE', 'PREPARING', 'SERVED', 'PAID'}:
             return JsonResponse({'error': 'Paramètres invalides.'}, status=400)
 
         order_ids = [oid.strip() for oid in order_ids_raw.split(',') if oid.strip()]
-        orders = Order.objects.filter(id__in=order_ids, bar=profile.bar, serveur=pilot_profile).select_related('table')
+        orders = Order.objects.filter(
+            Q(serveur=pilot_profile) | Q(serveur__isnull=True),
+            id__in=order_ids,
+            bar=profile.bar,
+        ).select_related('table')
         if not orders.exists():
             return JsonResponse({'error': 'Commande introuvable pour ce serveur.'}, status=404)
+        if orders.count() != len(order_ids):
+            return JsonResponse({'error': 'Une commande est déjà assignée à un autre serveur.'}, status=403)
 
         if deferred:
             eligibility = _client_debt_eligibility(bar=profile.bar, name=client_name, phone=client_phone)
@@ -939,7 +1141,11 @@ class ServeurUpdateOrderStatusView(LoginRequiredMixin, View):
             eligibility = None
 
         for order in orders:
+            if not order.serveur_id:
+                order.serveur = pilot_profile
             order.statut = new_status
+            if new_status in {'ACCEPTEE', 'PREPARING'} and not order.date_service:
+                order.date_service = timezone.now()
             if new_status == 'SERVED':
                 order.date_service = timezone.now()
             if client_name:
@@ -950,9 +1156,14 @@ class ServeurUpdateOrderStatusView(LoginRequiredMixin, View):
 
         facture_id = None
         if new_status == 'PAID':
-            total_usd = sum(order.total_usd for order in orders)
-            total_cdf = sum(order.total_cdf for order in orders)
-            table_nom = orders.first().table.nom if orders.first().table else 'Comptoir'
+            orders_list = list(orders)
+            total_usd = sum(order.total_usd for order in orders_list)
+            total_cdf = sum(order.total_cdf for order in orders_list)
+            payment_currency = requested_payment_currency or _order_payment_currency(orders_list[0])
+            converted_amount, payment_rate = _convert_payment_amount(profile.bar, total_usd, total_cdf, payment_currency)
+            facture_usd = converted_amount if payment_currency == 'USD' else Decimal('0')
+            facture_cdf = converted_amount if payment_currency == 'CDF' else Decimal('0')
+            table_nom = orders_list[0].table.nom if orders_list[0].table else 'Comptoir'
             if client_name and client_phone:
                 client_nom_complet = f"{client_name} ({client_phone})"
             elif client_name:
@@ -965,8 +1176,10 @@ class ServeurUpdateOrderStatusView(LoginRequiredMixin, View):
             short_uuid = str(uuid.uuid4())[:4].upper()
             date_str = timezone.now().strftime('%y%m%d')
             notes_lines = [
-                f"Dette enregistrée par serveur pour {orders.count()} commande(s) - {table_nom}" if deferred else f"Paiement serveur de {orders.count()} commande(s) - {table_nom}",
+                f"Dette enregistrée par serveur pour {len(orders_list)} commande(s) - {table_nom}" if deferred else f"Paiement serveur de {len(orders_list)} commande(s) - {table_nom}",
                 f"Serveur: {profile.prenom} {profile.nom}",
+                f"Montant encaissé en {payment_currency}: {_payment_label(converted_amount, payment_currency)}",
+                f"Total original: {total_usd:.2f} USD + {total_cdf:.0f} CDF; taux: 1 USD = {payment_rate:.0f} CDF",
             ]
             guaranteed_by = None
             if deferred:
@@ -980,17 +1193,41 @@ class ServeurUpdateOrderStatusView(LoginRequiredMixin, View):
                 bar=profile.bar,
                 numero=f"FAC-{date_str}-{short_uuid}",
                 client_fournisseur=client_nom_complet,
-                montant_usd=total_usd,
-                montant_cdf=total_cdf,
+                montant_usd=facture_usd,
+                montant_cdf=facture_cdf,
                 type_facture='CLIENT',
                 statut='IMPAYEE' if deferred else 'PAYEE',
                 guaranteed_by=guaranteed_by,
                 notes="\n".join(notes_lines),
             )
-            facture.orders.set(orders)
+            facture.orders.set(orders_list)
             facture_id = str(facture.id)
+            for order in orders_list:
+                order_currency = requested_payment_currency or _order_payment_currency(order, payment_currency)
+                order_amount, order_rate = _convert_payment_amount(profile.bar, order.total_usd, order.total_cdf, order_currency)
+                meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
+                meta.payment_currency = order_currency
+                meta.payment_amount = order_amount
+                meta.payment_rate = order_rate
+                if not deferred:
+                    meta.payment_confirmed_by = pilot_profile
+                    meta.payment_confirmed_at = timezone.now()
+                    meta.payment_requested = False
+                update_fields = ['payment_currency', 'payment_amount', 'payment_rate', 'updated_at']
+                if not deferred:
+                    update_fields += ['payment_confirmed_by', 'payment_confirmed_at', 'payment_requested']
+                meta.save(update_fields=update_fields)
 
-        return JsonResponse({'success': True, 'new_status': new_status, 'facture_id': facture_id})
+        for order in orders:
+            notify_order_status(order, actor=request.user, status_label=order.get_statut_display())
+        response_data = {'success': True, 'new_status': new_status, 'facture_id': facture_id}
+        if new_status == 'PAID':
+            response_data.update({
+                'payment_currency': payment_currency,
+                'payment_amount': float(converted_amount),
+                'payment_label': _payment_label(converted_amount, payment_currency),
+            })
+        return JsonResponse(response_data)
 
 
 
@@ -1004,7 +1241,10 @@ class ServeurToggleCurrencyView(LoginRequiredMixin, View):
             pilot_profile.role = 'SERVEUR'
         pilot_profile.preferred_currency = 'CDF' if pilot_profile.preferred_currency == 'USD' else 'USD'
         pilot_profile.save(update_fields=['bar', 'role', 'preferred_currency'])
-        return redirect(request.META.get('HTTP_REFERER', 'serveur_dashboard'))
+        return JsonResponse({
+            'currency': pilot_profile.preferred_currency,
+            'exchange_rate': float(profile.bar.taux_change_usd_to_cdf or 2800) if profile.bar else 2800,
+        })
 
 class ServeurLogoutView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):

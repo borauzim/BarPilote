@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Johnnie Walker - Sélection Executive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#eeeef0",
+                    "surface-tint": "#a63b00",
+                    "on-secondary-fixed-variant": "#7d2d04",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "surface-dim": "#d9dadc",
+                    "on-surface-variant": "#5b4137",
+                    "surface-variant": "#e2e2e4",
+                    "inverse-primary": "#ffb599",
+                    "on-background": "#1a1c1d",
+                    "inverse-on-surface": "#f0f0f2",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#370e00",
+                    "on-primary-fixed": "#370e00",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e2e2e4",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "primary-fixed": "#ffdbce",
+                    "outline": "#8f7065",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f3f3f5",
+                    "on-tertiary-container": "#002d51",
+                    "on-tertiary-fixed": "#001d36",
+                    "on-secondary-container": "#732600",
+                    "background": "#f9f9fb",
+                    "primary": "#a63b00",
+                    "surface-bright": "#f9f9fb",
+                    "surface": "#f9f9fb",
+                    "secondary-fixed": "#ffdbce",
+                    "tertiary-fixed": "#d1e4ff",
+                    "on-error": "#ffffff",
+                    "secondary-fixed-dim": "#ffb599",
+                    "on-primary-container": "#531900",
+                    "tertiary-fixed-dim": "#9fcaff",
+                    "surface-container-high": "#e8e8ea",
+                    "on-tertiary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#ff5e00",
+                    "tertiary-container": "#0097fb",
+                    "primary-fixed-dim": "#ffb599",
+                    "on-tertiary-fixed-variant": "#00497d",
+                    "tertiary": "#0061a4",
+                    "secondary": "#9c431c",
+                    "outline-variant": "#e4bfb1",
+                    "inverse-surface": "#2f3132",
+                    "on-surface": "#1a1c1d",
+                    "secondary-container": "#fd8d5f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "16px",
+                    "xl": "24px",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "display": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9fb; color: #1a1c1d; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-nav { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .executive-shadow { box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04); }
+        .orange-gradient { background: linear-gradient(145deg, #ff5e00 0%, #a63b00 100%); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .active-ring { outline: 2px solid #ff5e00; outline-offset: 2px; }
+    </style>
+</head>
+<body class="bg-background min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#F5F5F7]/80 dark:bg-[#1A1C1D]/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-7xl mx-auto">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-[#EEEEF0] active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[#1A1C1D]">arrow_back</span>
+</button>
+<h1 class="font-sans font-semibold tracking-tight text-[#1A1C1D] text-center">Validation</h1>
+<div class="flex items-center gap-4">
+<span class="text-lg font-bold tracking-tighter text-[#FF5E00]">J.W.</span>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-5xl mx-auto">
+<!-- Main Product Section: Apple-style Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+<!-- Left: High-End Visual -->
+<div class="relative group">
+<div class="rounded-xl overflow-hidden executive-shadow bg-surface-container-lowest transition-transform duration-700 group-hover:scale-[1.02]">
+<img alt="Johnnie Walker Whisky" class="w-full h-auto aspect-square object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLte9pm1eX1TOH4iBkiQDUuL5c8h386kfC32qbpKvjGe5usiDnA6XAEId8aB8WfAjYUHm-hCm2zcSCIjroZv0nSp2SCgR9SG_BmnARk1Ug3qQK0zf3Yo9VsNzDfxPQe-5itvXuU29PFAX9nTaOEG13jftNXTnmOJoBCFqYAyl-0eQNkq1vpsxJVjXyqLLeapsyo4d4VWq2Kfv4uXzTc3o_-k2e5-SAQ4HArgetLNfke2g7eVxaHsA_iYVu78"/>
+</div>
+<!-- Ambient Glow effect -->
+<div class="absolute -inset-4 bg-primary/5 blur-3xl -z-10 rounded-full opacity-50"></div>
+</div>
+<!-- Right: Product Controls -->
+<div class="flex flex-col gap-8">
+<!-- Header -->
+<div class="space-y-2">
+<span class="text-[10px] font-medium uppercase tracking-[0.15em] text-primary">Prestige Collection</span>
+<h2 class="text-4xl font-extrabold tracking-tight text-on-surface">Johnnie Walker</h2>
+<p class="text-on-surface-variant text-sm leading-relaxed max-w-sm">
+                        Une expérience sensorielle unique. Des notes fumées emblématiques équilibrées par une douceur maltée et des nuances de fruits secs.
+                    </p>
+</div>
+<!-- Dosage Selector -->
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<label class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Choix du dosage</label>
+<span class="text-3xl font-light text-on-surface tracking-tighter transition-all duration-300" id="price-display">12,00€</span>
+</div>
+<div class="flex flex-col gap-3" id="dosage-container">
+<!-- Option 1 -->
+<button class="dosage-btn group flex items-center justify-between p-5 rounded-lg bg-surface-container-lowest border border-transparent hover:border-outline-variant/30 transition-all executive-shadow active:scale-[0.98]" data-choice="glass" onclick="updateSelection('glass', 12.00)">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary group-[.active]:bg-primary group-[.active]:text-white transition-colors">
+<span class="material-symbols-outlined">liquor</span>
+</div>
+<div class="text-left">
+<div class="text-sm font-semibold">Verre (4cl)</div>
+<div class="text-[10px] text-on-surface-variant opacity-60">Dégustation standard</div>
+</div>
+</div>
+<div class="radio-indicator w-5 h-5 rounded-full border-2 border-surface-container group-[.active]:border-primary group-[.active]:bg-primary flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-white opacity-0 group-[.active]:opacity-100"></div>
+</div>
+</button>
+<!-- Option 2 -->
+<button class="dosage-btn group flex items-center justify-between p-5 rounded-lg bg-surface-container-lowest border border-transparent hover:border-outline-variant/30 transition-all executive-shadow active:scale-[0.98]" data-choice="double" onclick="updateSelection('double', 22.00)">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary group-[.active]:bg-primary group-[.active]:text-white transition-colors">
+<span class="material-symbols-outlined">workspace_premium</span>
+</div>
+<div class="text-left">
+<div class="text-sm font-semibold">Dose Double (8cl)</div>
+<div class="text-[10px] text-on-surface-variant opacity-60">Pour les amateurs</div>
+</div>
+</div>
+<div class="radio-indicator w-5 h-5 rounded-full border-2 border-surface-container group-[.active]:border-primary group-[.active]:bg-primary flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-white opacity-0 group-[.active]:opacity-100"></div>
+</div>
+</button>
+<!-- Option 3 -->
+<button class="dosage-btn group flex items-center justify-between p-5 rounded-lg bg-surface-container-lowest border border-transparent hover:border-outline-variant/30 transition-all executive-shadow active:scale-[0.98]" data-choice="bottle" onclick="updateSelection('bottle', 145.00)">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary group-[.active]:bg-primary group-[.active]:text-white transition-colors">
+<span class="material-symbols-outlined">wine_bar</span>
+</div>
+<div class="text-left">
+<div class="text-sm font-semibold">Bouteille Entière</div>
+<div class="text-[10px] text-on-surface-variant opacity-60">Service à table</div>
+</div>
+</div>
+<div class="radio-indicator w-5 h-5 rounded-full border-2 border-surface-container group-[.active]:border-primary group-[.active]:bg-primary flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-white opacity-0 group-[.active]:opacity-100"></div>
+</div>
+</button>
+</div>
+</div>
+<!-- Add Action -->
+<div class="pt-4 flex flex-col gap-4">
+<button class="orange-gradient w-full py-5 rounded-full text-white font-bold text-sm tracking-wide executive-shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3" id="add-to-plate">
+<span class="material-symbols-outlined text-lg">add_shopping_cart</span>
+                        Ajouter au plateau
+                    </button>
+<p class="text-[10px] text-center text-on-surface-variant opacity-50 px-8">
+                        L'abus d'alcool est dangereux pour la santé, à consommer avec modération.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Inventory Status (Design System Specialized Component) -->
+<section class="mt-20 border-t border-surface-container pt-10">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold tracking-tight">Disponibilité du Cellier</h3>
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-[10px] font-bold text-on-surface-variant">MIS À JOUR : 18:42</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+<!-- Stock Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl executive-shadow border border-transparent hover:border-primary/20 transition-all">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[10px] font-bold uppercase text-on-surface-variant/60 tracking-tighter">Réserve Gold</span>
+<span class="text-primary font-bold text-xs">82%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full mb-2">
+<div class="bg-primary h-full rounded-full w-[82%]"></div>
+</div>
+<p class="text-xs font-medium">Stock Optimal</p>
+</div>
+<!-- Stock Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl executive-shadow border border-transparent hover:border-primary/20 transition-all">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[10px] font-bold uppercase text-on-surface-variant/60 tracking-tighter">Édition Blue</span>
+<span class="text-error font-bold text-xs">14%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full mb-2">
+<div class="bg-error h-full rounded-full w-[14%]"></div>
+</div>
+<p class="text-xs font-medium text-error">Critique</p>
+</div>
+<!-- Stock Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl executive-shadow border border-transparent hover:border-primary/20 transition-all">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[10px] font-bold uppercase text-on-surface-variant/60 tracking-tighter">Black Label</span>
+<span class="text-primary font-bold text-xs">55%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full mb-2">
+<div class="bg-primary h-full rounded-full w-[55%]"></div>
+</div>
+<p class="text-xs font-medium">Modéré</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-[#FFFFFF]/80 dark:bg-[#1A1C1D]/90 backdrop-blur-2xl rounded-t-[24px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] md:hidden">
+<div class="flex justify-around items-center h-20 px-4 pb-safe w-full">
+<a class="flex flex-col items-center justify-center text-[#FF5E00] bg-[#FF5E00]/10 rounded-2xl px-4 py-2 active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="text-[10px] font-medium uppercase tracking-[0.05em] mt-1">Menu</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1A1C1D] dark:text-[#F5F5F7] opacity-40 px-4 py-2 hover:opacity-100 transition-opacity active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="text-[10px] font-medium uppercase tracking-[0.05em] mt-1">Cart</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1A1C1D] dark:text-[#F5F5F7] opacity-40 px-4 py-2 hover:opacity-100 transition-opacity active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[10px] font-medium uppercase tracking-[0.05em] mt-1">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1A1C1D] dark:text-[#F5F5F7] opacity-40 px-4 py-2 hover:opacity-100 transition-opacity active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium uppercase tracking-[0.05em] mt-1">Account</span>
+</a>
+</div>
+</nav>
+<script>
+        function updateSelection(choice, price) {
+            // Update buttons state
+            const buttons = document.querySelectorAll('.dosage-btn');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-choice') === choice) {
+                    btn.classList.add('active');
+                    btn.classList.add('border-primary/40');
+                } else {
+                    btn.classList.remove('active');
+                    btn.classList.remove('border-primary/40');
+                }
+            });
+
+            // Update price with animation
+            const priceEl = document.getElementById('price-display');
+            priceEl.style.opacity = '0';
+            priceEl.style.transform = 'translateY(5px)';
+            
+            setTimeout(() => {
+                priceEl.innerText = price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+                priceEl.style.opacity = '1';
+                priceEl.style.transform = 'translateY(0)';
+            }, 150);
+        }
+
+        // Initialize first selection
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSelection('glass', 12.00);
+            
+            // Interaction on "Add to plate"
+            const addBtn = document.getElementById('add-to-plate');
+            addBtn.addEventListener('click', () => {
+                const originalText = addBtn.innerHTML;
+                addBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span>Ajout en cours...';
+                addBtn.disabled = true;
+                
+                setTimeout(() => {
+                    addBtn.innerHTML = '<span class="material-symbols-outlined">check</span>Ajouté !';
+                    addBtn.classList.remove('orange-gradient');
+                    addBtn.classList.add('bg-green-600');
+                    
+                    setTimeout(() => {
+                        addBtn.innerHTML = originalText;
+                        addBtn.classList.add('orange-gradient');
+                        addBtn.classList.remove('bg-green-600');
+                        addBtn.disabled = false;
+                    }, 2000);
+                }, 800);
+            });
+        });
+    </script>
+</body></html>

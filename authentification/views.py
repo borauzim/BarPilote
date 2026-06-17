@@ -55,7 +55,12 @@ class LoginRedirectView(LoginRequiredMixin, View):
                 if not (profile.nom and profile.prenom and profile.telephone):
                     return redirect('profile_setup')
                 if not profile.bar:
-                    return redirect('establishment_setup')
+                    fallback_bar = profile.owned_bars.order_by('-date_creation').first()
+                    if fallback_bar:
+                        profile.bar = fallback_bar
+                        profile.save(update_fields=['bar'])
+                    else:
+                        return redirect('establishment_setup')
                 return redirect('dashboard_html')
             elif profile.role == 'SERVEUR':
                 # Pour les serveurs, rediriger vers la page de scan/setup pour créer leur ServeurProfile

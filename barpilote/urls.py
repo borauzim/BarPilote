@@ -20,11 +20,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from authentification.views import GoogleLogin
 from authentification.root_views import RootRedirectView
+from proprietaire.html_views import FirebaseMessagingServiceWorkerView
 
 from django.views.generic import RedirectView
 
 urlpatterns = [
     path('', RootRedirectView.as_view(), name='root'),
+    path('firebase-messaging-sw.js', FirebaseMessagingServiceWorkerView.as_view(), name='firebase_messaging_sw'),
     path('admin/', admin.site.urls),
     
     # Overrides Allauth local routes to force our custom page
@@ -47,6 +49,9 @@ urlpatterns = [
     # Serveur API & HTML
     path('api/serveur/', include('serveur.urls')),
     path('serveur/', include('serveur.html_urls')),
+
+    # Client public QR
+    path('client/', include('client.urls')),
 ]
 
 if settings.DEBUG:

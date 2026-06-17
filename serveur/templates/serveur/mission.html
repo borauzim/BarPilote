@@ -58,7 +58,7 @@
 
     <!-- Actions -->
     <div class="w-full max-w-sm mx-auto space-y-4 pt-6">
-        <form method="post" action="{% url 'serveur_shift_action' %}">
+        <form method="post" action="{% url 'serveur_shift_action' %}" data-live-action="true">
             {% csrf_token %}
             <input type="hidden" name="action" value="deliver">
             <input type="hidden" name="order_id" value="{{ order.id }}">

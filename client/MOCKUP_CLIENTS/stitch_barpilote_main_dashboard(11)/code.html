@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Digital Sommelier | Boucle Active</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#d1e4ff",
+                        "surface": "#f9f9fb",
+                        "on-primary-fixed": "#370e00",
+                        "on-secondary-container": "#732600",
+                        "primary": "#a63b00",
+                        "surface-tint": "#a63b00",
+                        "on-primary-container": "#531900",
+                        "surface-bright": "#f9f9fb",
+                        "primary-fixed-dim": "#ffb599",
+                        "on-surface-variant": "#5b4137",
+                        "secondary-container": "#fd8d5f",
+                        "secondary": "#9c431c",
+                        "outline-variant": "#e4bfb1",
+                        "tertiary": "#0061a4",
+                        "primary-fixed": "#ffdbce",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#00497d",
+                        "surface-dim": "#d9dadc",
+                        "surface-container-high": "#e8e8ea",
+                        "on-background": "#1a1c1d",
+                        "surface-variant": "#e2e2e4",
+                        "secondary-fixed": "#ffdbce",
+                        "tertiary-container": "#0097fb",
+                        "on-secondary-fixed-variant": "#7d2d04",
+                        "inverse-on-surface": "#f0f0f2",
+                        "outline": "#8f7065",
+                        "on-surface": "#1a1c1d",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#2f3132",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#9fcaff",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-secondary-fixed": "#370e00",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#ff5e00",
+                        "background": "#f9f9fb",
+                        "surface-container-low": "#f3f3f5",
+                        "surface-container-highest": "#e2e2e4",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#002d51",
+                        "on-tertiary-fixed": "#001d36",
+                        "surface-container": "#eeeef0",
+                        "inverse-primary": "#ffb599",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .progress-flow {
+            transition: width 1s linear;
+        }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+        .animate-pulse-soft {
+            animation: pulse-soft 3s ease-in-out infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<nav class="bg-[#F5F5F7]/80 dark:bg-zinc-900/80 backdrop-blur-xl docked full-width top-0 z-50 fixed flex justify-between items-center w-full px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden executive-shadow">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<span class="text-sm font-bold tracking-[0.05em] uppercase text-[#1A1C1D] dark:text-zinc-100">The Digital Sommelier</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-8">
+<a class="text-[#FF5E00] font-semibold transition-opacity hover:opacity-70" href="#">Tableau</a>
+<a class="text-zinc-400 dark:text-zinc-500 transition-opacity hover:opacity-70" href="#">Commandes</a>
+<a class="text-zinc-400 dark:text-zinc-500 transition-opacity hover:opacity-70" href="#">Profil</a>
+</div>
+<button class="material-symbols-outlined text-zinc-400 hover:opacity-70 transition-opacity">info</button>
+</div>
+</nav>
+<main class="flex-grow pt-24 pb-32 px-6 max-w-7xl mx-auto w-full">
+<!-- Header Section -->
+<header class="mb-12">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></div>
+<span class="text-[0.6875rem] font-bold tracking-[0.05em] uppercase text-tertiary">Session En Cours</span>
+</div>
+<h1 class="text-[2.75rem] font-extrabold tracking-tight text-on-surface leading-tight">Boucle Active</h1>
+</header>
+<!-- Main Bento Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Countdown Card (Central Focus) -->
+<div class="lg:col-span-8 bg-surface-container-lowest rounded-xl executive-shadow p-8 lg:p-12 relative overflow-hidden">
+<!-- Background Subtle Gradient -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-tertiary-fixed opacity-10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div>
+<p class="text-[0.6875rem] font-bold tracking-[0.05em] uppercase text-on-surface-variant mb-6">Prochaine tournée dans</p>
+<div class="text-[4.5rem] lg:text-[6rem] font-black tracking-tighter text-on-surface tabular-nums leading-none" id="countdown">
+                            01:24:50
+                        </div>
+</div>
+<!-- Sleek Progress Bar -->
+<div class="mt-12">
+<div class="flex justify-between items-end mb-4">
+<span class="text-sm font-medium text-on-surface-variant">Progression de la boucle</span>
+<span class="text-sm font-bold text-tertiary">72%</span>
+</div>
+<div class="w-full h-3 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="progress-flow h-full bg-tertiary rounded-full shadow-[0_0_15px_rgba(0,97,164,0.3)]" style="width: 72%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Controls Card -->
+<div class="lg:col-span-4 flex flex-col gap-6">
+<div class="bg-surface-container-lowest rounded-xl executive-shadow p-8 flex flex-col gap-4">
+<h3 class="text-sm font-bold tracking-[0.05em] uppercase text-on-surface-variant mb-2">Contrôles de Flux</h3>
+<button class="group flex items-center justify-between w-full p-5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest transition-all duration-300 active:scale-95">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center executive-shadow text-on-surface">
+<span class="material-symbols-outlined">pause</span>
+</div>
+<span class="font-semibold text-on-surface">Mettre en pause</span>
+</div>
+<span class="material-symbols-outlined text-zinc-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+<button class="group flex items-center justify-between w-full p-5 rounded-xl bg-error-container/10 border border-error-container/20 hover:bg-error-container/20 transition-all duration-300 active:scale-95">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center executive-shadow text-error">
+<span class="material-symbols-outlined">close</span>
+</div>
+<span class="font-semibold text-error">Annuler la Boucle</span>
+</div>
+<span class="material-symbols-outlined text-error/30 group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+</div>
+<!-- Status Card -->
+<div class="bg-tertiary text-white rounded-xl executive-shadow p-8 flex-grow">
+<div class="flex items-start justify-between mb-8">
+<div>
+<p class="text-[0.6875rem] font-bold tracking-[0.05em] uppercase text-tertiary-fixed opacity-80 mb-1">État du Service</p>
+<h4 class="text-xl font-bold">Optimisé</h4>
+</div>
+<span class="material-symbols-outlined text-4xl opacity-50">verified</span>
+</div>
+<p class="text-sm leading-relaxed text-tertiary-fixed opacity-90">
+                        Votre boucle est actuellement synchronisée avec le flux du bar. Le temps d'attente estimé est réduit de 15% par rapport à un service standard.
+                    </p>
+</div>
+</div>
+<!-- Metrics Row -->
+<div class="lg:col-span-4 bg-surface-container-lowest rounded-xl executive-shadow p-6 flex items-center gap-6">
+<div class="w-14 h-14 rounded-full bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-3xl">wine_bar</span>
+</div>
+<div>
+<p class="text-[0.6875rem] font-bold tracking-[0.05em] uppercase text-on-surface-variant">Boissons en attente</p>
+<p class="text-2xl font-black text-on-surface">12 unités</p>
+</div>
+</div>
+<div class="lg:col-span-4 bg-surface-container-lowest rounded-xl executive-shadow p-6 flex items-center gap-6">
+<div class="w-14 h-14 rounded-full bg-tertiary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-3xl">group</span>
+</div>
+<div>
+<p class="text-[0.6875rem] font-bold tracking-[0.05em] uppercase text-on-surface-variant">Convives Actifs</p>
+<p class="text-2xl font-black text-on-surface">08 personnes</p>
+</div>
+</div>
+<div class="lg:col-span-4 bg-surface-container-lowest rounded-xl executive-shadow p-6 flex items-center gap-6">
+<div class="w-14 h-14 rounded-full bg-secondary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-3xl">avg_pace</span>
+</div>
+<div>
+<p class="text-[0.6875rem] font-bold tracking-[0.05em] uppercase text-on-surface-variant">Fréquence moyenne</p>
+<p class="text-2xl font-black text-on-surface">45 min</p>
+</div>
+</div>
+</div>
+<!-- Atmospheric Visual -->
+<section class="mt-12 rounded-xl h-48 overflow-hidden relative executive-shadow">
+<img alt="Bar atmosphérique minimaliste" class="w-full h-full object-cover grayscale opacity-40 mix-blend-multiply" data-alt="A high-end, minimalist cocktail bar interior with soft blue and warm orange ambient lighting. The atmosphere is sophisticated and quiet, featuring pristine glassware and polished marble surfaces. A soft, artistic blur creates a sense of professional hospitality and premium executive leisure. The composition is wide and cinematic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnCE0w_LJsCQgqk_pCj1RSxCXMG3jZlwsuJROJCIRYu-cXh7Xr3IfLlsUYDp624l4wcI4id6wtKgo7AGI8nw7ABRLCOrJL0WiTCVw74AE82kDirCUbJ5thILFfiqTcU-pyWC8D5CfTn6qF1kznJV2aPw34ZTwrvcpb92HdKzoKvtUz8NasVySV_SbiDNQC2F19Ri3SFis5uH99FUUjBWG_lwGt4HXrSObuyNCk8BPmCOF6MHUSbwVaqO4p7jgdEhunoCg7UG15r6Zu"/>
+<div class="absolute inset-0 bg-gradient-to-r from-surface to-transparent flex items-center px-12">
+<div class="max-w-md">
+<h3 class="text-xl font-bold mb-2">L'Art de l'Anticipation</h3>
+<p class="text-sm text-on-surface-variant">The Digital Sommelier prépare votre prochaine expérience avant même que vous n'ayez soif.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-8 pb-8 pt-4 md:hidden bg-[#F5F5F7]/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-t-[24px] shadow-[0_-10px_30px_rgba(26,28,29,0.04)]">
+<button class="flex flex-col items-center justify-center text-[#FF5E00] dark:text-[#FF5E00] scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-[10px] font-medium tracking-widest uppercase mt-1">Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 hover:text-[#FF5E00] transition-colors">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium tracking-widest uppercase mt-1">Planning</span>
+</button>
+<button class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 hover:text-[#FF5E00] transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium tracking-widest uppercase mt-1">Compte</span>
+</button>
+</nav>
+<script>
+        // Simple countdown logic simulation
+        let hours = 1;
+        let minutes = 24;
+        let seconds = 50;
+
+        const countdownEl = document.getElementById('countdown');
+
+        function updateCountdown() {
+            seconds--;
+            if (seconds < 0) {
+                seconds = 59;
+                minutes--;
+                if (minutes < 0) {
+                    minutes = 59;
+                    hours--;
+                }
+            }
+
+            const h = hours.toString().padStart(2, '0');
+            const m = minutes.toString().padStart(2, '0');
+            const s = seconds.toString().padStart(2, '0');
+            
+            countdownEl.innerText = `${h}:${m}:${s}`;
+        }
+
+        setInterval(updateCountdown, 1000);
+
+        // Interaction scale effect for buttons
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.classList.add('scale-95');
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.classList.remove('scale-95');
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.classList.remove('scale-95');
+            });
+        });
+    </script>
+</body></html>

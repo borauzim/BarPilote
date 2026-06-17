@@ -29,7 +29,7 @@
             </div>
             <div>
                 <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">{% if read_only_interface %}Clients Servis{% else %}Total Clients Listés{% endif %}</p>
-                <p class="text-2xl font-black text-on-surface">{{ clients|length }}</p>
+                <p id="clientsTotalCount" class="text-2xl font-black text-on-surface">{{ clients|length }}</p>
             </div>
         </div>
         <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex items-center gap-5">
@@ -50,6 +50,7 @@
                         {% endfor %}
                     {% endif %}
                 </p>
+                {% if read_only_interface %}<p class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest mt-2">{{ personal_paid_clients_count|default:0 }} clients payés</p>{% endif %}
             </div>
         </div>
         <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex flex-col justify-between gap-4">
@@ -88,7 +89,7 @@
                         <th class="py-5 px-6">Client</th>
                         <th class="py-5 px-6">Téléphone</th>
                         <th class="py-5 px-6">Total Dépensé (CDF)</th>
-                        {% if read_only_interface %}<th class="py-5 px-6">Dette Ouverte</th>{% endif %}
+                        {% if read_only_interface %}<th class="py-5 px-6">Dette Ouverte</th><th class="py-5 px-6">Paiement</th>{% endif %}
                         <th class="py-5 px-6">Statut d'éligibilité</th>
                         {% if not read_only_interface %}<th class="py-5 px-6 text-center">Autoriser la dette</th>
                         <th class="py-5 px-6 text-right">Actions</th>{% endif %}
@@ -96,7 +97,7 @@
                 </thead>
                 <tbody class="divide-y divide-surface-container">
                     {% for client in clients %}
-                    <tr class="hover:bg-surface-container-low/30 transition-colors">
+                    <tr id="client-row-{{ client.id }}" class="hover:bg-surface-container-low/30 transition-colors">
                         <td class="py-5 px-6">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-black text-sm">
@@ -118,6 +119,12 @@
                         {% if read_only_interface %}
                         <td class="py-5 px-6 font-black text-sm {% if client.debt_usd or client.debt_cdf %}text-red-600{% else %}text-emerald-600{% endif %}">
                             {% if client.debt_usd or client.debt_cdf %}${{ client.debt_usd|floatformat:2 }} / {{ client.debt_cdf|floatformat:0 }} FC{% else %}Aucune{% endif %}
+                        </td>
+                        <td class="py-5 px-6">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest {{ client.payment_status_class }}">
+                                <span class="material-symbols-outlined text-xs">{% if client.payment_status_label == 'Impayé' %}dangerous{% else %}task_alt{% endif %}</span>
+                                {{ client.payment_status_label }}
+                            </span>
                         </td>
                         {% endif %}
                         <td class="py-5 px-6">
@@ -146,7 +153,7 @@
                             </label>
                         </td>
                         <td class="py-5 px-6 text-right">
-                            <form method="POST" action="{% url 'clients_html' %}" onsubmit="return confirm('Voulez-vous vraiment retirer ce client ?');" class="inline">
+                            <form method="POST" action="{% url 'clients_html' %}" data-live-action="true" onsubmit="return confirm('Voulez-vous vraiment retirer ce client ?');" class="inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="name" value="{{ client.nom }}">
@@ -159,7 +166,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="py-16 text-center text-on-surface-variant/40 font-bold text-sm">
+                        <td colspan="{% if read_only_interface %}7{% else %}6{% endif %}" class="py-16 text-center text-on-surface-variant/40 font-bold text-sm">
                             <span class="material-symbols-outlined text-4xl block mb-2 text-zinc-300">group_off</span>
                             Aucun client enregistré pour le moment.
                         </td>

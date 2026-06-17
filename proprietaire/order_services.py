@@ -41,7 +41,7 @@ def take_order_for_profile(*, bar, pilot_profile, table_id, items_raw):
     if not valid_lines:
         return None
 
-    order = Order.objects.filter(table=table, statut__in=['PENDING', 'PREPARING']).first()
+    order = Order.objects.filter(table=table, statut__in=['PENDING', 'ACCEPTEE', 'PREPARING']).first()
     if not order:
         order = Order.objects.create(
             bar=bar,

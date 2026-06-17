@@ -55,7 +55,7 @@
     <!-- Table Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="tablesGrid">
         {% for table in tables %}
-        <div class="table-card bg-white rounded-[32px] p-8 executive-shadow border transition-all duration-500 relative overflow-hidden group 
+        <div id="table-card-{{ table.id }}" class="table-card bg-white rounded-[32px] p-8 executive-shadow border transition-all duration-500 relative overflow-hidden group 
                     {% if table.is_occupied %}{% if is_server_interface and table.is_mine %}border-orange-500/40 ring-4 ring-orange-500/10 status-occupied{% elif is_server_interface %}border-blue-300/50 ring-4 ring-blue-500/5 status-occupied{% elif not read_only_interface %}border-orange-500/30 ring-4 ring-orange-500/5 status-occupied{% else %}border-surface-container-high status-occupied{% endif %}{% else %}border-surface-container-high status-free{% endif %}"
              data-status="{% if table.is_occupied %}occupied{% else %}free{% endif %}">
             
@@ -75,7 +75,7 @@
                     <a href="{% url 'table_download_qr' %}?table_id={{ table.id }}" class="w-10 h-10 rounded-xl flex items-center justify-center text-orange-600 hover:bg-orange-50 transition-colors" title="Télécharger QR">
                         <span class="material-symbols-outlined text-lg">qr_code_2</span>
                     </a>
-                    <form method="post" action="{% url 'table_action' %}" onsubmit="return confirm('Supprimer définitivement la {{ table.nom }} ?')" class="inline">
+                    <form method="post" action="{% url 'table_action' %}" data-live-action="true" onsubmit="return confirm('Supprimer définitivement la {{ table.nom }} ?')" class="inline">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="table_id" value="{{ table.id }}">
@@ -87,7 +87,7 @@
             </div>
             
             <div class="relative z-10">
-                <h3 class="text-2xl font-black text-on-surface tracking-tight mb-1">{{ table.nom }}</h3>
+                <h3 id="table-name-{{ table.id }}" class="text-2xl font-black text-on-surface tracking-tight mb-1">{{ table.nom }}</h3>
                 {% if table.is_occupied %}
                     <div class="mt-4 p-4 rounded-2xl bg-orange-50/50 border border-orange-100/50 group-hover:bg-orange-50 transition-colors">
                         <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-1">
@@ -118,8 +118,8 @@
                         <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
                         Service
                     </a>
-                    {% if table.is_occupied and not read_only_interface %}
-                        <form method="post" action="{% url 'table_action' %}" onsubmit="return confirm('Voulez-vous vraiment libérer cette table ?')" class="flex-1">
+                    {% if table.is_occupied and not read_only_interface or table.is_occupied and is_server_interface %}
+                        <form method="post" action="{% if is_server_interface %}{% url 'serveur_table_action' %}{% else %}{% url 'table_action' %}{% endif %}" data-live-action="true" onsubmit="return confirm('Voulez-vous vraiment libérer cette table ?')" class="flex-1">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="liberate">
                             <input type="hidden" name="table_id" value="{{ table.id }}">
@@ -151,7 +151,7 @@
         <h3 class="text-2xl font-black text-on-surface mb-2">Renommer la Table</h3>
         <p class="text-on-surface-variant text-sm mb-8">Donnez un nom unique à cet emplacement.</p>
         
-        <form method="post" action="{% url 'table_action' %}">
+        <form method="post" action="{% url 'table_action' %}" data-live-action="true">
             {% csrf_token %}
             <input type="hidden" name="action" value="rename">
             <input type="hidden" name="table_id" id="rename_table_id">
@@ -176,7 +176,7 @@
         <h3 class="text-2xl font-black text-on-surface mb-2">Ajouter des Tables</h3>
         <p class="text-on-surface-variant text-sm mb-8">Combien de nouvelles tables souhaitez-vous créer ?</p>
         
-        <form method="post" action="{% url 'table_action' %}">
+        <form method="post" action="{% url 'table_action' %}" data-live-action="true">
             {% csrf_token %}
             <input type="hidden" name="action" value="add">
             

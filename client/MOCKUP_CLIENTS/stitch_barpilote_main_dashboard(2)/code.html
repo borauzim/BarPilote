@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>THE DIGITAL SOMMELIER - Heineken Détail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eeeef0",
+                        "surface-tint": "#a63b00",
+                        "on-secondary-fixed-variant": "#7d2d04",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "surface-dim": "#d9dadc",
+                        "on-surface-variant": "#5b4137",
+                        "surface-variant": "#e2e2e4",
+                        "inverse-primary": "#ffb599",
+                        "on-background": "#1a1c1d",
+                        "inverse-on-surface": "#f0f0f2",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#370e00",
+                        "on-primary-fixed": "#370e00",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e2e2e4",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#ffdbce",
+                        "outline": "#8f7065",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f3f3f5",
+                        "on-tertiary-container": "#002d51",
+                        "on-tertiary-fixed": "#001d36",
+                        "on-secondary-container": "#732600",
+                        "background": "#f9f9fb",
+                        "primary": "#a63b00",
+                        "surface-bright": "#f9f9fb",
+                        "surface": "#f9f9fb",
+                        "secondary-fixed": "#ffdbce",
+                        "tertiary-fixed": "#d1e4ff",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-primary-container": "#531900",
+                        "tertiary-fixed-dim": "#9fcaff",
+                        "surface-container-high": "#e8e8ea",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#ff5e00",
+                        "tertiary-container": "#0097fb",
+                        "primary-fixed-dim": "#ffb599",
+                        "on-tertiary-fixed-variant": "#00497d",
+                        "tertiary": "#0061a4",
+                        "secondary": "#9c431c",
+                        "outline-variant": "#e4bfb1",
+                        "inverse-surface": "#2f3132",
+                        "on-surface": "#1a1c1d",
+                        "secondary-container": "#fd8d5f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "16px",
+                        "xl": "24px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9fb; color: #1a1c1d; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .orange-gradient {
+            background: linear-gradient(145deg, #FF5E00 0%, #A63B00 100%);
+        }
+        /* Custom hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen selection:bg-primary-container/30">
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl docked full-width top-0 z-50 sticky shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+<div class="flex items-center justify-between px-6 py-4 w-full">
+<button class="text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors p-2 rounded-full active:scale-90 transition-transform">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</button>
+<h1 class="text-[#FF5E00] font-black tracking-tighter uppercase font-sans tracking-[0.05em] text-[0.6875rem] font-bold">THE DIGITAL SOMMELIER</h1>
+<div class="flex items-center gap-4">
+<button class="text-[#FF5E00] hover:bg-zinc-100 transition-colors p-2 rounded-full active:scale-90 transition-transform">
+<span class="material-symbols-outlined">wine_bar</span>
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-2xl mx-auto pb-32">
+<!-- Hero Section - Product Image -->
+<section class="relative w-full aspect-[4/5] bg-surface-container-lowest overflow-hidden flex items-center justify-center p-8">
+<!-- Asymmetric Glow Background -->
+<div class="absolute inset-0 bg-gradient-to-tr from-surface-container-low to-white opacity-50"></div>
+<img alt="Heineken Bottle" class="relative z-10 w-full h-full object-contain drop-shadow-2xl transition-transform duration-700 hover:scale-105" src="https://lh3.googleusercontent.com/aida/AP1WRLv1FW7iOdIMuP79WoIgHH1EHjXSsrH1RDFIFQMe0gLuPOSQSKnF8Cmtd48v8SmpFCtyje_1wBcnv-6_ZPKd1Q1VUIVgpUnpOeV6VwEjP0f0El9WikAFz2wBppcQNfHOLc8r4Fri7jamTj4Np2WIz5B43x-ohR0oI1t-ErvEj760twSgCxMb58eGWB9b-V_opA0ohITruO8iwLW0ry7K4ZSfPzHalyGcbOMCUnU9ztQt6fgVnbZinz8bXRFh"/>
+<!-- Temperature Badge (Floating) -->
+<div class="absolute top-10 right-8 bg-white/90 backdrop-blur-md rounded-2xl px-4 py-3 flex items-center gap-3 executive-shadow animate-bounce-subtle">
+<div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#0097fb] text-lg" style="font-variation-settings: 'FILL' 1;">ac_unit</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[0.6rem] font-bold tracking-widest text-zinc-400 uppercase">Température</span>
+<span class="text-sm font-bold text-zinc-800">Extra Cold</span>
+</div>
+</div>
+</section>
+<!-- Product Details Canvas -->
+<section class="px-6 -mt-12 relative z-20">
+<div class="bg-white rounded-t-[40px] pt-10 pb-6 px-4">
+<!-- Editorial Header -->
+<div class="flex flex-col mb-8 px-2">
+<div class="flex justify-between items-end mb-2">
+<div>
+<span class="text-[0.6875rem] font-bold tracking-[0.2em] text-[#FF5E00] uppercase block mb-1">Premium Lager</span>
+<h2 class="text-[2.75rem] font-black text-on-surface leading-none tracking-tight">Heineken</h2>
+</div>
+<div class="text-right">
+<span class="text-[0.6875rem] font-bold text-zinc-400 uppercase block mb-1">Prix Unité</span>
+<span class="text-2xl font-bold text-on-surface">6,50€</span>
+</div>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed max-w-md italic opacity-80">
+                        « Une Heineken bien frappée, servie dans son verre givré »
+                    </p>
+</div>
+<!-- Bento Info Grid -->
+<div class="grid grid-cols-2 gap-4 mb-10">
+<div class="bg-surface-container-low rounded-xl p-5 flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-primary text-3xl">water_drop</span>
+<div>
+<span class="text-[0.6875rem] font-bold text-zinc-400 uppercase block mb-1">Volume</span>
+<span class="text-xl font-bold text-on-surface">33cl</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-5 flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-primary text-3xl">percent</span>
+<div>
+<span class="text-[0.6875rem] font-bold text-zinc-400 uppercase block mb-1">Degré</span>
+<span class="text-xl font-bold text-on-surface">5.0% Vol.</span>
+</div>
+</div>
+</div>
+<!-- The Stock Meter (Specialized Component) -->
+<div class="bg-surface-container-low rounded-xl p-6 mb-10">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-zinc-500 text-sm">inventory_2</span>
+<span class="text-[0.6875rem] font-bold text-zinc-500 uppercase tracking-widest">État du Stock</span>
+</div>
+<span class="text-xs font-bold text-primary uppercase">Stock Élevé</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="h-full orange-gradient w-[85%] rounded-full shadow-[0_0_8px_rgba(255,94,0,0.4)]"></div>
+</div>
+<div class="flex justify-between mt-3 text-[0.6rem] font-medium text-zinc-400">
+<span>Min</span>
+<span>Max (92)</span>
+</div>
+</div>
+<!-- Description / Tasting Notes -->
+<div class="px-2 mb-10">
+<h3 class="text-sm font-bold text-on-surface uppercase tracking-widest mb-4">Notes de Dégustation</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">
+                        Cette lager premium se distingue par sa clarté cristalline et sa robe dorée. En bouche, elle révèle des notes d'orge maltée équilibrées par une amertume subtile et des touches florales provenant du houblon. Sa fermentation en cuves horizontales lui confère une finesse et une pétillance uniques.
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Action Bar (Contextual Suppression of standard nav) -->
+<div class="fixed bottom-0 left-0 w-full z-50 px-6 pb-8 pt-4 bg-gradient-to-t from-white via-white/95 to-transparent">
+<button class="w-full orange-gradient h-16 rounded-full flex items-center justify-center gap-3 text-white font-bold text-lg executive-shadow active:scale-[0.98] transition-transform duration-200">
+<span class="material-symbols-outlined">add_shopping_cart</span>
+            Ajouter au plateau
+        </button>
+</div>
+<!-- BottomNavBar (Hidden on details page as per UX Goal - Suppressed for task-focused screens) -->
+<!-- [Hidden because this is a Details/Focused journey] -->
+<script>
+        // Micro-interaction for temperature badge
+        const badge = document.querySelector('.animate-bounce-subtle');
+        if(badge) {
+            let angle = 0;
+            setInterval(() => {
+                angle += 0.05;
+                const yOffset = Math.sin(angle) * 5;
+                badge.style.transform = `translateY(${yOffset}px)`;
+            }, 30);
+        }
+
+        // Simple scroll behavior for header
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('py-2');
+                header.classList.remove('py-4');
+            } else {
+                header.classList.add('py-4');
+                header.classList.remove('py-2');
+            }
+        });
+    </script>
+</body></html>

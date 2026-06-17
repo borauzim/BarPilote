@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mon Plateau - Vide</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#001d36",
+                        "secondary-fixed": "#ffdbce",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#f0f0f2",
+                        "tertiary-fixed-dim": "#9fcaff",
+                        "tertiary": "#0061a4",
+                        "primary-fixed-dim": "#ffb599",
+                        "outline": "#8f7065",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#5b4137",
+                        "background": "#f9f9fb",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#d1e4ff",
+                        "on-background": "#1a1c1d",
+                        "surface-container-highest": "#e2e2e4",
+                        "primary": "#a63b00",
+                        "outline-variant": "#e4bfb1",
+                        "surface-container-high": "#e8e8ea",
+                        "on-secondary-fixed-variant": "#7d2d04",
+                        "inverse-primary": "#ffb599",
+                        "surface-container": "#eeeef0",
+                        "surface-bright": "#f9f9fb",
+                        "on-error": "#ffffff",
+                        "secondary": "#9c431c",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#a63b00",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#002d51",
+                        "on-surface": "#1a1c1d",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f3f3f5",
+                        "secondary-fixed-dim": "#ffb599",
+                        "primary-fixed": "#ffdbce",
+                        "on-tertiary-fixed-variant": "#00497d",
+                        "inverse-surface": "#2f3132",
+                        "on-secondary-fixed": "#370e00",
+                        "surface-variant": "#e2e2e4",
+                        "surface-dim": "#d9dadc",
+                        "on-secondary-container": "#732600",
+                        "tertiary-container": "#0097fb",
+                        "on-primary-fixed": "#370e00",
+                        "secondary-container": "#fd8d5f",
+                        "on-primary-container": "#531900",
+                        "surface": "#f9f9fb",
+                        "primary-container": "#ff5e00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-nav { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .animate-bounce-short { animation: bounce 1s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(0); } }
+        .executive-shadow { box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface selection:bg-primary-container">
+<!-- Top Navigation -->
+<nav class="fixed top-0 w-full z-50 bg-zinc-50/80 backdrop-blur-xl transition-all duration-300 ease-out shadow-sm flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden executive-shadow ring-2 ring-surface-container">
+<img alt="Jean's Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a sophisticated man in his 30s with a clean-shaven face and confident expression. The lighting is high-key and soft, characteristic of an executive profile. The background is a clean, neutral off-white that matches a premium digital interface aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQuwNvIE1DljOqL7_nrrnOpjs_oN_zNxAXfS-66yTFiDCiSWicOPt4E99t-GN_j3o7YbedteieVkAuwBVL7j5-Iy_ojXKx64N22JiopINg2Do_9lMDBQ8Bu-V31UUSu3dQZaOvnRcWEyGprHR4e-dWkgi-oVtYpLdmAMzHAVZ6YcgYjgNb7_-xMSscHZ27qdFu-5kdWmqXHZi8vtrpKuotCE1IdGOD0FdJ7TrrzKxzs8oSNBpDbl34XoE7CKyFKdTseEBSXMdDIZeI"/>
+</div>
+<span class="font-semibold text-zinc-900 tracking-tight text-xl">Mon Plateau</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-200/50 transition-all">
+<span class="material-symbols-outlined text-zinc-900">search</span>
+</button>
+</nav>
+<main class="pt-24 pb-32 px-6 max-w-lg mx-auto flex flex-col items-center min-h-screen">
+<!-- Empty State Hero -->
+<section class="flex flex-col items-center text-center mt-12 w-full">
+<div class="relative w-64 h-64 mb-10 flex items-center justify-center">
+<!-- Atmospheric Background Glow -->
+<div class="absolute inset-0 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
+<!-- Illustration Placeholder -->
+<div class="relative z-10 w-full h-full transform transition-transform hover:scale-105 duration-700">
+<img alt="Illustration Plateau Vide" class="w-full h-full object-contain rounded-3xl mix-blend-multiply opacity-90" data-alt="A minimalist, high-end digital illustration of a polished, empty silver serving tray centered on a pristine white surface. The tray reflects soft, diffuse studio lighting with elegant metallic highlights and soft grey shadows. The background is a clean, minimalist off-white, emphasizing a sophisticated bar management aesthetic with luxury material textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCS6FqBMzBYOoQe2hZVxppOeMWRdQNNF8makaAWDp05BSxBYiYWKOPw90NATMRjSq9lY_6f3svhisQEGXmDciCjjKusqgIm8B9A5EAzPbGm-eGiyE3FGiU-EfJDTA8aKzNW26B1Xxn0UAxj_X6JhdJJOiBABklf0jFiELU-ZP3DVL-b8rleSl8WssEygZ4O1pAoltQ2BR6WN515LWZk034-yGKkJNrIgoV_HdYFkq3JdoU2pOPIlElG9Y1qHOrYUZkWe5J5Ww1ehrYD"/>
+</div>
+</div>
+<div class="space-y-4">
+<h1 class="text-on-surface text-3xl font-extrabold tracking-tight leading-tight">
+                    Votre plateau est vide.
+                </h1>
+<p class="text-on-surface-variant text-lg font-medium opacity-80">
+                    Que pilotons-nous aujourd'hui ?
+                </p>
+</div>
+<button class="mt-8 px-8 py-4 bg-gradient-to-br from-primary-container to-primary text-white font-bold rounded-full executive-shadow transform active:scale-95 transition-all flex items-center gap-2">
+                Commencer le service
+                <span class="material-symbols-outlined text-[20px]">play_arrow</span>
+</button>
+</section>
+<!-- Recommendations Section -->
+<section class="w-full mt-20">
+<div class="flex items-center justify-between mb-6">
+<p class="text-[11px] font-bold tracking-[0.1em] text-on-surface-variant uppercase">RECOMMANDATIONS</p>
+<div class="h-[1px] flex-grow ml-4 bg-outline-variant/20"></div>
+</div>
+<!-- Recommendation Card -->
+<div class="group relative bg-surface-container-lowest rounded-xl p-4 executive-shadow transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98]">
+<div class="flex gap-4 items-center">
+<div class="w-24 h-24 rounded-lg overflow-hidden bg-surface-container relative">
+<img alt="Skol Beer" class="w-full h-full object-cover" data-alt="A close-up, high-detail photograph of a condensation-covered, ice-cold bottle of Skol beer. The bottle is presented in a premium lifestyle setting with dramatic lighting that emphasizes the crisp droplets of water and the golden amber liquid inside. The overall mood is refreshing, luxurious, and ready for service in a high-end bar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbSuOw_ijRTI3jDIrIzZhYBfjs4QC6G82UVwriWJUUXLVbHraGye6zZ1PT9vDyUFQBx3Db0Z7DQj2rYOpkPuk9ROxr7Qdb1yb5XFoK-FXW-D2xqpvK9DmfU9IWiYIIRa4LNhZUlvUZs72mS_eJO7Oqxrn002J_2iZdzI36urieavdIAKDsjvK-pBXxs_bNH4fOR51y8trwrm1uYsDfMIv3Qa0F6aO0ItYNqWHysuq306Jjwv-67qUEj2ixzNv4e1ZDfhjGnABNM99Y"/>
+<div class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<div class="flex-grow flex flex-col justify-between h-24 py-1">
+<div>
+<p class="text-xs font-bold text-primary tracking-wide mb-1">Sélection du Sommelier</p>
+<h3 class="text-on-surface text-lg font-bold leading-tight">Skol bien frappée</h3>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-medium">L'incontournable</span>
+<button class="w-8 h-8 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container hover:bg-primary-container hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary Suggestion (Subtle) -->
+<div class="mt-4 flex items-center gap-3 p-4 bg-surface-container-low rounded-xl opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined text-on-surface-variant">history</span>
+<span class="text-sm font-semibold text-on-surface-variant">Renouveler la dernière commande</span>
+<span class="material-symbols-outlined text-on-surface-variant ml-auto text-[18px]">chevron_right</span>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 w-full z-50 bg-zinc-50/80 backdrop-blur-xl rounded-t-[32px] shadow-[0_-10px_30px_rgba(26,28,29,0.04)]">
+<nav class="flex justify-around items-center w-full px-4 pb-8 pt-4">
+<!-- Explore -->
+<a class="flex flex-col items-center justify-center text-zinc-400 hover:text-orange-400 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">local_bar</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide mt-1">Explore</span>
+</a>
+<!-- Favorites -->
+<a class="flex flex-col items-center justify-center text-zinc-400 hover:text-orange-400 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide mt-1">Favorites</span>
+</a>
+<!-- Tray (Active) -->
+<a class="flex flex-col items-center justify-center text-orange-600 bg-orange-50 rounded-2xl px-4 py-1 animate-bounce-short active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">shopping_basket</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide">Tray</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center text-zinc-400 hover:text-orange-400 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide mt-1">Profile</span>
+</a>
+</nav>
+</div>
+<!-- Micro-interaction script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Subtle scroll reveal for the recommendations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('opacity-100', 'translate-y-0');
+                        entry.target.classList.remove('opacity-0', 'translate-y-4');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            const recommendationSection = document.querySelector('section:nth-of-type(2)');
+            recommendationSection.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-4');
+            observer.observe(recommendationSection);
+        });
+    </script>
+</body></html>

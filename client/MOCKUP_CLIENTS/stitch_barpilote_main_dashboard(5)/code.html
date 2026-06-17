@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Identification - Validation de Commande</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#ffb599",
+                    "surface-dim": "#d9dadc",
+                    "inverse-surface": "#2f3132",
+                    "tertiary-container": "#0097fb",
+                    "primary-fixed-dim": "#ffb599",
+                    "background": "#f9f9fb",
+                    "on-surface": "#1a1c1d",
+                    "on-secondary-container": "#732600",
+                    "on-secondary-fixed-variant": "#7d2d04",
+                    "secondary": "#9c431c",
+                    "on-secondary": "#ffffff",
+                    "primary": "#a63b00",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed": "#370e00",
+                    "tertiary-fixed": "#d1e4ff",
+                    "surface-bright": "#f9f9fb",
+                    "on-tertiary-fixed": "#001d36",
+                    "surface-variant": "#e2e2e4",
+                    "primary-container": "#ff5e00",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#a63b00",
+                    "primary-fixed": "#ffdbce",
+                    "inverse-on-surface": "#f0f0f2",
+                    "surface-container-highest": "#e2e2e4",
+                    "on-tertiary-container": "#002d51",
+                    "on-primary-container": "#531900",
+                    "secondary-container": "#fd8d5f",
+                    "tertiary": "#0061a4",
+                    "surface-container-high": "#e8e8ea",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-surface-variant": "#5b4137",
+                    "outline": "#8f7065",
+                    "on-background": "#1a1c1d",
+                    "surface-container": "#eeeef0",
+                    "outline-variant": "#e4bfb1",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#9fcaff",
+                    "surface-container-low": "#f3f3f5",
+                    "surface": "#f9f9fb",
+                    "on-tertiary-fixed-variant": "#00497d",
+                    "on-primary-fixed": "#370e00",
+                    "secondary-fixed-dim": "#ffb599",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#ffdbce",
+                    "on-primary": "#ffffff",
+                    "on-tertiary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "display": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #f9f9fb;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+      }
+      .subtle-input-line {
+        border: none;
+        border-bottom: 1px solid #e2e2e4;
+        background: transparent;
+        transition: border-color 0.3s ease;
+      }
+      .subtle-input-line:focus {
+        border-bottom: 1px solid #ff5e00;
+        outline: none;
+        box-shadow: none;
+      }
+      .fade-in {
+        animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .orange-gradient {
+        background: linear-gradient(145deg, #ff5e00 0%, #a63b00 100%);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col items-center justify-center p-6 sm:p-12">
+<!-- Top Navigation (Contextually Hidden/Simplified as per Transactional Flow) -->
+<header class="fixed top-0 left-0 w-full p-8 flex justify-start items-center">
+<button class="flex items-center space-x-2 text-on-surface-variant hover:text-primary transition-colors" onclick="history.back()">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+<span class="text-sm font-medium tracking-tight">Retour</span>
+</button>
+</header>
+<main class="w-full max-w-xl fade-in flex flex-col items-center">
+<!-- Logo / Brand Visual -->
+<div class="mb-12">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-2xl shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-4xl" data-icon="restaurant_menu">restaurant_menu</span>
+</div>
+</div>
+<!-- Headline -->
+<div class="text-center mb-16">
+<h1 class="text-3xl md:text-4xl font-bold tracking-tight text-on-surface mb-4">
+                Dites-nous qui vous êtes pour un service plus rapide
+            </h1>
+<p class="text-on-surface-variant text-lg font-light">
+                Une dernière étape pour finaliser votre commande.
+            </p>
+</div>
+<!-- Identification Form -->
+<form class="w-full space-y-12" id="orderForm">
+<div class="space-y-10">
+<div class="relative">
+<label class="block text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant mb-2 ml-1" for="prenom">Prénom</label>
+<input class="w-full subtle-input-line py-4 px-1 text-xl font-medium placeholder:text-surface-dim" id="prenom" name="prenom" placeholder="Jean" required="" type="text"/>
+</div>
+<div class="relative">
+<label class="block text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant mb-2 ml-1" for="nom">Nom</label>
+<input class="w-full subtle-input-line py-4 px-1 text-xl font-medium placeholder:text-surface-dim" id="nom" name="nom" placeholder="Dupont" required="" type="text"/>
+</div>
+<div class="relative">
+<label class="block text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant mb-2 ml-1" for="tel">Numéro de téléphone</label>
+<input class="w-full subtle-input-line py-4 px-1 text-xl font-medium placeholder:text-surface-dim" id="tel" name="tel" placeholder="06 12 34 56 78" required="" type="tel"/>
+</div>
+</div>
+<!-- Transactional Information -->
+<div class="flex items-center justify-between p-6 bg-surface-container-low rounded-xl">
+<div class="flex items-center space-x-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="payments">payments</span>
+<span class="text-sm font-medium text-on-surface-variant">Paiement à la réception</span>
+</div>
+<div class="text-right">
+<p class="text-[10px] font-bold uppercase tracking-wider text-surface-dim">TOTAL ESTIMÉ</p>
+<p class="text-xl font-bold text-on-surface">42,00 €</p>
+</div>
+</div>
+<!-- Primary Action -->
+<div class="pt-8">
+<button class="w-full orange-gradient text-white py-6 rounded-full text-lg font-semibold tracking-tight shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center space-x-3" type="submit">
+<span>Passer la commande ($ Espèces)</span>
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<p class="text-center mt-6 text-xs text-on-surface-variant/60">
+                    En validant, vous acceptez nos conditions générales de vente.
+                </p>
+</div>
+</form>
+</main>
+<!-- Visual Element: Decorative Abstract Background (Minimalist) -->
+<div class="fixed top-0 right-0 -z-10 opacity-20 pointer-events-none">
+<svg fill="none" height="600" viewbox="0 0 600 600" width="600" xmlns="http://www.w3.org/2000/svg">
+<circle cx="450" cy="150" fill="url(#paint0_linear)" r="150"></circle>
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="paint0_linear" x1="450" x2="450" y1="0" y2="300">
+<stop stop-color="#FF5E00"></stop>
+<stop offset="1" stop-color="#FF5E00" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalContent = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Traitement...</span>
+            `;
+
+            // Simulate successful API call
+            setTimeout(() => {
+                btn.innerHTML = `
+                    <span class="material-symbols-outlined text-2xl" data-icon="check_circle">check_circle</span>
+                    <span>Commande validée !</span>
+                `;
+                btn.classList.remove('orange-gradient');
+                btn.classList.add('bg-green-600');
+                
+                // Optional: Redirect or show success modal
+                setTimeout(() => {
+                   // window.location.href = '/success';
+                }, 1500);
+            }, 2000);
+        });
+
+        // Floating labels logic or enhanced focus effects can be added here
+        const inputs = document.querySelectorAll('.subtle-input-line');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.previousElementSibling.classList.add('text-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.previousElementSibling.classList.remove('text-primary');
+            });
+        });
+    </script>
+</body></html>

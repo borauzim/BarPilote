@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#d1e4ff",
+                    "surface": "#f9f9fb",
+                    "on-primary-fixed": "#370e00",
+                    "on-secondary-container": "#732600",
+                    "primary": "#a63b00",
+                    "surface-tint": "#a63b00",
+                    "on-primary-container": "#531900",
+                    "surface-bright": "#f9f9fb",
+                    "primary-fixed-dim": "#ffb599",
+                    "on-surface-variant": "#5b4137",
+                    "secondary-container": "#fd8d5f",
+                    "secondary": "#9c431c",
+                    "outline-variant": "#e4bfb1",
+                    "tertiary": "#0061a4",
+                    "primary-fixed": "#ffdbce",
+                    "error-container": "#ffdad6",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#00497d",
+                    "surface-dim": "#d9dadc",
+                    "surface-container-high": "#e8e8ea",
+                    "on-background": "#1a1c1d",
+                    "surface-variant": "#e2e2e4",
+                    "secondary-fixed": "#ffdbce",
+                    "tertiary-container": "#0097fb",
+                    "on-secondary-fixed-variant": "#7d2d04",
+                    "inverse-on-surface": "#f0f0f2",
+                    "outline": "#8f7065",
+                    "on-surface": "#1a1c1d",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-surface": "#2f3132",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#9fcaff",
+                    "secondary-fixed-dim": "#ffb599",
+                    "on-secondary-fixed": "#370e00",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#ff5e00",
+                    "background": "#f9f9fb",
+                    "surface-container-low": "#f3f3f5",
+                    "surface-container-highest": "#e2e2e4",
+                    "on-error": "#ffffff",
+                    "on-tertiary-container": "#002d51",
+                    "on-tertiary-fixed": "#001d36",
+                    "surface-container": "#eeeef0",
+                    "inverse-primary": "#ffb599",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "display": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        .glass-panel {
+            background: rgba(245, 245, 247, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #FF5E00;
+        }
+        .toggle-checkbox:checked + .toggle-label .toggle-dot {
+            transform: translateX(20px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .loop-animation {
+            animation: rotate 10s linear infinite;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#F5F5F7] min-h-screen flex flex-col items-center justify-center p-4">
+<!-- Main Navigation (TopAppBar Prediction) -->
+<header class="bg-[#F5F5F7]/80 backdrop-blur-xl fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-on-surface text-xl">person</span>
+</div>
+<span class="text-sm font-bold tracking-[0.05em] uppercase text-[#1A1C1D]">The Digital Sommelier</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-zinc-400">info</span>
+</div>
+</header>
+<!-- Content Canvas -->
+<main class="w-full max-w-lg mt-20 mb-32 flex flex-col items-center">
+<!-- Mock Background Content (Simulated Dashboard) -->
+<div class="w-full mb-8 opacity-20 pointer-events-none scale-95 transition-all duration-700">
+<div class="bg-surface-container-lowest rounded-xl p-6 mb-4 shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+<div class="h-4 w-32 bg-surface-container-highest rounded-full mb-6"></div>
+<div class="space-y-4">
+<div class="h-20 bg-surface-container rounded-lg"></div>
+<div class="h-20 bg-surface-container rounded-lg"></div>
+</div>
+</div>
+</div>
+<!-- Loop Proposal Overlay Card -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-8 shadow-[0_20px_50px_rgba(26,28,29,0.1)] flex flex-col items-center text-center transition-all duration-500 ease-out translate-y-0 opacity-100 relative z-10" id="loop-card">
+<!-- Recurrence Icon Block -->
+<div class="relative mb-8">
+<div class="w-24 h-24 bg-primary-fixed/30 rounded-full flex items-center justify-center">
+<div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/20 loop-animation">
+<span class="material-symbols-outlined text-white text-4xl" data-icon="sync">sync</span>
+</div>
+</div>
+<!-- Subtle Orbit Pulse -->
+<div class="absolute inset-0 border-2 border-primary/10 rounded-full scale-125 animate-pulse"></div>
+</div>
+<!-- Typography Content -->
+<h1 class="text-[24px] font-bold text-on-surface mb-3 tracking-tight">Vous appréciez vos consommations ?</h1>
+<p class="text-[15px] leading-relaxed text-zinc-500 mb-10 px-4">
+                Activez une Boucle pour recevoir la même commande automatiquement toutes les 2 heures.
+            </p>
+<!-- Interactive Toggle (Focus Mode Style) -->
+<div class="w-full bg-surface-container rounded-xl p-4 flex items-center justify-between group cursor-pointer hover:bg-surface-container-high transition-colors" onclick="toggleLoop()">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-container-lowest rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="repeat">repeat</span>
+</div>
+<span class="text-[16px] font-semibold text-on-surface">Activer la Boucle</span>
+</div>
+<div class="relative inline-block w-11 h-6 transition duration-200 ease-in-out">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer hidden" id="loop-toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 cursor-pointer transition-colors duration-200" for="loop-toggle">
+<span class="toggle-dot block w-4 h-4 mt-1 ml-1 rounded-full bg-white shadow-sm transition-transform duration-200"></span>
+</label>
+</div>
+</div>
+<!-- Contextual CTA -->
+<button class="mt-8 text-primary font-semibold text-[15px] hover:opacity-70 transition-opacity" onclick="dismissCard()">
+                Peut-être plus tard
+            </button>
+</div>
+<!-- Feedback Toast (Hidden) -->
+<div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-90 opacity-0 pointer-events-none transition-all duration-300 bg-zinc-900 text-white px-8 py-4 rounded-full flex items-center gap-3 shadow-2xl z-50" id="success-toast">
+<span class="material-symbols-outlined text-green-400">check_circle</span>
+<span class="font-medium">Boucle activée : Prochaine commande à 18h45</span>
+</div>
+</main>
+<!-- Bottom Navigation (BottomNavBar Prediction) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-8 pb-8 pt-4 bg-[#F5F5F7]/80 backdrop-blur-xl rounded-t-[24px]">
+<div class="flex flex-col items-center justify-center text-[#FF5E00] scale-110 transition-transform">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-400">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-400">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</div>
+</nav>
+<script>
+        function toggleLoop() {
+            const toggle = document.getElementById('loop-toggle');
+            const label = toggle.nextElementSibling;
+            const dot = label.firstElementChild;
+            const card = document.getElementById('loop-card');
+            const toast = document.getElementById('success-toast');
+
+            const isActive = label.classList.contains('bg-primary-container');
+
+            if (!isActive) {
+                // Activate
+                label.classList.replace('bg-zinc-300', 'bg-primary-container');
+                dot.style.transform = 'translateX(20px)';
+                
+                // Show Success State
+                setTimeout(() => {
+                    toast.classList.remove('opacity-0', 'scale-90', 'pointer-events-none');
+                    toast.classList.add('opacity-100', 'scale-100');
+                    
+                    // Exit Animation
+                    setTimeout(() => {
+                        dismissCard();
+                    }, 2000);
+                }, 400);
+            } else {
+                // Deactivate
+                label.classList.replace('bg-primary-container', 'bg-zinc-300');
+                dot.style.transform = 'translateX(0px)';
+            }
+        }
+
+        function dismissCard() {
+            const card = document.getElementById('loop-card');
+            const toast = document.getElementById('success-toast');
+            
+            card.style.transform = 'translateY(20px) scale(0.95)';
+            card.style.opacity = '0';
+            toast.style.opacity = '0';
+            
+            setTimeout(() => {
+                card.style.display = 'none';
+                toast.style.display = 'none';
+            }, 500);
+        }
+    </script>
+</body></html>

@@ -79,7 +79,7 @@
             </div>
         </div>
         
-        <form method="post" class="flex items-center gap-3 w-full md:w-auto">
+        <form method="post" data-live-action="true" class="flex items-center gap-3 w-full md:w-auto">
             {% csrf_token %}
             <input type="hidden" name="action" value="update_rate">
             <div class="flex items-center bg-surface-container rounded-2xl px-5 py-3 border border-surface-container-high focus-within:ring-2 focus-within:ring-orange-500 transition-all">
@@ -311,7 +311,7 @@
                 <thead><tr class="bg-surface-container-low/50"><th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Table</th><th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Statut</th><th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Montant</th><th class="px-8 py-5 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Date</th></tr></thead>
                 <tbody class="divide-y divide-surface-container-high">
                     {% for order in report_orders %}
-                    <tr><td class="px-8 py-5 font-black text-on-surface">{{ order.table.nom }}</td><td class="px-8 py-5 text-xs font-bold text-on-surface-variant">{{ order.get_statut_display }}</td><td class="px-8 py-5 font-black text-on-surface">{% display_price order.total_usd order.total_cdf %}</td><td class="px-8 py-5 text-xs font-bold text-on-surface-variant/60">{{ order.date_creation|date:"d/m H:i" }}</td></tr>
+                    <tr><td class="px-8 py-5 font-black text-on-surface">{{ order.table.nom }}</td><td class="px-8 py-5 text-xs font-bold text-on-surface-variant">{{ order.get_statut_display }}</td><td class="px-8 py-5 font-black text-on-surface">{% order_total order.total_usd order.total_cdf %}</td><td class="px-8 py-5 text-xs font-bold text-on-surface-variant/60">{{ order.date_creation|date:"d/m H:i" }}</td></tr>
                     {% empty %}
                     <tr><td colspan="4" class="px-8 py-16 text-center text-on-surface-variant/40 font-bold">Aucune commande personnelle.</td></tr>
                     {% endfor %}
@@ -358,7 +358,7 @@
                 </thead>
                 <tbody class="divide-y divide-surface-container-high">
                     {% for f in factures %}
-                    <tr class="hover:bg-surface-container-lowest/50 transition-colors facture-row" data-client="{{ f.client_fournisseur|lower }}">
+                    <tr id="facture-row-{{ f.id }}" class="hover:bg-surface-container-lowest/50 transition-colors facture-row" data-client="{{ f.client_fournisseur|lower }}">
                         <td class="px-8 py-5 font-black text-xs text-on-surface-variant">{{ f.numero }}</td>
                         <td class="px-8 py-5">
                             <p class="font-bold text-on-surface text-sm">{{ f.client_fournisseur }}</p>
@@ -376,7 +376,7 @@
                         <td class="px-8 py-5">
                             <div class="flex items-center gap-2">
                                 <div class="w-2 h-2 rounded-full {% if f.statut == 'PAYEE' %}bg-emerald-500{% else %}bg-red-500 animate-pulse{% endif %}"></div>
-                                <span class="text-[10px] font-black uppercase tracking-widest {% if f.statut == 'PAYEE' %}text-emerald-600{% else %}text-red-600{% endif %}">
+                                <span id="facture-status-{{ f.id }}" class="text-[10px] font-black uppercase tracking-widest {% if f.statut == 'PAYEE' %}text-emerald-600{% else %}text-red-600{% endif %}">
                                     {{ f.get_statut_display }}
                                 </span>
                             </div>
@@ -401,7 +401,7 @@
                                 {% endif %}
 
                                 {% if not read_only_interface and f.statut == 'IMPAYEE' %}
-                                <form method="post" action="{% url 'facture_action' %}" class="inline-block">
+                                <form method="post" action="{% url 'facture_action' %}" data-live-action="true" class="inline-block">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="pay">
                                     <input type="hidden" name="facture_id" value="{{ f.id }}">
@@ -410,7 +410,7 @@
                                     </button>
                                 </form>
                                 {% endif %}
-                                {% if not read_only_interface %}<form method="post" action="{% url 'facture_action' %}" onsubmit="return confirm('Supprimer cette facture ?')" class="inline-block">
+                                {% if not read_only_interface %}<form method="post" action="{% url 'facture_action' %}" data-live-action="true" onsubmit="return confirm('Supprimer cette facture ?')" class="inline-block">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="facture_id" value="{{ f.id }}">
@@ -654,7 +654,7 @@
         
         container.innerHTML = html;
         usdEl.innerText = parseFloat(totalUsd).toFixed(2) + ' $';
-        cdfEl.innerText = parseInt(totalCdf).toLocaleString() + ' FC';
+        cdfEl.innerText = parseInt(totalCdf).toLocaleString('fr-FR') + ' FC';
         
         modal.classList.remove('hidden');
         modal.classList.add('flex');

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Bar, PilotProfile, Table, StockItem, StockSupply, Category, MasterProduct, Sale, Order, OrderItem, StaffShift
+from .models import Bar, PilotProfile, Table, StockItem, StockSupply, Category, MasterProduct, Sale, Order, OrderItem, StaffShift, Notification
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -27,7 +27,7 @@ class StockSupplyAdmin(admin.ModelAdmin):
 
 @admin.register(Bar)
 class BarAdmin(admin.ModelAdmin):
-    list_display = ('nom', 'adresse', 'type_etablissement', 'code_invitation', 'date_creation')
+    list_display = ('nom', 'adresse', 'type_etablissement', 'prix_mensuel_par_table_usd', 'tables_facturables_count', 'date_creation')
     search_fields = ('nom',)
     list_filter = ('type_etablissement',)
 
@@ -74,3 +74,11 @@ class TableAdmin(admin.ModelAdmin):
     list_display = ('nom', 'bar', 'est_active', 'date_creation')
     list_filter = ('est_active', 'bar')
     search_fields = ('nom',)
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('title', 'recipient', 'category', 'bar', 'read_at', 'created_at')
+    list_filter = ('category', 'bar', 'read_at', 'created_at')
+    search_fields = ('title', 'message', 'recipient__username', 'recipient__email')
+    ordering = ('-created_at',)

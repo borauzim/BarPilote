@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Feedback Service - Digital Sommelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e2e2e4",
+                        "on-tertiary-fixed-variant": "#00497d",
+                        "on-tertiary-container": "#002d51",
+                        "surface-container-highest": "#e2e2e4",
+                        "secondary": "#9c431c",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eeeef0",
+                        "secondary-container": "#fd8d5f",
+                        "inverse-on-surface": "#f0f0f2",
+                        "tertiary": "#0061a4",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#9fcaff",
+                        "surface-container-high": "#e8e8ea",
+                        "on-tertiary-fixed": "#001d36",
+                        "surface-dim": "#d9dadc",
+                        "tertiary-fixed": "#d1e4ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f9f9fb",
+                        "primary": "#a63b00",
+                        "outline-variant": "#e4bfb1",
+                        "outline": "#8f7065",
+                        "primary-container": "#ff5e00",
+                        "on-secondary-container": "#732600",
+                        "on-secondary-fixed": "#370e00",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#370e00",
+                        "on-secondary-fixed-variant": "#7d2d04",
+                        "on-background": "#1a1c1d",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#531900",
+                        "background": "#f9f9fb",
+                        "surface-container-low": "#f3f3f5",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#5b4137",
+                        "tertiary-container": "#0097fb",
+                        "primary-fixed-dim": "#ffb599",
+                        "surface-bright": "#f9f9fb",
+                        "on-surface": "#1a1c1d",
+                        "secondary-fixed-dim": "#ffb599",
+                        "inverse-primary": "#ffb599",
+                        "surface-tint": "#a63b00",
+                        "inverse-surface": "#2f3132",
+                        "primary-fixed": "#ffdbce",
+                        "secondary-fixed": "#ffdbce"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .star-active {
+            font-variation-settings: 'FILL' 1;
+            color: #FF5E00;
+        }
+        .executive-shadow {
+            box-shadow: 0 10px 30px rgba(26, 28, 29, 0.04);
+        }
+        .glass-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/20">
+<!-- Top Navigation (Contextual Suppression Logic: Back button for task focus) -->
+<header class="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-xl px-6 py-4 flex items-center justify-between">
+<button class="p-2 -ml-2 rounded-full hover:bg-zinc-100 transition-colors active:scale-90 duration-200">
+<span class="material-symbols-outlined text-on-surface text-[24px]">close</span>
+</button>
+<div class="text-[#FF5E00] font-black tracking-tighter text-sm uppercase">THE DIGITAL SOMMELIER</div>
+<div class="w-10"></div> <!-- Spacer for symmetry -->
+</header>
+<main class="min-h-screen pt-24 pb-12 px-6 max-w-lg mx-auto flex flex-col items-center">
+<!-- Server Identity Section -->
+<section class="w-full text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+<div class="relative inline-block mb-8 group">
+<div class="absolute inset-0 bg-[#FF5E00]/10 rounded-full scale-110 blur-xl opacity-50 group-hover:opacity-80 transition-opacity"></div>
+<div class="relative w-32 h-32 rounded-full overflow-hidden border-[3px] border-white executive-shadow">
+<img alt="Tshala" class="w-full h-full object-cover" data-alt="A professional close-up portrait of a friendly server named Tshala with a warm, welcoming expression. The lighting is sophisticated, using high-key soft white tones to match a minimalist executive aesthetic. She is wearing a clean, modern hospitality uniform in a brightly lit, high-end restaurant environment with soft background bokeh. The overall style is editorial and premium, with a palette of crisp whites and subtle warm orange tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmBd1dnM3_wV84tO-hm8TcZnGaAo4NxJbG2-m_vHNdwmceVRKi4-cq6b624LE886ofgFupzJXdBORIcV2mKv47cBb2cAtnfMlxFLwhzLfSEhg_vcTef8punjbYjmdO3Oqq2DkPKvDhAc0Ua4K6QHafYCHntMgIObtP3S3fxk8tm1GDrVXn_lkbPMGoQ3R7r9z9Lr8dF14w8vX9Hn4hnbbvXj0iI9357FgLN56OrHiS2GI1qO9Eo3J7ZgASU9XhPULsIxez8BXeMh1w"/>
+</div>
+</div>
+<h1 class="text-on-surface font-headline font-bold text-2xl tracking-tight mb-2">
+                Tshala vous a servi avec soin
+            </h1>
+<p class="text-zinc-400 font-label text-[0.6875rem] tracking-[0.05em] uppercase">
+                VOTRE EXPÉRIENCE COMPTE
+            </p>
+</section>
+<!-- Dynamic Rating Section -->
+<section class="w-full mb-12 flex flex-col items-center">
+<div class="flex gap-2 mb-4" id="star-container">
+<button class="p-1 star-btn group" data-star="1">
+<span class="material-symbols-outlined text-[42px] text-zinc-200 group-hover:text-[#FF5E00]/50 transition-colors">star</span>
+</button>
+<button class="p-1 star-btn group" data-star="2">
+<span class="material-symbols-outlined text-[42px] text-zinc-200 group-hover:text-[#FF5E00]/50 transition-colors">star</span>
+</button>
+<button class="p-1 star-btn group" data-star="3">
+<span class="material-symbols-outlined text-[42px] text-zinc-200 group-hover:text-[#FF5E00]/50 transition-colors">star</span>
+</button>
+<button class="p-1 star-btn group" data-star="4">
+<span class="material-symbols-outlined text-[42px] text-zinc-200 group-hover:text-[#FF5E00]/50 transition-colors">star</span>
+</button>
+<button class="p-1 star-btn group" data-star="5">
+<span class="material-symbols-outlined text-[42px] text-zinc-200 group-hover:text-[#FF5E00]/50 transition-colors">star</span>
+</button>
+</div>
+<p class="text-[#FF5E00] font-semibold text-sm opacity-0 transition-opacity duration-300" id="rating-label">
+                Excellent service
+            </p>
+</section>
+<!-- Feedback Chips -->
+<section class="w-full mb-12">
+<h2 class="text-zinc-500 text-[0.6875rem] font-bold tracking-[0.05em] uppercase text-center mb-6">
+                QU'AVEZ-VOUS LE PLUS APPRÉCIÉ ?
+            </h2>
+<div class="flex flex-wrap justify-center gap-3">
+<button class="chip group px-6 py-3 rounded-full bg-white border border-[#E4BFB1]/15 executive-shadow text-on-surface text-sm font-medium transition-all active:scale-95 hover:border-[#FF5E00]/40">
+                    Rapide
+                </button>
+<button class="chip group px-6 py-3 rounded-full bg-white border border-[#E4BFB1]/15 executive-shadow text-on-surface text-sm font-medium transition-all active:scale-95 hover:border-[#FF5E00]/40">
+                    Souriant
+                </button>
+<button class="chip group px-6 py-3 rounded-full bg-white border border-[#E4BFB1]/15 executive-shadow text-on-surface text-sm font-medium transition-all active:scale-95 hover:border-[#FF5E00]/40">
+                    Précis
+                </button>
+</div>
+</section>
+<!-- Commentary Area -->
+<section class="w-full mb-12">
+<div class="relative group">
+<textarea class="w-full bg-surface-container-low border-none rounded-2xl p-6 text-sm focus:ring-2 focus:ring-[#FF5E00]/20 focus:bg-white transition-all executive-shadow min-h-[140px] resize-none" placeholder="Un mot supplémentaire pour Tshala ? (Optionnel)"></textarea>
+</div>
+</section>
+<!-- Final Submission -->
+<footer class="w-full space-y-4">
+<button class="w-full py-5 rounded-full bg-gradient-to-br from-primary-container to-[#A63B00] text-white font-bold text-base tracking-wide executive-shadow active:scale-95 transition-all shadow-lg shadow-[#FF5E00]/20">
+                Envoyer l'avis
+            </button>
+<p class="text-center text-zinc-400 text-xs px-8 leading-relaxed">
+                Merci de nous aider à maintenir l'excellence de notre service.
+            </p>
+</footer>
+</main>
+<script>
+        // Star Interaction Logic
+        const stars = document.querySelectorAll('.star-btn');
+        const ratingLabel = document.getElementById('rating-label');
+        const labels = {
+            1: 'À améliorer',
+            2: 'Passable',
+            3: 'Correct',
+            4: 'Très bien',
+            5: 'Excellent service'
+        };
+
+        stars.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = parseInt(btn.dataset.star);
+                updateStars(val);
+                ratingLabel.textContent = labels[val];
+                ratingLabel.classList.remove('opacity-0');
+            });
+        });
+
+        function updateStars(rating) {
+            stars.forEach(btn => {
+                const starVal = parseInt(btn.dataset.star);
+                const span = btn.querySelector('.material-symbols-outlined');
+                if (starVal <= rating) {
+                    span.classList.add('star-active');
+                    span.classList.remove('text-zinc-200');
+                    span.style.fontVariationSettings = "'FILL' 1";
+                } else {
+                    span.classList.remove('star-active');
+                    span.classList.add('text-zinc-200');
+                    span.style.fontVariationSettings = "'FILL' 0";
+                }
+            });
+        }
+
+        // Chip Interaction Logic
+        const chips = document.querySelectorAll('.chip');
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('bg-primary-container');
+                chip.classList.toggle('text-white');
+                chip.classList.toggle('border-primary-container');
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,362 @@
+{% load static %}
+{% load currency_tags %}
+{% load trial_ads %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BarPilote - Suivi commande</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        :root { color-scheme: light; }
+        html.dark { color-scheme: dark; }
+        html.dark body { background: #0b0d10 !important; color: #f4f4f5 !important; }
+        html.dark header { background: rgba(17, 24, 39, 0.88) !important; border-color: rgba(63, 63, 70, 0.95) !important; }
+        html.dark section, html.dark article { background: #111827 !important; border-color: rgba(63, 63, 70, 0.95) !important; }
+        html.dark .bg-white { background-color: #111827 !important; }
+        html.dark .bg-neutral-50 { background-color: #18181b !important; }
+        html.dark .bg-neutral-100 { background-color: #27272a !important; }
+        html.dark .bg-neutral-200 { background-color: #3f3f46 !important; }
+        html.dark .text-neutral-950, html.dark .text-neutral-900, html.dark .text-neutral-800 { color: #f4f4f5 !important; }
+        html.dark .text-neutral-700, html.dark .text-neutral-600, html.dark .text-neutral-500, html.dark .text-neutral-400 { color: #a1a1aa !important; }
+        html.dark .border-neutral-200, html.dark .border-neutral-300 { border-color: rgba(63, 63, 70, 0.95) !important; }
+        html.dark .shadow-sm, html.dark .shadow-xl, html.dark .shadow-2xl { box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28) !important; }
+        body{font-family:Inter,sans-serif;background:#fbfbfc;color:#171717}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 650,'GRAD' 0,'opsz' 24}.action-card:active{transform:scale(.985)}.star.active{color:#f97316}.toast-show{opacity:1;transform:translateY(0)}
+    </style>
+</head>
+<body>
+<form class="hidden">{% csrf_token %}</form>
+<div id="toast" class="fixed left-4 right-4 top-4 z-50 mx-auto max-w-md -translate-y-3 rounded-2xl bg-neutral-950 px-4 py-3 text-sm font-black text-white opacity-0 shadow-2xl transition">Action enregistrée.</div>
+<main class="mx-auto min-h-screen max-w-2xl px-4 pb-28 pt-5">
+    <section class="rounded-[32px] bg-neutral-950 p-5 text-white shadow-2xl shadow-neutral-950/10">
+        <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+                <div class="flex items-center gap-3">
+                    <img src="{% static 'logo_orange.png' %}" alt="BarPilote" class="h-11 w-11 shrink-0 rounded-2xl bg-white object-contain p-1">
+                    <p class="text-xs font-black uppercase tracking-[.18em] text-orange-300">BarPilote · {{ order.table.nom }}</p>
+                </div>
+                <h1 class="mt-3 text-3xl font-black tracking-tight">Commande reçue, {{ client_first_name }}</h1>
+                <p class="mt-2 text-sm font-semibold leading-6 text-white/60">Ticket #{{ order.id.hex|slice:':6'|upper }} · {% display_price order.total_usd order.total_cdf %}</p>
+            </div>
+            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-emerald-400 text-neutral-950">
+                <span class="material-symbols-outlined text-4xl">check</span>
+            </div>
+        </div>
+        <div class="mt-5 grid grid-cols-2 gap-3">
+            <div class="rounded-3xl bg-white/10 p-4">
+                <p class="text-[10px] font-black uppercase tracking-widest text-white/45">Statut</p>
+                <p id="statusLabel" class="mt-1 text-lg font-black">{{ order.get_statut_display }}</p>
+            </div>
+            <div class="rounded-3xl bg-white/10 p-4">
+                <p class="text-[10px] font-black uppercase tracking-widest text-white/45">Vigie</p>
+                <p id="serverLabel" class="mt-1 truncate text-lg font-black">{{ server_name }}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mt-5 rounded-[28px] border border-neutral-200 bg-white p-4">
+        <div class="flex items-center gap-3">
+            {% if order.bar.logo %}
+            <img src="{{ order.bar.logo.url }}" alt="{{ order.bar.nom }}" class="h-14 w-14 shrink-0 rounded-2xl object-cover">
+            {% else %}
+            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-lg font-black text-orange-700">{{ order.bar.nom|slice:":2"|upper }}</div>
+            {% endif %}
+            <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase tracking-[.18em] text-neutral-400">Établissement</p>
+                <h2 class="truncate text-lg font-black text-neutral-950">{{ order.bar.nom }}</h2>
+                {% if establishment_owner %}<p class="truncate text-xs font-bold text-neutral-500">Propriétaire: {{ establishment_owner.name }}</p>{% endif %}
+            </div>
+            {% if establishment_owner.whatsapp_url %}
+            <a href="{{ establishment_owner.whatsapp_url }}" target="_blank" rel="noopener" class="flex h-11 shrink-0 items-center gap-2 rounded-full bg-emerald-600 px-4 text-xs font-black text-white" aria-label="Contacter le propriétaire sur WhatsApp"><span class="material-symbols-outlined text-base">chat</span>WhatsApp</a>
+            {% endif %}
+        </div>
+        {% if establishment_owner.phone %}<p class="mt-3 rounded-2xl bg-neutral-50 px-3 py-2 text-xs font-bold text-neutral-600">WhatsApp propriétaire: {{ establishment_owner.phone }}</p>{% endif %}
+    </section>
+
+    <section class="mt-5 rounded-[28px] border border-neutral-200 bg-white p-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-black">Progression</h2>
+            <span id="liveDot" class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-emerald-700">Live</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="rounded-2xl bg-neutral-50 px-4 py-3">
+                <p class="text-[10px] font-black uppercase tracking-[.18em] text-neutral-400">Chronomètre</p>
+                <p id="orderTimer" class="mt-1 text-lg font-black text-orange-700">00:00</p>
+            </div>
+            {% if order.statut != 'PAID' and order.statut != 'CANCELLED' %}<button data-action="cancel" data-prompt="Pourquoi annulez-vous la commande ?" class="client-action rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-black text-red-700">Annuler la commande</button>{% else %}<div class="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-black text-neutral-500">Commande clôturée</div>{% endif %}
+        </div>
+        <div class="mt-5 space-y-4" id="statusSteps">
+            {% for step in status_steps %}
+            <div class="flex gap-3" data-step="{{ step.code }}">
+                <div class="flex flex-col items-center">
+                    <div class="step-dot flex h-9 w-9 items-center justify-center rounded-full {% if step.done %}bg-orange-600 text-white{% else %}bg-neutral-100 text-neutral-400{% endif %}"><span class="material-symbols-outlined text-lg">{% if step.done %}check{% else %}radio_button_unchecked{% endif %}</span></div>
+                    {% if not forloop.last %}<div class="step-line mt-2 h-8 w-0.5 {% if step.done %}bg-orange-200{% else %}bg-neutral-100{% endif %}"></div>{% endif %}
+                </div>
+                <div class="min-w-0 pb-2">
+                    <p class="step-label text-sm font-black {% if step.active %}text-orange-700{% else %}text-neutral-950{% endif %}">{{ step.label }}</p>
+                    <p class="text-xs font-semibold text-neutral-500">{{ step.caption }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="mt-5 rounded-[28px] border border-neutral-200 bg-white p-4">
+        <div class="mb-3 flex items-center justify-between">
+            <h2 class="text-lg font-black">Plateau</h2>
+            <a href="{% url 'client_invoice_download' order.id %}" id="invoiceDownload" class="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-900" aria-label="Télécharger facture"><span class="material-symbols-outlined">download</span></a>
+        </div>
+        <div class="divide-y divide-neutral-100">
+            {% for item in items %}
+            <div class="flex items-center justify-between gap-3 py-3">
+                <div class="min-w-0">
+                    <p class="truncate text-sm font-black">{{ item.product_item.produit.nom }}</p>
+                    <p class="text-xs font-bold text-neutral-400">{{ item.get_unite_vente_display }} · {% money_amount item.prix_unitaire item.devise %}</p>
+                </div>
+                <p class="rounded-full bg-neutral-100 px-3 py-1 text-sm font-black">x{{ item.quantite }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% if meta.note %}<div class="mt-3 rounded-2xl bg-neutral-50 p-3 text-sm font-semibold text-neutral-600">{{ meta.note }}</div>{% endif %}
+        <div class="mt-4 flex items-center justify-between rounded-2xl bg-orange-50 px-4 py-3"><span class="text-sm font-black text-orange-950">Total</span><span class="text-lg font-black text-orange-700">{{ total_label }}</span></div>
+    </section>
+
+    <section class="mt-5 rounded-[28px] border border-neutral-200 bg-white p-4">
+        <div class="flex items-start justify-between gap-3">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[.18em] text-neutral-400">Paiement / facture</p>
+                <h2 class="text-lg font-black">Informations facultatives</h2>
+                <p class="mt-1 text-xs font-bold text-neutral-500">Vous pouvez payer ou télécharger la facture sans remplir ces champs.</p>
+            </div>
+            <span class="material-symbols-outlined text-orange-600">receipt_long</span>
+        </div>
+        <form id="paymentIdentityForm" class="mt-4 grid gap-3 sm:grid-cols-2">
+            <input name="client_name" value="{{ order.client_name|default:'' }}" class="h-12 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 text-sm font-bold outline-none focus:border-orange-400" placeholder="Nom">
+            <input name="client_prenom" value="{{ meta.client_prenom }}" class="h-12 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 text-sm font-bold outline-none focus:border-orange-400" placeholder="Prénom">
+            <input name="client_postnom" value="{{ meta.client_postnom }}" class="h-12 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 text-sm font-bold outline-none focus:border-orange-400" placeholder="Post-nom">
+            <input name="client_phone" value="{{ order.client_phone|default:'' }}" class="h-12 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 text-sm font-bold outline-none focus:border-orange-400" placeholder="Téléphone WhatsApp">
+            <textarea name="note" rows="3" class="sm:col-span-2 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-bold outline-none focus:border-orange-400" placeholder="Note pour le service (facultatif)">{{ meta.note }}</textarea>
+            <div class="sm:col-span-2 rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
+                <p class="text-[10px] font-black uppercase tracking-[.18em] text-neutral-400">Devise de paiement</p>
+                <div class="mt-2 grid grid-cols-2 gap-2">
+                    <label class="flex h-12 items-center justify-center rounded-xl border border-neutral-200 bg-white text-sm font-black has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50 has-[:checked]:text-orange-700">
+                        <input type="radio" name="payment_currency" value="CDF" class="sr-only" {% if payment_currency == 'CDF' %}checked{% endif %}>
+                        FC
+                    </label>
+                    <label class="flex h-12 items-center justify-center rounded-xl border border-neutral-200 bg-white text-sm font-black has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50 has-[:checked]:text-orange-700">
+                        <input type="radio" name="payment_currency" value="USD" class="sr-only" {% if payment_currency == 'USD' %}checked{% endif %}>
+                        USD
+                    </label>
+                </div>
+                <div class="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2">
+                    <span class="text-xs font-black text-neutral-500">Montant à payer</span>
+                    <span id="paymentLabel" class="text-base font-black text-orange-700">{{ payment_label }}</span>
+                </div>
+                <p class="mt-2 text-[11px] font-bold text-neutral-400">Conversion au taux de l'établissement: 1 $ = {{ payment_rate|floatformat:0 }} FC.</p>
+            </div>
+        </form>
+    </section>
+
+    <section class="mt-5 grid grid-cols-2 gap-3">
+        {% if server_phone %}<a href="https://wa.me/{{ server_phone|cut:'+'|cut:' ' }}" class="action-card flex min-h-24 flex-col justify-between rounded-[24px] bg-emerald-600 p-4 text-white transition"><span class="material-symbols-outlined">chat</span><span class="text-sm font-black">WhatsApp vigie</span></a>{% endif %}
+        {% if order.statut != 'PAID' and order.statut != 'CANCELLED' %}
+        <button data-action="pay_cash" data-save-identity="1" class="client-action action-card flex min-h-24 flex-col justify-between rounded-[24px] bg-orange-600 p-4 text-left text-white transition"><span class="material-symbols-outlined">payments</span><span class="text-sm font-black">J'ai payé cash</span></button>
+        <button data-action="debt" data-prompt="Pourquoi demandez-vous une dette ?" class="client-action action-card flex min-h-24 flex-col justify-between rounded-[24px] border border-neutral-200 bg-white p-4 text-left transition"><span class="material-symbols-outlined text-orange-600">credit_card_clock</span><span class="text-sm font-black">Demander dette</span></button>
+        <button data-action="repeat" class="client-action action-card flex min-h-24 flex-col justify-between rounded-[24px] border border-neutral-200 bg-white p-4 text-left transition"><span class="material-symbols-outlined text-orange-600">repeat</span><span class="text-sm font-black">Même commande</span></button>
+        {% endif %}
+        <a href="{% url 'client_menu' order.table.id %}" class="action-card flex min-h-24 flex-col justify-between rounded-[24px] border border-neutral-200 bg-white p-4 text-neutral-950 transition"><span class="material-symbols-outlined text-orange-600">add_shopping_cart</span><span class="text-sm font-black">Ajouter autre chose</span></a>
+    </section>
+
+    {% if order.statut != 'PAID' and order.statut != 'CANCELLED' %}
+    <section class="mt-5 rounded-[28px] border border-neutral-200 bg-white p-4">
+        <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700"><span class="material-symbols-outlined">cycle</span></div>
+            <div class="min-w-0"><h2 class="text-lg font-black">Boucle</h2><p id="loopLabel" class="text-xs font-bold text-neutral-500">{% if meta.repeat_after_minutes %}Rappel actif toutes les {{ meta.repeat_after_minutes }} min{% else %}Programmer un rappel de tournée{% endif %}</p></div>
+        </div>
+        <div class="mt-4 flex items-center gap-3">
+            <input id="loopMinutes" type="range" min="30" max="150" step="30" value="{{ meta.repeat_after_minutes|default:60 }}" class="min-w-0 flex-1 accent-orange-600">
+            <span id="loopMinutesLabel" class="w-16 text-right text-sm font-black text-orange-700">{{ meta.repeat_after_minutes|default:60 }} min</span>
+        </div>
+        <button data-action="reminder" id="reminderBtn" class="client-action mt-3 h-12 w-full rounded-2xl bg-neutral-950 text-sm font-black text-white">Activer la boucle</button>
+    </section>
+    {% endif %}
+
+    <section class="mt-5 rounded-[28px] border border-neutral-200 bg-white p-4">
+        <h2 class="text-lg font-black">Avis service</h2>
+        <p class="mt-1 text-xs font-bold text-neutral-500">L’identité du client, la note du serveur et le commentaire seront demandés ici au moment du paiement.</p>
+        {% if rating %}<p class="mt-2 text-xs font-bold text-emerald-700">Avis déjà enregistré. Vous pouvez le mettre à jour.</p>{% endif %}
+        <form id="ratingForm" class="mt-4 space-y-4">
+            <input type="hidden" name="server_score" id="serverScore" value="{{ rating.server_score|default:'' }}">
+            <input type="hidden" name="bar_score" id="barScore" value="{{ rating.bar_score|default:'' }}">
+            <div>
+                <p class="mb-2 text-xs font-black uppercase tracking-widest text-neutral-400">Vigie</p>
+                <div class="star-row flex gap-1 text-3xl text-neutral-200" data-target="serverScore">{% for i in '12345' %}<button type="button" class="star" data-value="{{ forloop.counter }}">★</button>{% endfor %}</div>
+            </div>
+            <div>
+                <p class="mb-2 text-xs font-black uppercase tracking-widest text-neutral-400">Établissement</p>
+                <div class="star-row flex gap-1 text-3xl text-neutral-200" data-target="barScore">{% for i in '12345' %}<button type="button" class="star" data-value="{{ forloop.counter }}">★</button>{% endfor %}</div>
+            </div>
+            <textarea name="comment" rows="3" class="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-bold outline-none focus:border-orange-400" placeholder="Un mot sur le service">{% if rating %}{{ rating.comment }}{% endif %}</textarea>
+            <button class="h-12 w-full rounded-2xl bg-orange-600 text-sm font-black text-white">Enregistrer l'avis</button>
+        </form>
+    </section>
+
+    <section class="mt-5 grid grid-cols-2 gap-3">
+        {% if order.statut == 'PAID' %}
+        <button data-action="release_table" class="client-action h-12 rounded-2xl border border-neutral-200 bg-white text-sm font-black {% if meta.table_released_at %}opacity-50{% endif %}" {% if meta.table_released_at %}disabled{% endif %}>{% if meta.table_released_at %}Table libérée{% else %}Libérer la table{% endif %}</button>
+        {% else %}
+        <div class="flex h-12 items-center justify-center rounded-2xl border border-neutral-200 bg-neutral-50 px-3 text-center text-xs font-black text-neutral-500">Libération après paiement</div>
+        {% endif %}
+        <a href="{% url 'client_menu' order.table.id %}" class="flex h-12 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-sm font-black">Ajouter autre chose</a>
+    </section>
+</main>
+{% include 'client/_client_nav.html' with table=order.table active_order=order active_tab='status' %}
+<script>window.BARPILOTE_CURRENCY_KEY = 'barpilote_currency_{{ bar.id }}'; window.BARPILOTE_INITIAL_CURRENCY = localStorage.getItem('barpilote_client_currency_{{ bar.id }}') || 'USD'; window.BARPILOTE_EXCHANGE_RATE = {{ order.bar.taux_change_usd_to_cdf|default:2800 }};</script>
+<script src="{% static 'js/barpilote-currency.js' %}"></script>
+
+<script>
+const statusLabel=document.getElementById('statusLabel');
+const serverLabel=document.getElementById('serverLabel');
+const toast=document.getElementById('toast');
+const loopMinutes=document.getElementById('loopMinutes');
+const loopMinutesLabel=document.getElementById('loopMinutesLabel');
+const loopLabel=document.getElementById('loopLabel');
+function csrf(){return document.querySelector('[name=csrfmiddlewaretoken]')?.value || document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1] || '';}
+function showToast(message){toast.textContent=message;toast.classList.add('toast-show');setTimeout(()=>toast.classList.remove('toast-show'),2200);}
+function postAction(action, extra={}){const body=new URLSearchParams({action,...extra});return fetch("{% url 'client_order_action' order.id %}",{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':csrf()},body:body.toString()}).then(async r=>{const data=await r.json();if(!r.ok&&!data.error)data.error='Erreur.';return data;});}
+function paymentData(){const form=document.getElementById('paymentIdentityForm');return form?Object.fromEntries(new FormData(form).entries()):{};}
+function ratingData(){const form=document.getElementById('ratingForm');return form?Object.fromEntries(new FormData(form).entries()):{};}
+function formatDuration(ms){
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    if (hours > 0) return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+function updateOrderTimer(status){
+    if (!orderTimer) return;
+    const normalized = (status || 'PENDING').toUpperCase();
+    const elapsed = Date.now() - orderStartAt;
+    orderTimer.textContent = formatDuration(elapsed);
+    if (['PAID', 'CANCELLED'].includes(normalized) && timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    } else if (!timerInterval) {
+        timerInterval = setInterval(() => { orderTimer.textContent = formatDuration(Date.now() - orderStartAt); }, 1000);
+    }
+}
+const paymentLabel=document.getElementById('paymentLabel');
+const liveDot=document.getElementById('liveDot');
+const orderTimer=document.getElementById('orderTimer');
+const statusSteps=document.getElementById('statusSteps');
+const stepNodes=statusSteps ? Array.from(statusSteps.querySelectorAll('[data-step]')) : [];
+const orderStartAt = Number('{{ order.date_creation|date:"U" }}') * 1000;
+let timerInterval = null;
+let repeatTimer = null;
+let repeatMinutes = null;
+function updateStepNode(node, state){
+    const dot=node.querySelector('.step-dot');
+    const icon=dot ? dot.querySelector('.material-symbols-outlined') : null;
+    const label=node.querySelector('.step-label');
+    const line=node.querySelector('.step-line');
+    if (dot) {
+        dot.classList.toggle('bg-orange-600', state === 'done');
+        dot.classList.toggle('text-white', state === 'done');
+        dot.classList.toggle('bg-orange-100', state === 'active');
+        dot.classList.toggle('text-orange-700', state === 'active');
+        dot.classList.toggle('bg-neutral-100', state === 'todo');
+        dot.classList.toggle('text-neutral-400', state === 'todo');
+    }
+    if (icon) icon.textContent = state === 'done' ? 'check' : 'radio_button_unchecked';
+    if (label) {
+        label.classList.toggle('text-orange-700', state !== 'todo');
+        label.classList.toggle('text-neutral-950', state === 'todo');
+    }
+    if (line) {
+        line.classList.toggle('bg-orange-200', state !== 'todo');
+        line.classList.toggle('bg-neutral-100', state === 'todo');
+    }
+}
+function renderProgress(status){
+    if (!stepNodes.length) return;
+    const normalized=(status || 'PENDING').toUpperCase();
+    const activeIndexMap={PENDING:0, ACCEPTEE:1, PREPARING:2, SERVED:3, PAID:4};
+    const activeIndex = Object.prototype.hasOwnProperty.call(activeIndexMap, normalized) ? activeIndexMap[normalized] : 0;
+    stepNodes.forEach((node, index)=>{
+        if (normalized === 'CANCELLED') {
+            updateStepNode(node, 'todo');
+            return;
+        }
+        if (index < activeIndex) {
+            updateStepNode(node, 'done');
+        } else if (index === activeIndex) {
+            updateStepNode(node, 'active');
+        } else {
+            updateStepNode(node, 'todo');
+        }
+    });
+    if (liveDot) {
+        liveDot.textContent = normalized === 'CANCELLED' ? 'Annulée' : 'Live';
+        liveDot.classList.toggle('bg-red-50', normalized === 'CANCELLED');
+        liveDot.classList.toggle('text-red-700', normalized === 'CANCELLED');
+        liveDot.classList.toggle('bg-emerald-50', normalized !== 'CANCELLED');
+        liveDot.classList.toggle('text-emerald-700', normalized !== 'CANCELLED');
+    }
+    if (normalized === 'CANCELLED') {
+        statusLabel.textContent = 'Commande annulée';
+    }
+}
+function clearRepeatTimer(){ if (repeatTimer) { clearTimeout(repeatTimer); repeatTimer = null; } }
+function scheduleRepeat(minutes){
+    clearRepeatTimer();
+    const mins = parseInt(minutes || '0', 10);
+    if (!mins || mins < 5) return;
+    repeatMinutes = mins;
+    loopLabel.textContent = `Boucle active toutes les ${mins} min`;
+    repeatTimer = setTimeout(() => {
+        postAction('repeat').then(data => {
+            if (data.order_url) location.href = data.order_url;
+            else if (data.success) location.href = data.order_url || location.href;
+            else showToast(data.error || 'Erreur.');
+        }).catch(() => showToast('Erreur lors de la relance automatique.'));
+    }, mins * 60 * 1000);
+}
+document.querySelectorAll('input[name="payment_currency"]').forEach(input=>input.addEventListener('change',refreshStatus));
+document.querySelectorAll('.client-action').forEach(btn=>btn.addEventListener('click',async()=>{if(btn.disabled)return;let extra={};if(btn.dataset.prompt){const reason=prompt(btn.dataset.prompt);if(reason===null)return;extra.reason=reason;}if(btn.dataset.action==='reminder')extra.minutes=loopMinutes.value;if(btn.dataset.action==='pay_cash'){Object.assign(extra, paymentData(), ratingData());}postAction(btn.dataset.action,extra).then(data=>{if(data.order_url) location.href=data.order_url; else if(data.success){showToast(btn.dataset.action==='reminder'?`Boucle active: ${data.minutes} min`:'Action enregistrée.');refreshStatus();} else showToast(data.error||'Erreur.');});}));
+const invoiceDownload=document.getElementById('invoiceDownload');
+loopMinutes.addEventListener('input',()=>{loopMinutesLabel.textContent=`${loopMinutes.value} min`;});
+document.querySelectorAll('.star-row').forEach(row=>{const target=document.getElementById(row.dataset.target);function paint(){const value=parseInt(target.value||0,10);row.querySelectorAll('.star').forEach(star=>star.classList.toggle('active',parseInt(star.dataset.value,10)<=value));}row.querySelectorAll('.star').forEach(star=>star.addEventListener('click',()=>{target.value=star.dataset.value;paint();}));paint();});
+document.getElementById('ratingForm').addEventListener('submit',(e)=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target).entries());postAction('rate',data).then(r=>showToast(r.success?'Merci pour votre avis.':(r.error||'Erreur.')));});
+function refreshStatus(){fetch("{% url 'client_order_status_api' order.id %}").then(r=>r.json()).then(data=>{statusLabel.textContent=data.status_label;serverLabel.textContent=data.server||'Serveur en attente';renderProgress(data.status);updateOrderTimer(data.status);if(paymentLabel&&data.payment_label)paymentLabel.textContent=data.payment_label;const shouldRepeat = data.repeat_after_minutes && !['PAID','CANCELLED'].includes(data.status);if(shouldRepeat){ if (repeatMinutes !== data.repeat_after_minutes) scheduleRepeat(data.repeat_after_minutes);} else { clearRepeatTimer(); loopLabel.textContent = data.repeat_after_minutes ? `Boucle configurée toutes les ${data.repeat_after_minutes} min` : loopLabel.textContent; } }).catch(()=>{});}
+
+function connectClientOrderSocket(){
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(`${protocol}://${location.host}/ws/client/order/{{ order.id }}/`);
+    socket.onopen = () => {
+        // Le suivi est déjà initialisé par refreshStatus(); le socket prend ensuite le relais.
+    };
+    socket.onmessage = (event) => {
+        const payload = JSON.parse(event.data || '{}');
+        if (payload.type !== 'commande.accepted' || !payload.commande) return;
+        const commande = payload.commande;
+        statusLabel.textContent = 'Commande acceptée ! 🍺';
+        statusLabel.className = 'inline-flex items-center rounded-full px-3 py-1 text-xs font-black bg-emerald-100 text-emerald-700 border border-emerald-200';
+        renderProgress(commande.statut);
+        updateOrderTimer(commande.statut);
+        if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+        showToast('Commande acceptée ! 🍺');
+        if (serverLabel && commande.server) serverLabel.textContent = commande.server;
+    };
+    socket.onclose = () => setTimeout(connectClientOrderSocket, 3000);
+}
+connectClientOrderSocket();
+
+refreshStatus();
+</script>
+    <script src="{% static 'js/barpilote-theme.js' %}"></script>
+</body>
+</html>

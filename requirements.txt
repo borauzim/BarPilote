@@ -73,3 +73,7 @@ urllib3==2.6.3
 wcwidth==0.6.0
 webencodings==0.5.1
 yarg==0.1.9
+channels>=4.3.0
+channels-redis>=4.3.0
+daphne>=4.2.1
+firebase-admin>=7.1.0

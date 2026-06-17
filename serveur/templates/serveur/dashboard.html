@@ -56,9 +56,12 @@
             height: 3.5rem !important;
             border-radius: 1.25rem !important;
         }
-        #liveOrdersContainer > div {
+        #liveOrdersContainer > article {
             flex-direction: column !important;
             align-items: stretch !important;
+        }
+        #liveOrdersContainer {
+            max-height: 62dvh !important;
         }
         #liveOrdersContainer .flex.items-center.gap-8 {
             justify-content: space-between !important;
@@ -198,84 +201,103 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-[40px] p-10 executive-shadow border border-surface-container-high">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-4">
+        <div class="bg-white rounded-[32px] sm:rounded-[40px] p-4 sm:p-8 lg:p-10 executive-shadow border border-surface-container-high">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
                 <div>
                     <h2 class="text-2xl font-black tracking-tight text-on-surface">Journal de Bord</h2>
-                    <p class="text-xs text-on-surface-variant/40 font-bold uppercase tracking-widest mt-1">Vos commandes uniquement</p>
+                    <p class="text-xs text-on-surface-variant/40 font-bold uppercase tracking-widest mt-1">Toutes les commandes de l'établissement</p>
                 </div>
-                <button type="button" onclick="openTakeOrderPopover()" class="bg-surface-container hover:bg-on-surface hover:text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">Nouvelle commande</button>
+                <button type="button" onclick="openTakeOrderPopover()" class="inline-flex items-center justify-center gap-2 bg-on-surface text-white hover:bg-orange-600 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
+                    <span class="material-symbols-outlined text-sm">add</span>
+                    Nouvelle commande
+                </button>
             </div>
 
-            <div id="liveOrdersContainer" class="space-y-4">
+            <div id="liveOrdersContainer" class="space-y-3 max-h-[68vh] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar scroll-smooth">
                 {% for order in recent_orders %}
-                <div onclick="openServerOrderDetailsPopover('{{ order.table.nom|escapejs }}', '{{ order.get_statut_display|escapejs }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'.2f' }}, {{ order.total_cdf|stringformat:'.0f' }})" class="flex items-center justify-between p-5 rounded-[24px] hover:bg-surface-container-lowest hover:executive-shadow transition-all group border border-transparent hover:border-surface-container cursor-pointer">
-                    <div class="flex items-center gap-5">
-                        <div class="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-orange-600 group-hover:text-white transition-all duration-500">
-                            <span class="material-symbols-outlined text-2xl">local_bar</span>
-                        </div>
-                        <div>
-                            <h4 class="font-black text-lg text-on-surface tracking-tight">{{ order.table.nom }}</h4>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-tighter">{{ order.date_creation|timesince }} ago</span>
-                                <span class="w-1 h-1 rounded-full bg-surface-container-highest"></span>
-                                <span class="delivery-timer inline-flex items-center gap-1 px-2 py-0.5 rounded-full {% if order.date_service %}bg-emerald-50 text-emerald-600{% else %}bg-orange-50 text-orange-600{% endif %} text-[10px] font-black uppercase tracking-tighter"
-                                      data-start="{{ order.date_creation|date:'U' }}"
-                                      data-end="{% if order.date_service %}{{ order.date_service|date:'U' }}{% endif %}">
-                                    <span class="material-symbols-outlined text-[12px]">timer</span>
-                                    <span class="delivery-timer-label">--:--</span>
-                                </span>
-                                <span class="w-1 h-1 rounded-full bg-surface-container-highest"></span>
-                                <span class="text-[10px] font-bold text-orange-600 uppercase">{{ order.items.count }} Produits</span>
+                <article class="rounded-[24px] border border-surface-container bg-white transition-all hover:border-orange-100 hover:bg-surface-container-lowest hover:executive-shadow">
+                    <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-[1fr_auto] sm:items-center sm:p-5">
+                        <button type="button" onclick="openServerOrderDetailsPopover('{{ order.table.nom|escapejs }}', '{{ order.get_statut_display|escapejs }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'.2f' }}, {{ order.total_cdf|stringformat:'.0f' }})" class="w-full min-w-0 text-left">
+                            <div class="flex min-w-0 items-start gap-4">
+                                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl {% if order.statut == 'CANCELLED' %}bg-red-50 text-red-600{% elif order.statut == 'PAID' %}bg-emerald-50 text-emerald-600{% elif order.statut == 'SERVED' %}bg-blue-50 text-blue-600{% else %}bg-orange-50 text-orange-600{% endif %}">
+                                    <span class="material-symbols-outlined text-2xl">local_bar</span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <h4 class="text-lg font-black tracking-tight text-on-surface">{{ order.table.nom }}</h4>
+                                        <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase border {% if order.statut == 'PAID' %}bg-emerald-50 text-emerald-600 border-emerald-100{% elif order.statut == 'SERVED' %}bg-blue-50 text-blue-600 border-blue-100{% elif order.statut == 'ACCEPTEE' or order.statut == 'PREPARING' %}bg-orange-50 text-orange-600 border-orange-100{% elif order.statut == 'CANCELLED' %}bg-red-50 text-red-600 border-red-100{% else %}bg-amber-50 text-amber-600 border-amber-100{% endif %}">{{ order.get_statut_display }}</span>
+                                    </div>
+                                    <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant/50">
+                                        <span>{{ order.date_creation|timesince }} ago</span>
+                                        <span class="delivery-timer inline-flex items-center gap-1 rounded-full px-2 py-0.5 {% if order.statut == 'CANCELLED' %}bg-red-50 text-red-600{% elif order.date_service %}bg-emerald-50 text-emerald-600{% else %}bg-orange-50 text-orange-600{% endif %} font-black"
+                                              data-status="{{ order.statut }}"
+                                              data-start="{{ order.date_creation|date:'U' }}"
+                                              data-end="{% if order.statut == 'CANCELLED' %}{{ order.date_maj|date:'U' }}{% elif order.date_service %}{{ order.date_service|date:'U' }}{% endif %}">
+                                            <span class="material-symbols-outlined text-[12px]">timer</span>
+                                            <span class="delivery-timer-label">--:--</span>
+                                        </span>
+                                        <span>{{ order.items.count }} produit{% if order.items.count > 1 %}s{% endif %}</span>
+                                        <span>{% if order.serveur %}{{ order.serveur.prenom|default:'Serveur' }}{% else %}Non assignée{% endif %}</span>
+                                    </div>
+                                    {% if order.statut == 'CANCELLED' %}
+                                    <p class="mt-2 text-[10px] font-black uppercase tracking-widest text-red-600">Commande annulée dans le journal</p>
+                                    {% elif order.serveur_id and order.serveur_id != pilot_profile.id %}
+                                    <p class="mt-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50">Assignée à {{ order.serveur.prenom|default:'un autre serveur' }}</p>
+                                    {% endif %}
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                        <span class="hidden sm:inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border {% if order.statut == 'PAID' %}bg-emerald-50 text-emerald-600 border-emerald-100{% elif order.statut == 'SERVED' %}bg-blue-50 text-blue-600 border-blue-100{% elif order.statut == 'PREPARING' %}bg-orange-50 text-orange-600 border-orange-100{% else %}bg-red-50 text-red-600 border-red-100{% endif %}">{{ order.get_statut_display }}</span>
-                        <div class="flex items-center gap-3">
-                            <div class="text-right">
+                        </button>
+
+                        <div class="flex flex-col gap-3 sm:items-end">
+                            <div class="flex items-center justify-between gap-3 sm:justify-end">
                                 <p class="text-xl font-black text-on-surface">{% display_price order.total_usd order.total_cdf %}</p>
+                                <button type="button" onclick="event.stopPropagation(); toggleInlineOrderDetails('serverOrderDetails-{{ order.id }}', this)" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container text-on-surface-variant transition-all hover:bg-orange-50 hover:text-orange-600" aria-label="Afficher les produits">
+                                    <span data-toggle-icon class="material-symbols-outlined text-sm transition-transform duration-300">expand_more</span>
+                                </button>
                             </div>
-                            <button type="button" onclick="event.stopPropagation(); toggleInlineOrderDetails('serverOrderDetails-{{ order.id }}', this)" class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-orange-600 hover:bg-orange-50 transition-all">
-                                <span data-toggle-icon class="material-symbols-outlined text-sm transition-transform duration-300">expand_more</span>
-                            </button>
-                        </div>
-                        {% if order.statut != 'PAID' %}
-                        <div class="flex flex-wrap justify-end gap-2 mt-2">
-                                {% if order.statut != 'SERVED' %}
-                                <button type="button" onclick="event.stopPropagation(); markServerOrderServed('{{ order.id }}')" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest border border-blue-100">Servir</button>
+                            {% if order.statut != 'PAID' and order.statut != 'CANCELLED' %}
+                                {% if not order.serveur_id or order.serveur_id == pilot_profile.id %}
+                                <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                                    {% if order.statut == 'PENDING' %}
+                                    <button type="button" onclick="event.stopPropagation(); markServerOrderAccepted('{{ order.id }}')" class="rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-orange-700">Commande accepter</button>
+                                    {% endif %}
+                                    {% if order.statut != 'SERVED' %}
+                                    <button type="button" onclick="event.stopPropagation(); markServerOrderServed('{{ order.id }}')" class="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-blue-600">Servir</button>
+                                    {% endif %}
+                                    <button type="button" onclick="event.stopPropagation(); openServerPaymentModal('{{ order.id }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'.2f' }}, {{ order.total_cdf|stringformat:'.0f' }}, 'USD')" class="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-emerald-600">Encaisser</button>
+                                    {% if order.client_meta.payment_requested %}<button type="button" onclick="event.stopPropagation(); confirmClientCash('{{ order.id }}')" class="rounded-xl bg-emerald-600 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white">Cash reçu</button>{% endif %}
+                                    <button type="button" onclick="event.stopPropagation(); cancelClientOrder('{{ order.id }}')" class="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-600">Annuler</button>
+                                </div>
                                 {% endif %}
-                                <button type="button" onclick="event.stopPropagation(); openServerPaymentModal('{{ order.id }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'.2f' }}, {{ order.total_cdf|stringformat:'.0f' }})" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">Encaisser</button>
-                            </div>
                             {% endif %}
                         </div>
                     </div>
-                </div>
-                <div id="serverOrderDetails-{{ order.id }}" class="hidden max-h-0 opacity-0 -translate-y-2 transition-all duration-300 overflow-hidden rounded-[24px] border border-surface-container bg-surface-container-lowest px-5 py-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-primary">Produits commandés</span>
-                        <span class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Table {{ order.table.nom }}</span>
-                    </div>
-                    <div class="space-y-2">
-                        {% for item in order.items.all %}
-                        <div class="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 border border-surface-container">
-                            <div class="min-w-0">
-                                <p class="text-xs font-black text-on-surface truncate">{{ item.product_item.produit.nom }}</p>
-                                <p class="text-[9px] font-bold text-on-surface-variant/50 uppercase">{{ item.unite_vente }} x{{ item.quantite }}</p>
-                            </div>
-                            <span class="text-[10px] font-black text-on-surface-variant shrink-0">{{ item.prix_unitaire|floatformat:2 }} {{ item.devise }}</span>
+                    <div id="serverOrderDetails-{{ order.id }}" class="hidden max-h-0 overflow-hidden border-t border-surface-container bg-surface-container-lowest px-4 py-0 opacity-0 -translate-y-2 transition-all duration-300 sm:px-5">
+                        <div class="flex items-center justify-between py-3">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-primary">Produits commandés</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/40">Table {{ order.table.nom }}</span>
                         </div>
-                        {% empty %}
-                        <p class="text-xs text-on-surface-variant/50 font-bold text-center py-4">Aucun produit trouvé.</p>
-                        {% endfor %}
+                        <div class="space-y-2 pb-4">
+                            {% for item in order.items.all %}
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-surface-container bg-white px-3 py-2">
+                                <div class="min-w-0">
+                                    <p class="truncate text-xs font-black text-on-surface">{{ item.product_item.produit.nom }}</p>
+                                    <p class="text-[9px] font-bold uppercase text-on-surface-variant/50">{{ item.unite_vente }} x{{ item.quantite }}</p>
+                                </div>
+                                <span class="shrink-0 text-[10px] font-black text-on-surface-variant">{% usd_amount item.prix_unitaire item.devise item.quantite %}</span>
+                            </div>
+                            {% empty %}
+                            <p class="py-4 text-center text-xs font-bold text-on-surface-variant/50">Aucun produit trouvé.</p>
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
+                </article>
                 {% empty %}
                 <div class="py-20 text-center" id="emptyOrdersMsg">
-                    <div class="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-6 text-on-surface-variant/20">
+                    <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-surface-container text-on-surface-variant/20">
                         <span class="material-symbols-outlined text-4xl">inbox</span>
                     </div>
-                    <p class="text-on-surface-variant/60 font-black uppercase text-xs tracking-widest">Aucune activité personnelle pour le moment</p>
+                    <p class="text-xs font-black uppercase tracking-widest text-on-surface-variant/60">Aucune commande pour le moment</p>
                 </div>
                 {% endfor %}
             </div>
@@ -419,10 +441,20 @@
         </div>
         <div class="p-6 space-y-5">
             <input type="hidden" id="serverPaymentOrderId">
+            <input type="hidden" id="serverPaymentCurrency" value="USD">
             <div id="serverPaymentOrderItems" class="space-y-2 bg-surface-container-lowest border border-surface-container rounded-2xl p-4"></div>
-            <div class="flex items-center justify-between p-4 rounded-2xl bg-orange-50 border border-orange-100">
-                <span class="text-xs font-black uppercase tracking-widest text-orange-600">Total</span>
-                <span id="serverPaymentOrderTotal" class="text-2xl font-black text-on-surface">0</span>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between p-4 rounded-2xl bg-orange-50 border border-orange-100">
+                    <span class="text-xs font-black uppercase tracking-widest text-orange-600">Total produits</span>
+                    <span id="serverPaymentOrderTotal" class="text-2xl font-black text-on-surface">0</span>
+                </div>
+                <div class="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                    <div>
+                        <span class="block text-xs font-black uppercase tracking-widest text-emerald-700">À encaisser</span>
+                        <span id="serverPaymentCurrencyLabel" class="block text-[10px] font-bold text-emerald-700/70 mt-1">Devise client</span>
+                    </div>
+                    <span id="serverPaymentConvertedTotal" class="text-2xl font-black text-emerald-700">0</span>
+                </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input id="serverPaymentClientName" type="text" placeholder="Nom du client" class="bg-surface-container-lowest border border-surface-container rounded-2xl py-3 px-4 font-bold text-on-surface focus:ring-2 focus:ring-orange-500">
@@ -533,7 +565,7 @@
                 <section class="sticky bottom-0 bg-white/95 backdrop-blur-md rounded-3xl border border-orange-100 premium-shadow p-5 space-y-4">
                     <div class="flex items-center justify-between">
                         <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Articles sélectionnés</h3>
-                        <strong id="serverOrderTotalDisplay" class="text-xl font-black text-primary">{% if pref_currency == 'CDF' %}0 FC{% else %}0.00 $ {% endif %}</strong>
+                        <strong id="serverOrderTotalDisplay" class="text-xl font-black text-primary">0.00 $</strong>
                     </div>
                     <div id="serverSelectedItems" class="space-y-3 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
                         <p id="serverEmptyOrderMsg" class="text-xs text-center py-6 text-on-surface-variant italic">Aucun article sélectionné</p>
@@ -566,9 +598,14 @@
             const start = parseFloat(timer.dataset.start || '0');
             const end = parseFloat(timer.dataset.end || '0');
             const label = timer.querySelector('.delivery-timer-label');
+            const status = timer.dataset.status || '';
             if (!start || !label) return;
             const duration = (end || nowSeconds) - start;
-            label.textContent = end ? `Livré en ${formatDeliveryDuration(duration)}` : `En cours ${formatDeliveryDuration(duration)}`;
+            if (status === 'CANCELLED') {
+                label.textContent = `Annulée en ${formatDeliveryDuration(duration)}`;
+            } else {
+                label.textContent = end ? `Livré en ${formatDeliveryDuration(duration)}` : `En cours ${formatDeliveryDuration(duration)}`;
+            }
             if (!end && duration >= 900) {
                 timer.classList.remove('bg-orange-50', 'text-orange-600');
                 timer.classList.add('bg-red-50', 'text-red-600');
@@ -581,7 +618,7 @@
 
     let serverCurrentOrder = {};
     const serverExchangeRate = {{ exchange_rate|default:2800 }};
-    const serverPrefCurrency = '{{ pref_currency }}';
+    const serverPrefCurrency = 'USD';
 
     function toggleInlineOrderDetails(panelId, buttonEl) {
         const panel = document.getElementById(panelId);
@@ -613,15 +650,14 @@
 
     function formatServerOrderDetailsPrice(amount, currency) {
         const value = Number(amount || 0);
-        if (currency === 'CDF') return Math.floor(value).toLocaleString() + ' FC';
-        return value.toFixed(2) + ' $';
+        const usdValue = currency === 'CDF' ? value / serverExchangeRate : value;
+        return usdValue.toFixed(2) + ' $';
     }
 
     function formatServerOrderDetailsTotal(totalUsd, totalCdf) {
-        if (serverPrefCurrency === 'USD') {
-            return (Number(totalUsd || 0) + (Number(totalCdf || 0) / serverExchangeRate)).toFixed(2) + ' $';
-        }
-        return Math.floor(Number(totalCdf || 0) + (Number(totalUsd || 0) * serverExchangeRate)).toLocaleString() + ' FC';
+        const usd = Number(totalUsd || 0);
+        const cdf = Number(totalCdf || 0);
+        return (usd + (cdf / serverExchangeRate)).toFixed(2) + ' $';
     }
 
     function openServerOrderDetailsPopover(tableName, statusLabel, itemsJsonStr, totalUsd, totalCdf) {
@@ -702,7 +738,7 @@
         const keys = Object.keys(serverCurrentOrder);
         if (keys.length === 0) {
             container.innerHTML = '<p id="serverEmptyOrderMsg" class="text-xs text-center py-6 text-on-surface-variant italic">Aucun article sélectionné</p>';
-            totalDisplay.innerText = serverPrefCurrency === 'USD' ? '0.00 $' : '0 FC';
+            totalDisplay.innerText = '0.00 $';
             return;
         }
 
@@ -712,14 +748,8 @@
             if (item.currency === 'USD') totalUSD += itemPrice * item.qty;
             else totalCDF += itemPrice * item.qty;
 
-            let displayPriceStr = '';
-            if (serverPrefCurrency === 'USD') {
-                const p = item.currency === 'USD' ? itemPrice : itemPrice / serverExchangeRate;
-                displayPriceStr = (p * item.qty).toFixed(2) + ' $';
-            } else {
-                const p = item.currency === 'CDF' ? itemPrice : itemPrice * serverExchangeRate;
-                displayPriceStr = Math.floor(p * item.qty).toLocaleString() + ' FC';
-            }
+            const p = item.currency === 'USD' ? itemPrice : itemPrice / serverExchangeRate;
+            const displayPriceStr = (p * item.qty).toFixed(2) + ' $';
 
             const row = document.createElement('div');
             row.className = 'flex items-center justify-between p-3 bg-surface-container-low rounded-2xl border border-orange-100';
@@ -743,11 +773,7 @@
             form.appendChild(input);
         });
 
-        if (serverPrefCurrency === 'USD') {
-            totalDisplay.innerText = (totalUSD + (totalCDF / serverExchangeRate)).toFixed(2) + ' $';
-        } else {
-            totalDisplay.innerText = Math.floor(totalCDF + (totalUSD * serverExchangeRate)).toLocaleString() + ' FC';
-        }
+        totalDisplay.innerText = (totalUSD + (totalCDF / serverExchangeRate)).toFixed(2) + ' $';
     }
 
     function openTakeOrderPopover() {
@@ -795,19 +821,48 @@
     let serverEligibleForDebt = false;
     let serverPhoneManuallyModified = false;
 
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
+    function postClientOrderServerAction(orderId, action, extra = {}) {
+        const bodyParams = new URLSearchParams({order_id: orderId, action, ...extra});
+        return fetch('{% url "serveur_client_order_action" %}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken')},
+            body: bodyParams.toString()
+        }).then(async res => {
+            const contentType = res.headers.get('content-type') || '';
+            const data = contentType.includes('application/json') ? await res.json() : {error: 'Session expirée ou accès refusé.'};
+            if (!res.ok && !data.error) data.error = 'Action refusée.';
+            return data;
+        });
+    }
+
+    function confirmClientCash(orderId) {
+        postClientOrderServerAction(orderId, 'confirm_cash', {payment_currency: 'USD'}).then(data => {
+            if (data.success) window.location.reload();
+            else alert(data.error || 'Erreur confirmation cash.');
+        });
+    }
+
+    function markServerOrderAccepted(orderId) {
+        const bodyParams = new URLSearchParams();
+        bodyParams.append('order_id', orderId);
+        bodyParams.append('status', 'ACCEPTEE');
+        fetch('{% url "serveur_update_order_status" %}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken')},
+            body: bodyParams.toString()
+        }).then(res => res.json()).then(data => {
+            if (data.success) window.location.reload();
+            else alert(data.error || "Erreur lors de l'acceptation.");
+        });
+    }
+
+    function cancelClientOrder(orderId) {
+        const reason = prompt('Pourquoi annuler cette commande ?');
+        if (reason === null) return;
+        postClientOrderServerAction(orderId, 'cancel', {reason}).then(data => {
+            if (data.success) window.location.reload();
+            else alert(data.error || 'Erreur annulation.');
+        });
     }
 
     function markServerOrderServed(orderId) {
@@ -824,8 +879,14 @@
         });
     }
 
-    function openServerPaymentModal(orderId, itemsJsonStr, totalUsd, totalCdf) {
+    function formatServerPaymentConvertedTotal(totalUsd, totalCdf, currency) {
+        return formatServerOrderDetailsTotal(totalUsd, totalCdf);
+    }
+
+    function openServerPaymentModal(orderId, itemsJsonStr, totalUsd, totalCdf, paymentCurrency = 'USD') {
+        paymentCurrency = 'USD';
         document.getElementById('serverPaymentOrderId').value = orderId;
+        document.getElementById('serverPaymentCurrency').value = paymentCurrency;
         document.getElementById('serverPaymentClientName').value = '';
         document.getElementById('serverPaymentClientPhone').value = '';
         document.getElementById('serverGuaranteeCheckbox').checked = false;
@@ -849,19 +910,14 @@
         const items = JSON.parse(decodeURIComponent(itemsJsonStr));
         const container = document.getElementById('serverPaymentOrderItems');
         container.innerHTML = items.map(item => {
-            const priceDisplay = item.devise === 'USD' ? `${item.price} $` : `${Number(item.price).toLocaleString()} FC`;
+            const lineTotal = Number(item.price || 0) * Number(item.qty || 0);
+            const priceDisplay = formatServerOrderDetailsPrice(lineTotal, item.devise);
             return `<div class="flex justify-between items-center text-sm"><span class="font-bold text-on-surface"><span class="text-on-surface-variant mr-1">${item.qty}x</span>${item.name}</span><span class="font-black text-on-surface-variant">${priceDisplay}</span></div>`;
         }).join('');
 
-        const prefCurrency = '{{ pref_currency }}';
-        const rate = {{ exchange_rate|default:2800 }};
-        if (prefCurrency === 'USD') {
-            const value = Number(totalUsd || 0) + (Number(totalCdf || 0) / rate);
-            document.getElementById('serverPaymentOrderTotal').innerText = value.toFixed(2) + ' $';
-        } else {
-            const value = Number(totalCdf || 0) + (Number(totalUsd || 0) * rate);
-            document.getElementById('serverPaymentOrderTotal').innerText = Math.floor(value).toLocaleString() + ' FC';
-        }
+        document.getElementById('serverPaymentOrderTotal').innerText = formatServerOrderDetailsTotal(totalUsd, totalCdf);
+        document.getElementById('serverPaymentConvertedTotal').innerText = formatServerPaymentConvertedTotal(totalUsd, totalCdf, paymentCurrency);
+        document.getElementById('serverPaymentCurrencyLabel').innerText = 'Devise serveur: USD';
 
         const modal = document.getElementById('serverPaymentModal');
         const content = document.getElementById('serverPaymentModalContent');
@@ -914,7 +970,10 @@
                 serverEligibleForDebt = !!data.eligible;
                 if (serverEligibleForDebt) {
                     statusBox.className = 'p-4 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-100 flex items-center gap-3';
-                    statusBox.innerHTML = `<span class="material-symbols-outlined text-base text-emerald-600">check_circle</span><div><span class="block">Client éligible à la dette.</span><span class="block text-[10px] font-medium text-emerald-700/80 mt-0.5">Historique: ${Math.floor(totalSpent).toLocaleString()} FC / seuil ${Math.floor(threshold).toLocaleString()} FC</span></div>`;
+                    const rate = Number(data.currency_rate || serverExchangeRate || 2800);
+                    const totalSpentUsd = Number(totalSpent || 0) / rate;
+                    const thresholdUsd = Number(threshold || 0) / rate;
+                    statusBox.innerHTML = `<span class="material-symbols-outlined text-base text-emerald-600">check_circle</span><div><span class="block">Client éligible à la dette.</span><span class="block text-[10px] font-medium text-emerald-700/80 mt-0.5">Historique: ${totalSpentUsd.toFixed(2)} $ / seuil ${thresholdUsd.toFixed(2)} $</span></div>`;
                 } else {
                     statusBox.className = 'p-4 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-100 flex items-center gap-3';
                     statusBox.innerHTML = `<span class="material-symbols-outlined text-base text-amber-600">warning</span><div><span class="block">Client non éligible chez le propriétaire.</span><span class="block text-[10px] font-medium text-amber-700/80 mt-0.5">Le serveur peut se porter garant s'il connaît la personne.</span></div>`;
@@ -941,10 +1000,12 @@
         const clientName = document.getElementById('serverPaymentClientName').value.trim();
         const clientPhone = document.getElementById('serverPaymentClientPhone').value.trim();
         const guaranteed = document.getElementById('serverGuaranteeCheckbox').checked;
+        const paymentCurrency = 'USD';
         const bodyParams = new URLSearchParams();
         bodyParams.append('order_id', orderId);
         bodyParams.append('status', 'PAID');
         bodyParams.append('deferred', deferred ? 'true' : 'false');
+        bodyParams.append('payment_currency', paymentCurrency);
         if (deferred && guaranteed) bodyParams.append('server_guarantee', 'true');
         if (clientName) bodyParams.append('client_name', clientName);
         if (clientPhone) bodyParams.append('client_phone', clientPhone);
@@ -976,26 +1037,73 @@
             }, 300);
         }
     }
-    function appendMessage(text, isUser = false) {
+    const advisorApiUrl = "{% url 'serveur_advisor_api' %}";
+    const advisorHistory = [];
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"]/g, function (char) {
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[char];
+        });
+    }
+
+    function formatAdvisorText(text) {
+        return escapeHtml(text).replace(/\n/g, '<br>');
+    }
+
+    function appendMessage(text, isUser = false, options = {}) {
         const container = document.getElementById('chatMessages');
         const msg = document.createElement('div');
         msg.className = `flex ${isUser ? 'justify-end' : ''} gap-3`;
+        if (options.loading) msg.dataset.loading = 'true';
+        const body = isUser ? escapeHtml(text) : formatAdvisorText(text);
+        if (!options.loading) {
+            advisorHistory.push({ role: isUser ? 'user' : 'assistant', text: String(text || '').slice(0, 600) });
+            if (advisorHistory.length > 10) advisorHistory.splice(0, advisorHistory.length - 10);
+        }
         msg.innerHTML = isUser
-            ? `<div class="bg-on-surface text-white p-4 rounded-2xl rounded-tr-none text-sm leading-relaxed max-w-[85%] shadow-lg">${text}</div>`
-            : `<div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-sm">smart_toy</span></div><div class="bg-white p-4 rounded-2xl rounded-tl-none border border-surface-container-high text-sm text-on-surface leading-relaxed shadow-sm">${text}</div>`;
+            ? `<div class="bg-on-surface text-white p-4 rounded-2xl rounded-tr-none text-sm leading-relaxed max-w-[85%] shadow-lg">${body}</div>`
+            : `<div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-sm">smart_toy</span></div><div class="bg-white p-4 rounded-2xl rounded-tl-none border border-surface-container-high text-sm text-on-surface leading-relaxed shadow-sm">${body}</div>`;
         container.appendChild(msg);
         container.scrollTop = container.scrollHeight;
+        return msg;
     }
+
     function askAI(topic) {
-        appendMessage(topic, true);
-        setTimeout(() => {
-            let response = "Analyse personnelle: gardez vos commandes actives visibles et signalez immédiatement les pertes pour éviter un écart de stock.";
-            if (topic.toLowerCase().includes('vente')) response = "Vos ventes du jour sont de {% display_price total_revenue_usd total_revenue_cdf %}. Proposez les produits proches du seuil seulement si le stock reste suffisant.";
-            if (topic.toLowerCase().includes('stock')) response = "Les alertes de stock sont globales. Si vous servez un produit en alerte, vérifiez la réserve avant de confirmer une grande commande.";
-            if (topic.toLowerCase().includes('prior')) response = "Priorité: terminez vos {{ active_orders|default:0 }} commande(s) active(s), puis reprenez une table libre.";
-            appendMessage(response);
-        }, 500);
+        const question = (topic || '').trim();
+        if (!question) return;
+        appendMessage(question, true);
+        const loading = appendMessage('Analyse de vos performances en cours...', false, { loading: true });
+        const body = new URLSearchParams();
+        body.append('question', question);
+        body.append('history', JSON.stringify(advisorHistory.slice(-8)));
+
+        fetch(advisorApiUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: body.toString()
+        })
+        .then(res => res.ok ? res.json() : Promise.reject(res))
+        .then(data => {
+            loading.remove();
+            appendMessage(data.answer || 'Je n’ai pas encore assez de données personnelles pour répondre précisément.');
+        })
+        .catch(() => {
+            loading.remove();
+            appendMessage('Impossible de joindre le conseiller pour le moment. Réessayez dans quelques secondes.');
+        });
     }
+
     function sendMessage() {
         const input = document.getElementById('aiInput');
         if (input.value.trim()) {
