@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "233670865046",
+    "project_id": "barpilote-c03bd",
+    "storage_bucket": "barpilote-c03bd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:233670865046:android:b3cd25595f906952f312b7",
+        "android_client_info": {
+          "package_name": "BarPilote.barpilote"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4VAzqqqRB_3JgK-KGryxm0r8Q1rDpBNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

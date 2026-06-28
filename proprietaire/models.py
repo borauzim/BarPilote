@@ -5,6 +5,7 @@ import uuid
 
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 
 class Bar(models.Model):
     """
@@ -61,8 +62,11 @@ class Bar(models.Model):
 
     @property
     def tables_facturables_count(self):
-        """Compte les tables actives qui sont réellement facturées."""
-        return self.tables.filter(est_active=True).count()
+        """Compte les tables avec un abonnement encore valide."""
+        return self.tables.filter(
+            est_active=True,
+            subscription_expires_at__gt=timezone.now(),
+        ).count()
 
     @property
     def prix_table_mensuel_usd(self):
@@ -80,6 +84,28 @@ class Bar(models.Model):
 
     def __str__(self):
         return self.nom
+
+
+class BarAdvisorSettings(models.Model):
+    PROVIDER_CHOICES = [
+        ('local', 'Local'),
+        ('gemini', 'Gemini'),
+        ('openai', 'OpenAI'),
+        ('auto', 'Auto'),
+    ]
+
+    bar = models.OneToOneField(Bar, on_delete=models.CASCADE, related_name='advisor_settings')
+    owner_enabled = models.BooleanField(default=True, verbose_name='Conseiller propriétaire actif')
+    server_enabled = models.BooleanField(default=True, verbose_name='Conseiller serveur actif')
+    provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES, default='local', verbose_name='Moteur de réponse')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Réglage du conseiller IA'
+        verbose_name_plural = 'Réglages des conseillers IA'
+
+    def __str__(self):
+        return f'Conseiller IA - {self.bar.nom}'
 
 def upload_pilot_photo(instance, filename):
     """Sépare les dossiers de stockage par rôle"""
@@ -167,7 +193,20 @@ class Table(models.Model):
     # Le QR code généré sera stocké ici ou construit dynamiquement
     code_qr_image = models.ImageField(upload_to='qr_codes/', blank=True, null=True, verbose_name="Flyer QR Code")
     est_active = models.BooleanField(default=True, verbose_name="Table active")
+    subscription_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Début d'abonnement")
+    subscription_expires_at = models.DateTimeField(null=True, blank=True, verbose_name="Expiration d'abonnement")
     date_creation = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def subscription_is_active(self):
+        return bool(self.est_active and self.subscription_expires_at and self.subscription_expires_at > timezone.now())
+
+    @property
+    def subscription_days_left(self):
+        if not self.subscription_expires_at:
+            return 0
+        delta = self.subscription_expires_at - timezone.now()
+        return max(0, delta.days)
 
     @property
     def client_menu_url(self):

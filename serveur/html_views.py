@@ -311,7 +311,7 @@ class ServeurDashboardView(LoginRequiredMixin, TemplateView):
             context['active_orders_list'] = active_own_orders
             context['pilot_profile'] = pilot_profile
             context['recent_orders'] = (
-                Order.objects.filter(bar=bar)
+                own_orders
                 .select_related('table', 'serveur')
                 .prefetch_related('items__product_item__produit')
                 .order_by('-date_creation')

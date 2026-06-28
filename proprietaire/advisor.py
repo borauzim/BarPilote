@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db.models import Count, F, Sum, DecimalField
 from django.utils import timezone
 
-from .models import Facture, Order, OrderItem, Perte, PilotProfile, StockItem, Table
+from .models import BarAdvisorSettings, Facture, Order, OrderItem, Perte, PilotProfile, StockItem, Table
 
 
 def _normalize(text):
@@ -347,16 +347,30 @@ def _call_openai_advisor(ctx, question, history=None):
     return None
 
 
-def _call_configured_advisor_model(ctx, question, history=None):
-    provider = getattr(settings, 'AI_ADVISOR_PROVIDER', 'local')
-    if provider == 'local':
+def _advisor_settings_for_bar(bar):
+    if not bar:
         return None
-    if provider == 'gemini':
-        return _call_gemini_advisor(ctx, question, history)
-    if provider == 'openai':
-        return _call_openai_advisor(ctx, question, history)
+    settings_obj, _ = BarAdvisorSettings.objects.get_or_create(bar=bar)
+    return settings_obj
 
-    return _call_gemini_advisor(ctx, question, history) or _call_openai_advisor(ctx, question, history)
+
+def _advisor_is_enabled(ctx):
+    settings_obj = ctx.get('advisor_settings')
+    if not settings_obj:
+        return True
+    if ctx.get('role') == 'SERVEUR':
+        return settings_obj.server_enabled
+    return settings_obj.owner_enabled
+
+
+def _advisor_disabled_response(ctx):
+    if ctx.get('role') == 'SERVEUR':
+        return "Le conseiller serveur est désactivé par le propriétaire de cet établissement."
+    return "Le conseiller propriétaire est désactivé pour cet établissement."
+
+
+def _call_configured_advisor_model(ctx, question, history=None):
+    return None
 
 
 def _percent(part, total):
@@ -432,6 +446,7 @@ def _owner_context(profile):
         'debt': debt,
         'losses_30': losses_30,
         'stock_alerts': _stock_alerts(bar),
+        'advisor_settings': _advisor_settings_for_bar(bar),
         'top_products': _top_products(order_items_30),
         'staff': staff[:5],
     }
@@ -470,6 +485,7 @@ def _server_context(profile):
         'debt': debt,
         'losses_30': losses_30,
         'stock_alerts': _stock_alerts(bar),
+        'advisor_settings': _advisor_settings_for_bar(bar),
         'top_products': _top_products(order_items_30),
         'rank': rank,
         'team_size': len(all_servers),
@@ -566,8 +582,53 @@ def _loss_answer(ctx):
     return lines
 
 
+def _personalized_advice_answer(ctx, profile):
+    bar_name = ctx['bar'].nom if ctx.get('bar') else 'cet établissement'
+    first_name = (getattr(profile, 'prenom', '') or profile.user.first_name or '').strip()
+    intro_name = f" {first_name}" if first_name else ''
+    lines = []
+
+    if ctx['role'] == 'SERVEUR':
+        lines.append(f"Conseil personnalisé{intro_name}: concentrez-vous sur les commandes actives avant de chercher une nouvelle table.")
+        if ctx.get('rank'):
+            lines.append(f"Votre position récente est #{ctx.get('rank')} sur {ctx.get('team_size') or 1}; améliorez-la avec des ventes additionnelles simples sur les tables déjà servies.")
+        if ctx['top_products']:
+            best = ctx['top_products'][0]
+            lines.append(f"Votre produit moteur récent est {best['name']}; proposez-le en priorité quand le stock suit.")
+        if ctx['debt'].get('count'):
+            lines.append("Attention dettes: évitez les nouveaux paiements différés sans validation claire du propriétaire.")
+        if ctx['stock_alerts']:
+            lines.append(f"Stock à surveiller: {ctx['stock_alerts'][0].produit.nom}. Ne le poussez pas si le réassort n'est pas sécurisé.")
+        return lines
+
+    lines.append(f"Conseil personnalisé pour {bar_name}: pilotez d'abord les points qui peuvent bloquer les ventes aujourd'hui.")
+    if ctx['stock_alerts']:
+        first_stock = ctx['stock_alerts'][0]
+        lines.append(f"Priorité stock: {first_stock.produit.nom} est à {first_stock.quantite_actuelle} unité(s), seuil {first_stock.seuil_alerte}. Réassort avant promotion.")
+    if ctx['active_orders']:
+        lines.append(f"Service: {ctx['active_orders']} commande(s) active(s) sur {ctx['active_tables']} table(s). Faites livrer/encaisser avant d'ouvrir trop de nouvelles commandes.")
+    if ctx['top_products']:
+        best = ctx['top_products'][0]
+        lines.append(f"Ventes: {best['name']} tire les volumes sur 30 jours ({best['qty']} vente(s)). Mettez-le en avant seulement si le stock est confortable.")
+    if ctx['debt'].get('count'):
+        lines.append(f"Dettes: {ctx['debt'].get('count')} facture(s) ouverte(s), total {_money(ctx['debt'].get('usd'), ctx['debt'].get('cdf'))}. Relancez avant le prochain pic de service.")
+    if ctx.get('staff'):
+        best_staff = ctx['staff'][0]
+        lines.append(f"Équipe: {best_staff['name']} a le meilleur volume récent. Utilisez ses méthodes comme référence pour les autres serveurs.")
+    if len(lines) == 1:
+        lines.append("Les données sont encore limitées: commencez par suivre stocks critiques, commandes payées, dettes ouvertes et pertes déclarées chaque jour.")
+    return lines
+
+
 def generate_advisor_response(profile, question, history=None):
     ctx = _build_context(profile)
+    if not _advisor_is_enabled(ctx):
+        return {
+            'answer': _advisor_disabled_response(ctx),
+            'role': ctx['role'],
+            'generated_at': timezone.localtime().strftime('%d/%m %H:%M'),
+        }
+
     model_answer = _call_configured_advisor_model(ctx, question, history)
     if model_answer:
         return {
@@ -600,12 +661,7 @@ def generate_advisor_response(profile, question, history=None):
     elif _matches(tokens, q, LOSS_WORDS):
         lines = _loss_answer(ctx)
     elif any(phrase in q for phrase in ADVICE_PHRASES):
-        lines = [
-            _sales_answer(ctx)[-1],
-            _stock_answer(ctx)[0],
-            _debt_answer(ctx)[0],
-            _service_answer(ctx)[-1],
-        ]
+        lines = _personalized_advice_answer(ctx, profile)
     else:
         return {
             'answer': _unknown_intent_response(profile),

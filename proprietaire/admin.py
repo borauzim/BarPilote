@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Bar, PilotProfile, Table, StockItem, StockSupply, Category, MasterProduct, Sale, Order, OrderItem, StaffShift, Notification
+from .models import Bar, BarAdvisorSettings, PilotProfile, Table, StockItem, StockSupply, Category, MasterProduct, Sale, Order, OrderItem, StaffShift, Notification
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -24,6 +24,12 @@ class StockItemAdmin(admin.ModelAdmin):
 class StockSupplyAdmin(admin.ModelAdmin):
     list_display = ('item', 'casiers_achetes', 'prix_achat_casier', 'date_achat')
     list_filter = ('date_achat', 'item__bar')
+
+@admin.register(BarAdvisorSettings)
+class BarAdvisorSettingsAdmin(admin.ModelAdmin):
+    list_display = ('bar', 'owner_enabled', 'server_enabled', 'updated_at')
+    list_filter = ('owner_enabled', 'server_enabled')
+    search_fields = ('bar__nom',)
 
 @admin.register(Bar)
 class BarAdmin(admin.ModelAdmin):
@@ -71,7 +77,7 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
-    list_display = ('nom', 'bar', 'est_active', 'date_creation')
+    list_display = ('nom', 'bar', 'est_active', 'subscription_is_active', 'subscription_expires_at', 'date_creation')
     list_filter = ('est_active', 'bar')
     search_fields = ('nom',)
 

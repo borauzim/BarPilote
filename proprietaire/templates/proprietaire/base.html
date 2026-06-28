@@ -7,23 +7,20 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <script>
         (function () {
-            try {
-                var stored = localStorage.getItem('barpilote_theme_mode') || 'system';
-                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                var resolved = stored === 'dark' || stored === 'light' ? stored : (prefersDark ? 'dark' : 'light');
-                document.documentElement.classList.toggle('dark', resolved === 'dark');
-                document.documentElement.style.colorScheme = resolved;
-                document.documentElement.dataset.theme = resolved;
-            } catch (error) {}
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
+            document.documentElement.dataset.theme = 'light';
         })();
     </script>
     <title>{% block title %}BarPilote Dashboard{% endblock %}</title>
+    <meta name="theme-color" content="#ff5e00"/>
+    <link rel="manifest" href="{% static 'manifest.webmanifest' %}"/>
+    <link rel="apple-touch-icon" href="{% static 'logo_orange.png' %}"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script id="tailwind-config">
         tailwind.config = {
-            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
@@ -87,7 +84,6 @@
     </script>
     <style>
         :root { color-scheme: light; }
-        html.dark { color-scheme: dark; }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f5f5f7;
@@ -95,10 +91,6 @@
             min-height: max(884px, 100dvh);
             overflow-x: hidden;
         }
-        html.dark body { background-color: #0b0d10; color: #f4f4f5; }
-        html.dark .glass-nav { background-color: rgba(17, 24, 39, 0.82); }
-        html.dark .executive-shadow { box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28); }
-        html.dark .citrus-gradient { background: linear-gradient(145deg, #ff7a1a 0%, #c14a08 100%); }
         *, *::before, *::after {
             box-sizing: border-box;
         }
@@ -159,11 +151,12 @@
             border-radius: 4px;
         }
     </style>
+    <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}"/>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="text-on-surface min-h-screen pb-32">
     <!-- TopAppBar -->
-    <header id="main-header" class="fixed top-0 w-full z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
+    <header id="main-header" class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
         <div class="flex items-center justify-between px-8 h-16 w-full max-w-none mx-0">
             <div class="flex items-center gap-4">
                 {% if user.pilot_profile.photo_profil %}
@@ -256,7 +249,7 @@
     </header>
 
     <main class="pt-24 pb-12 px-8 w-full max-w-none mx-0 overflow-x-hidden">
-        {% trial_ad_banner bar 'owner' %}
+        {% trial_ad_banner current_bar 'owner' %}
         {% block content %}
         {% endblock %}
     </main>
@@ -291,5 +284,6 @@
     <script src="{% static 'js/barpilote-notifications.js' %}"></script>
     {% block extra_body %}{% endblock %}
     <script src="{% static 'js/barpilote-theme.js' %}"></script>
+    <script src="{% static 'js/barpilote-pwa.js' %}"></script>
 </body>
 </html>

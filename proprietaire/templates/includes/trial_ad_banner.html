@@ -1,13 +1,32 @@
 {% if show_banner %}
-<div id="{{ banner_key }}" class="trial-ad-banner mb-3 rounded-2xl border border-amber-200 bg-amber-50/85 px-3 py-2 shadow-sm backdrop-blur-sm">
+{% if use_adsense %}
+<div id="{{ banner_key }}" class="trial-ad-banner mb-3 rounded-2xl border border-orange-200 bg-white px-3 py-2 shadow-sm">
+    <p class="mb-2 text-[9px] font-black uppercase tracking-[.18em] text-orange-700">Annonce Google · Essai gratuit · {{ audience_label }}</p>
+    <ins class="adsbygoogle"
+         style="display:block; min-height:90px"
+         data-ad-client="{{ adsense_client }}"
+         data-ad-slot="{{ adsense_slot }}"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+</div>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense_client }}" crossorigin="anonymous"></script>
+<script>
+(function(){
+    try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (error) {}
+})();
+</script>
+{% else %}
+<div id="{{ banner_key }}" class="trial-ad-banner mb-3 rounded-2xl border border-orange-200 bg-orange-50/90 px-3 py-2 shadow-sm backdrop-blur-sm">
     <div class="flex items-center gap-3">
-        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700">
             <span class="material-symbols-outlined text-[20px]">{{ icon }}</span>
         </div>
         <div class="min-w-0 flex-1">
-            <p class="text-[9px] font-black uppercase tracking-[.18em] text-amber-700">Essai gratuit · {{ audience_label }}</p>
+            <p class="text-[9px] font-black uppercase tracking-[.18em] text-orange-700">Publicité BarPilote · Essai gratuit · {{ audience_label }}</p>
             <p class="truncate text-xs font-bold text-neutral-900">{{ headline }}</p>
-            <p class="truncate text-[11px] font-medium text-neutral-600">{{ days_left }} jour{{ days_left|pluralize }} restan{{ days_left|pluralize:'t,ts' }} - {{ message }}</p>
+            <p class="truncate text-[11px] font-medium text-neutral-600">{{ bar_name }} · {{ days_left }} jour{{ days_left|pluralize }} restan{{ days_left|pluralize:'t,ts' }} · {{ message }}</p>
         </div>
         <button type="button" data-banner-close class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-500 hover:bg-white hover:text-neutral-900" aria-label="Masquer la publicité">
             <span class="material-symbols-outlined text-[18px]">close</span>
@@ -31,4 +50,5 @@
     });
 })();
 </script>
+{% endif %}
 {% endif %}

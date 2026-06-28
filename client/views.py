@@ -163,6 +163,30 @@ def _active_order_for_table(request, table):
     return Order.objects.filter(id=active_order_id, table=table).exclude(statut__in=['PAID', 'CANCELLED']).first()
 
 
+def _table_access_context(table):
+    owner = _owner_for_bar(table.bar)
+    return {
+        'table': table,
+        'bar': table.bar,
+        'establishment_owner': owner,
+        'subscription_is_active': table.subscription_is_active,
+        'subscription_expires_at': table.subscription_expires_at,
+    }
+
+
+def _table_access_response(request, table):
+    context = _table_access_context(table)
+    context['message'] = "Cette table n'a pas d'abonnement actif."
+    return render(request, 'client/table_unavailable.html', context, status=200)
+
+
+def _get_active_table_or_response(request, table_id):
+    table = get_object_or_404(Table.objects.select_related('bar'), id=table_id, est_active=True)
+    if not table.subscription_is_active:
+        return None, _table_access_response(request, table)
+    return table, None
+
+
 def _status_steps(order):
     steps = [
         ('PENDING', 'Reçue', 'Commande transmise'),
@@ -325,14 +349,13 @@ def _copy_order(source, *, assign_server=True):
 class ClientMenuView(View):
     template_name = 'client/menu.html'
 
-    def get_table(self, table_id):
-        return get_object_or_404(Table.objects.select_related('bar'), id=table_id, est_active=True)
-
     def get_menu_bar(self, table):
         return table.bar
 
     def get(self, request, table_id):
-        table = self.get_table(table_id)
+        table, blocked_response = _get_active_table_or_response(request, table_id)
+        if blocked_response:
+            return blocked_response
         menu_bar = self.get_menu_bar(table)
         items = (
             StockItem.objects.filter(bar=menu_bar)
@@ -356,7 +379,9 @@ class ClientMenuView(View):
 
     @transaction.atomic
     def post(self, request, table_id):
-        table = self.get_table(table_id)
+        table, blocked_response = _get_active_table_or_response(request, table_id)
+        if blocked_response:
+            return blocked_response
         menu_bar = self.get_menu_bar(table)
         lines = _cart_lines(menu_bar, request.POST)
         client_name = ''
@@ -458,7 +483,9 @@ class ClientHistoryView(View):
     template_name = 'client/history.html'
 
     def get(self, request, table_id):
-        table = get_object_or_404(Table.objects.select_related('bar'), id=table_id, est_active=True)
+        table, blocked_response = _get_active_table_or_response(request, table_id)
+        if blocked_response:
+            return blocked_response
         orders = list(_client_order_queryset(request, table)[:30])
         active_order = _active_order_for_table(request, table)
         return render(request, self.template_name, {
@@ -474,7 +501,9 @@ class ClientInvoicesView(View):
     template_name = 'client/invoices.html'
 
     def get(self, request, table_id):
-        table = get_object_or_404(Table.objects.select_related('bar'), id=table_id, est_active=True)
+        table, blocked_response = _get_active_table_or_response(request, table_id)
+        if blocked_response:
+            return blocked_response
         orders = list(_client_order_queryset(request, table)[:30])
         for order in orders:
             if order.items.exists() and not order.factures.filter(type_facture='CLIENT').exists():

@@ -22,10 +22,42 @@ from authentification.views import GoogleLogin
 from authentification.root_views import RootRedirectView
 from proprietaire.html_views import FirebaseMessagingServiceWorkerView
 
+from django.http import HttpResponse
 from django.views.generic import RedirectView
+
+
+def ads_txt(request):
+    client_id = (getattr(settings, 'GOOGLE_ADSENSE_CLIENT_ID', '') or '').replace('ca-pub-', '').strip()
+    seller_id = getattr(settings, 'GOOGLE_ADSENSE_SELLER_ID', 'f08c47fec0942fa0')
+    line = f"google.com, pub-{client_id}, DIRECT, {seller_id}\n" if client_id else ''
+    return HttpResponse(line, content_type='text/plain')
+
+
+def barpilote_sw(request):
+    script = """
+const CACHE_NAME = 'barpilote-shell-v1';
+const OFFLINE_URL = '/auth/login/';
+
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll([OFFLINE_URL, '/static/logo_orange.png'])));
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request).then((cached) => cached || caches.match(OFFLINE_URL))));
+});
+"""
+    return HttpResponse(script, content_type='application/javascript')
 
 urlpatterns = [
     path('', RootRedirectView.as_view(), name='root'),
+    path('ads.txt', ads_txt, name='ads_txt'),
+    path('barpilote-sw.js', barpilote_sw, name='barpilote_sw'),
     path('firebase-messaging-sw.js', FirebaseMessagingServiceWorkerView.as_view(), name='firebase_messaging_sw'),
     path('admin/', admin.site.urls),
     

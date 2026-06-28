@@ -1,5 +1,5 @@
 from django.urls import path
-from proprietaire.html_views import AdvisorAPIView, NotificationsAPIView
+from proprietaire.html_views import AdvisorAPIView, NotificationsAPIView, FCMConfigAPIView, FCMTokenAPIView
 from .html_views import (
     ServeurDashboardView, ServeurScanQRView, ServeurProfilSetupView,
     ServeurWelcomeView, ServeurCommandeDetailView, ServeurMissionView,
@@ -15,6 +15,8 @@ urlpatterns = [
     path('api/update-order-status/', ServeurUpdateOrderStatusView.as_view(), name='serveur_update_order_status'),
     path('api/client-order-action/', ServeurClientOrderActionView.as_view(), name='serveur_client_order_action'),
     path('api/notifications/', NotificationsAPIView.as_view(), name='serveur_notifications_api'),
+    path('api/fcm/config/', FCMConfigAPIView.as_view(), name='serveur_fcm_config_api'),
+    path('api/fcm/token/', FCMTokenAPIView.as_view(), name='serveur_fcm_token_api'),
     path('api/advisor/', AdvisorAPIView.as_view(), name='serveur_advisor_api'),
     path('join/<str:code>/', ServeurJoinView.as_view(), name='serveur_join'),
     path('setup/', ServeurProfilSetupView.as_view(), name='serveur_setup'),

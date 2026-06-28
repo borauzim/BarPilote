@@ -152,6 +152,7 @@
                     <p class="text-xs font-bold text-red-400">{% if read_only_interface %}Pertes signalées + factures impayées{% else %}Total pertes calculées{% endif %}</p>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -294,6 +295,63 @@
                     </div>
                     <p class="text-on-surface-variant font-medium">Aucune perte enregistrée sur cette période.</p>
                     <p class="text-on-surface-variant/40 text-xs mt-1">C'est une excellente nouvelle pour votre marge !</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-[32px] p-6 sm:p-8 executive-shadow border border-surface-container-high">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                    <div>
+                        <h2 class="text-xl font-black text-on-surface">Déclarations de pertes</h2>
+                        <p class="text-xs text-on-surface-variant/60 font-medium mt-1">Qui a déclaré, quelle boisson, le motif et le commentaire.</p>
+                    </div>
+                    <span class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Détail serveur</span>
+                </div>
+
+                {% if pertes_detaillees %}
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[780px]">
+                        <thead>
+                            <tr class="text-left border-b border-surface-container">
+                                <th class="pb-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Date</th>
+                                <th class="pb-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Déclaré par</th>
+                                <th class="pb-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Boisson</th>
+                                <th class="pb-4 text-center text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Qté</th>
+                                <th class="pb-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Motif</th>
+                                <th class="pb-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Commentaire</th>
+                                <th class="pb-4 text-right text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Valeur</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-surface-container">
+                            {% for perte in pertes_detaillees %}
+                            <tr class="hover:bg-surface-container/30 transition-all align-top">
+                                <td class="py-4 whitespace-nowrap text-xs font-bold text-on-surface-variant">{{ perte.date|date:"d/m/Y H:i" }}</td>
+                                <td class="py-4">
+                                    <p class="font-black text-on-surface">{{ perte.declarant }}</p>
+                                </td>
+                                <td class="py-4">
+                                    <p class="font-bold text-on-surface">{{ perte.boisson }}</p>
+                                </td>
+                                <td class="py-4 text-center">
+                                    <span class="bg-surface-container px-3 py-1 rounded-lg font-black text-xs">{{ perte.quantite }}</span>
+                                </td>
+                                <td class="py-4">
+                                    <span class="bg-red-50 text-red-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">{{ perte.raison }}</span>
+                                </td>
+                                <td class="py-4 max-w-[260px]">
+                                    <p class="text-sm font-medium text-on-surface-variant">{{ perte.commentaire|default:"-" }}</p>
+                                </td>
+                                <td class="py-4 text-right whitespace-nowrap">
+                                    <p class="font-black text-red-600">{% if perte.devise == 'CDF' %}FC{% else %}${% endif %}{{ perte.montant|floatformat:2 }}</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="py-10 text-center">
+                    <p class="text-on-surface-variant font-medium">Aucune déclaration de perte sur cette période.</p>
                 </div>
                 {% endif %}
             </div>

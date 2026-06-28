@@ -45,6 +45,31 @@
     });
   }
 
+
+
+  function appRoutePrefix() {
+    if (window.location.pathname.startsWith('/serveur/')) return '/serveur';
+    return '/proprietaire';
+  }
+
+  function fcmConfigUrl() {
+    return `${appRoutePrefix()}/api/fcm/config/`;
+  }
+
+  function fcmTokenUrl() {
+    return `${appRoutePrefix()}/api/fcm/token/`;
+  }
+
+  function capacitorPlatform() {
+    if (!window.Capacitor || typeof window.Capacitor.getPlatform !== 'function') return 'web';
+    return window.Capacitor.getPlatform();
+  }
+
+  function isNativeCapacitor() {
+    const platform = capacitorPlatform();
+    return platform === 'android' || platform === 'ios';
+  }
+
   function csrfToken() {
     const match = document.cookie.split('; ').find((row) => row.startsWith('csrftoken='));
     return match ? decodeURIComponent(match.split('=')[1]) : '';
@@ -91,8 +116,54 @@
     };
   }
 
+
+  async function registerNativePushToken(token) {
+    if (!token) return;
+    await fetch(fcmTokenUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+      body: JSON.stringify({ token, platform: capacitorPlatform() }),
+    });
+  }
+
+  async function setupCapacitorPush() {
+    if (!isNativeCapacitor()) return false;
+    const plugins = window.Capacitor && window.Capacitor.Plugins;
+    const PushNotifications = plugins && plugins.PushNotifications;
+    if (!PushNotifications) return false;
+
+    const permission = await PushNotifications.requestPermissions();
+    if (permission.receive !== 'granted') return true;
+
+    await PushNotifications.addListener('registration', async (token) => {
+      state.fcmToken = token.value;
+      await registerNativePushToken(token.value);
+    });
+
+    await PushNotifications.addListener('registrationError', (error) => {
+      console.warn('Enregistrement push mobile impossible', error);
+    });
+
+    await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+      showRealtimeNotification({
+        title: notification.title || notification.data?.title,
+        body: notification.body || notification.data?.body,
+        data: notification.data || {},
+        url: notification.data?.url || '/',
+      });
+    });
+
+    await PushNotifications.addListener('pushNotificationActionPerformed', (event) => {
+      const url = event.notification?.data?.url || '/';
+      if (url) window.location.href = url;
+    });
+
+    await PushNotifications.register();
+    return true;
+  }
+
   async function registerFcmToken(token) {
-    await fetch('/proprietaire/api/fcm/token/', {
+    await fetch(fcmTokenUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
       body: JSON.stringify({ token, platform: 'web' }),
@@ -100,9 +171,10 @@
   }
 
   async function setupFirebasePush() {
+    if (await setupCapacitorPush()) return;
     if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
 
-    const configResponse = await fetch('/proprietaire/api/fcm/config/');
+    const configResponse = await fetch(fcmConfigUrl());
     if (!configResponse.ok) return;
     const config = await configResponse.json();
     if (!config.apiKey || !config.projectId || !config.messagingSenderId || !config.appId || !config.vapidKey) return;
@@ -141,7 +213,7 @@
     });
   }
 
-  window.BarPiloteNotifications = { connectWebSocket, setupFirebasePush, playNotificationSound };
+  window.BarPiloteNotifications = { connectWebSocket, setupFirebasePush, setupCapacitorPush, playNotificationSound };
   document.addEventListener('DOMContentLoaded', () => {
     ['click', 'touchstart', 'keydown'].forEach((eventName) => {
       document.addEventListener(eventName, unlockNotificationSound, { once: true, passive: true });

@@ -41,6 +41,41 @@
         {% endif %}
     </div>
 
+    {% if not read_only_interface and advisor_settings %}
+    <section class="bg-surface-container-lowest rounded-2xl executive-shadow border border-surface-container p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined">psychology</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Conseiller local</p>
+                    <h2 class="text-xl font-black text-on-surface mt-1">Bots de conseils personnalisés</h2>
+                    <p class="text-sm font-medium text-on-surface-variant/60 mt-1 max-w-2xl">Les réponses restent locales et utilisent vos données BarPilote: ventes, stocks, dettes, pertes, tables et performances de l'équipe.</p>
+                </div>
+            </div>
+            <form method="post" action="{% url 'advisor_settings' %}" class="grid grid-cols-1 md:grid-cols-3 gap-3 lg:min-w-[520px]">
+                {% csrf_token %}
+                <label class="bg-white border border-surface-container rounded-2xl p-4 flex items-center justify-between gap-3">
+                    <span>
+                        <span class="block text-sm font-black text-on-surface">Propriétaire</span>
+                        <span class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 mt-1">Dashboard</span>
+                    </span>
+                    <input type="checkbox" name="owner_enabled" value="1" class="h-5 w-5 rounded border-orange-200 text-orange-600 focus:ring-orange-500" {% if advisor_settings.owner_enabled %}checked{% endif %}>
+                </label>
+                <label class="bg-white border border-surface-container rounded-2xl p-4 flex items-center justify-between gap-3">
+                    <span>
+                        <span class="block text-sm font-black text-on-surface">Serveurs</span>
+                        <span class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 mt-1">Espace serveur</span>
+                    </span>
+                    <input type="checkbox" name="server_enabled" value="1" class="h-5 w-5 rounded border-orange-200 text-orange-600 focus:ring-orange-500" {% if advisor_settings.server_enabled %}checked{% endif %}>
+                </label>
+                <button type="submit" class="citrus-gradient text-white rounded-2xl px-5 py-4 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">Enregistrer</button>
+            </form>
+        </div>
+    </section>
+    {% endif %}
+
     {% if pending_requests and not read_only_interface %}
     <!-- Pending Join Requests -->
     <section class="bg-surface-container-lowest rounded-2xl executive-shadow border border-orange-200/40 p-6 space-y-5">
@@ -225,7 +260,7 @@
             <div class="mt-8 flex flex-col items-center gap-6">
                 <div class="p-6 bg-white rounded-2xl inline-block border-2 border-dashed border-orange-200">
                     <p class="text-sm font-bold text-on-surface">Code d'invitation</p>
-                    <p class="text-3xl font-black text-orange-600 tracking-tighter mt-1">{{ bar.code_invitation|default:"---"|slice:":8" }}</p>
+                    <p class="max-w-xs text-sm md:text-base font-black text-orange-600 tracking-wide mt-2 break-all">{{ bar.code_invitation|default:"---" }}</p>
                 </div>
 
                 <a href="{% url 'staff_download_invite' %}" class="flex items-center gap-3 text-orange-600 font-bold hover:gap-4 transition-all group">

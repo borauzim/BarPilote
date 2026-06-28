@@ -670,6 +670,31 @@ class ServeurTakeOrderTests(TestCase):
         self.assertEqual(second_stock.quantite_actuelle, Decimal("9.000"))
         self.assertEqual(Perte.objects.filter(bar=self.bar).count(), 2)
 
+    def test_owner_finance_shows_waiter_loss_declaration_details(self):
+        self.stock_item.prix_achat_unitaire = Decimal("1.20")
+        self.stock_item.save(update_fields=["prix_achat_unitaire"])
+        self.client.force_login(self.server)
+
+        response = self.client.post(reverse("serveur_record_loss"), {
+            "item_id[]": [str(self.stock_item.id)],
+            "quantite[]": ["2"],
+            "raison[]": ["VOL"],
+            "commentaire[]": ["Bouteille disparue pendant le service"],
+        })
+
+        self.assertRedirects(response, reverse("serveur_dashboard"))
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse("finance_html"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Déclarations de pertes")
+        self.assertContains(response, "Order Waiter")
+        self.assertContains(response, "Primus")
+        self.assertContains(response, "Vol / Disparition")
+        self.assertContains(response, "Bouteille disparue pendant le service")
+        self.assertNotContains(response, "Signalé par Order WAITER")
+        self.assertEqual(response.context["pertes_detaillees"][0]["declarant"], "Order Waiter")
+
     def test_waiter_cannot_access_owner_routes(self):
         self.client.force_login(self.server)
 

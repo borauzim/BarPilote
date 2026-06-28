@@ -20,7 +20,7 @@ from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
 import uuid
-from .models import PilotProfile, Order, Table, Bar, StockItem, OrderItem, Category, Facture, Client, Notification, grant_trial_if_eligible, record_owner_audit
+from .models import PilotProfile, Order, Table, Bar, BarAdvisorSettings, StockItem, OrderItem, Category, Facture, Client, Notification, grant_trial_if_eligible, record_owner_audit
 from .order_services import take_order_for_profile
 from .notifications import ensure_daily_debt_reminders, notify_bar_owners, notify_bar_servers, notify_debt_created, notify_order_created, notify_order_status, notify_user
 from .advisor import generate_advisor_response
@@ -344,12 +344,16 @@ class TableSetupView(LoginRequiredMixin, TemplateView):
             
         profile = PilotProfile.objects.get(user=request.user)
         if profile.bar and count > 0:
-            # Create N tables
+            now = timezone.now()
+            expires_at = now + timedelta(days=30)
+            # Create N tables with an initial 30-day subscription.
             for i in range(1, count + 1):
                 Table.objects.create(
                     bar=profile.bar,
                     nom=f"Table {i}",
-                    est_active=True
+                    est_active=True,
+                    subscription_started_at=now,
+                    subscription_expires_at=expires_at,
                 )
             # Fin de l'onboarding -> Redirection vers la page de succès/téléchargement staff
             return redirect('establishment_ready')
@@ -537,6 +541,43 @@ class FinanceView(LoginRequiredMixin, TemplateView):
         context['total_perte_usd'] = total_perte_usd
         context['total_perte_cdf'] = total_perte_cdf
         context['pertes_par_produit'] = pertes_par_produit
+
+        pertes_detaillees = []
+        for perte in pertes.select_related('item__produit', 'reported_by', 'reported_by__user').order_by('-date_perte', '-id'):
+            reporter = 'Non renseigné'
+            if perte.reported_by:
+                name_parts = [perte.reported_by.prenom, perte.reported_by.nom, perte.reported_by.postnom]
+                reporter = ' '.join(part for part in name_parts if part).strip()
+                if not reporter:
+                    reporter = perte.reported_by.user.get_full_name() or perte.reported_by.user.get_username()
+
+            commentaire = (perte.commentaire or '').strip()
+            if commentaire.startswith('Signalé par '):
+                if '. ' in commentaire:
+                    declared_name, commentaire = commentaire.split('. ', 1)
+                    if reporter == 'Non renseigné':
+                        reporter = declared_name.replace('Signalé par ', '').strip() or reporter
+                    commentaire = commentaire.strip()
+                else:
+                    declared_name = commentaire.replace('Signalé par ', '').rstrip('.').strip()
+                    if reporter == 'Non renseigné' and declared_name:
+                        reporter = declared_name
+                    commentaire = ''
+
+            prix_achat = perte.item.prix_achat_unitaire or 0
+            montant = perte.quantite * prix_achat
+            pertes_detaillees.append({
+                'date': perte.date_perte,
+                'declarant': reporter,
+                'boisson': perte.item.produit.nom,
+                'quantite': perte.quantite,
+                'raison': perte.get_raison_display(),
+                'commentaire': commentaire,
+                'montant': montant,
+                'devise': perte.item.devise,
+            })
+
+        context['pertes_detaillees'] = pertes_detaillees
             
         # 4. Gestion des Factures (Dettes et Dépenses)
         from .models import Facture
@@ -766,6 +807,8 @@ class TeamView(LoginRequiredMixin, TemplateView):
         profile = PilotProfile.objects.get(user=self.request.user)
         context['bar'] = profile.bar
         if profile.bar:
+            context['advisor_settings'] = BarAdvisorSettings.objects.get_or_create(bar=profile.bar)[0]
+        if profile.bar:
             from serveur.models import ServeurProfile
 
             context['staff'] = PilotProfile.objects.filter(bar=profile.bar).exclude(role='PROPRIETAIRE')
@@ -835,6 +878,24 @@ class TeamView(LoginRequiredMixin, TemplateView):
                 actif=True,
             ).select_related('user').order_by('-updated_at')
         return context
+
+
+class AdvisorSettingsView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        profile = get_object_or_404(PilotProfile, user=request.user, role='PROPRIETAIRE')
+        if not profile.bar:
+            messages.error(request, 'Aucun établissement actif.')
+            return redirect('team_html')
+
+        settings_obj, _ = BarAdvisorSettings.objects.get_or_create(bar=profile.bar)
+        provider = 'local'
+
+        settings_obj.owner_enabled = request.POST.get('owner_enabled') == '1'
+        settings_obj.server_enabled = request.POST.get('server_enabled') == '1'
+        settings_obj.provider = provider
+        settings_obj.save(update_fields=['owner_enabled', 'server_enabled', 'provider', 'updated_at'])
+        messages.success(request, 'Réglages du conseiller IA enregistrés.')
+        return redirect('team_html')
 
 
 class TeamRequestActionView(LoginRequiredMixin, View):
@@ -1080,6 +1141,22 @@ class TableActionView(LoginRequiredMixin, View):
                 notify_bar_owners(profile.bar, actor=request.user, category='TABLE', title='Table supprimée', message=f"{table_name} a été retirée du plan de salle.", url='/proprietaire/tables/')
                 payload = {'success': True, 'message': 'La table a été supprimée avec succès.', 'remove_selectors': [f'#table-card-{table_id}'], 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table_id), 'action': 'delete'}}}
 
+        elif action == 'activate_subscription' and table_id:
+            try:
+                days = int(request.POST.get('days', 30) or 30)
+            except ValueError:
+                days = 30
+            days = max(1, days)
+            table = Table.objects.get(id=table_id, bar=profile.bar)
+            now = timezone.now()
+            base = table.subscription_expires_at if table.subscription_expires_at and table.subscription_expires_at > now else now
+            if not table.subscription_started_at or not table.subscription_expires_at or table.subscription_expires_at <= now:
+                table.subscription_started_at = now
+            table.subscription_expires_at = base + timedelta(days=days)
+            table.est_active = True
+            table.save(update_fields=['subscription_started_at', 'subscription_expires_at', 'est_active'])
+            payload = {'success': True, 'message': f"Abonnement activé pour {table.nom} jusqu'au {timezone.localtime(table.subscription_expires_at).strftime('%d/%m/%Y %H:%M')}.", 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table.id), 'action': 'activate_subscription'}}}
+
         elif action == 'add':
             count = request.POST.get('count', 0)
             try:
@@ -1224,11 +1301,12 @@ class TableDownloadQRView(LoginRequiredMixin, View):
         y_footer -= 5*mm
         c.setFillColor(orange_primary)
         c.setFont("Helvetica", 8)
-        display_url = qr_url.replace("https://", "").replace("http://", "").split('/')[0]
-        full_path = qr_url.split(display_url)[1] if len(qr_url.split(display_url)) > 1 else ""
+        url_text = str(qr_url or '').replace("https://", "").replace("http://", "")
+        url_text = url_text.strip('/') or str(qr_url or '')
+        if len(url_text) > 36:
+            url_text = f"{url_text[:33]}..."
         
-        # On affiche juste la partie importante de l'URL si trop longue
-        c.drawCentredString(width/2, y_footer, f"{display_url}{full_path[:20]}...") 
+        c.drawCentredString(width/2, y_footer, url_text) 
         
         c.showPage()
         c.save()
@@ -1335,6 +1413,15 @@ class StaffInvitationPDFView(LoginRequiredMixin, View):
         c.setFillColor(orange_primary)
         c.setFont("Helvetica", 7)
         c.drawCentredString(width/2, inner_y, invite_url.replace("https://", "").replace("http://", ""))
+
+        inner_y -= 8*mm
+        c.setFillColor(gray_muted)
+        c.setFont("Helvetica-Bold", 7)
+        c.drawCentredString(width/2, inner_y, "CODE À SAISIR")
+        inner_y -= 5*mm
+        c.setFillColor(dark_text)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(width/2, inner_y, str(bar.code_invitation))
 
         # 3. SECTION COMMENT ÇA MARCHE
         footer_y = 30*mm

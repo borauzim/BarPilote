@@ -5,7 +5,7 @@ from .html_views import (
     TableActionView, TableDownloadQRView, EstablishmentReadyView, StaffInvitationPDFView,
     RecordLossView, MixedCaseArrivalView, ToggleCurrencyView, FactureActionView, TakeOrderView,
     SwitchEstablishmentView,
-    LiveOrdersAPIView, UpdateOrderStatusView, DownloadFacturePDFView, DownloadAllFacturesView, ClientHistoryAPIView, ClientManagementView, NotificationsAPIView, AdvisorAPIView, FCMConfigAPIView, FCMTokenAPIView
+    LiveOrdersAPIView, UpdateOrderStatusView, DownloadFacturePDFView, DownloadAllFacturesView, ClientHistoryAPIView, ClientManagementView, NotificationsAPIView, AdvisorAPIView, AdvisorSettingsView, FCMConfigAPIView, FCMTokenAPIView
 )
 
 urlpatterns = [
@@ -38,6 +38,7 @@ urlpatterns = [
     path('clients/', ClientManagementView.as_view(), name='clients_html'),
     path('api/notifications/', NotificationsAPIView.as_view(), name='notifications_api'),
     path('api/advisor/', AdvisorAPIView.as_view(), name='advisor_api'),
+    path('advisor/settings/', AdvisorSettingsView.as_view(), name='advisor_settings'),
     path('api/fcm/config/', FCMConfigAPIView.as_view(), name='fcm_config_api'),
     path('api/fcm/token/', FCMTokenAPIView.as_view(), name='fcm_token_api'),
 ]

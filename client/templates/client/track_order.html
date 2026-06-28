@@ -7,30 +7,22 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BarPilote - Suivi commande</title>
+    <meta name="theme-color" content="#ff5e00">
+    <link rel="manifest" href="{% static 'manifest.webmanifest' %}">
+    <link rel="apple-touch-icon" href="{% static 'logo_orange.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <style>
         :root { color-scheme: light; }
-        html.dark { color-scheme: dark; }
-        html.dark body { background: #0b0d10 !important; color: #f4f4f5 !important; }
-        html.dark header { background: rgba(17, 24, 39, 0.88) !important; border-color: rgba(63, 63, 70, 0.95) !important; }
-        html.dark section, html.dark article { background: #111827 !important; border-color: rgba(63, 63, 70, 0.95) !important; }
-        html.dark .bg-white { background-color: #111827 !important; }
-        html.dark .bg-neutral-50 { background-color: #18181b !important; }
-        html.dark .bg-neutral-100 { background-color: #27272a !important; }
-        html.dark .bg-neutral-200 { background-color: #3f3f46 !important; }
-        html.dark .text-neutral-950, html.dark .text-neutral-900, html.dark .text-neutral-800 { color: #f4f4f5 !important; }
-        html.dark .text-neutral-700, html.dark .text-neutral-600, html.dark .text-neutral-500, html.dark .text-neutral-400 { color: #a1a1aa !important; }
-        html.dark .border-neutral-200, html.dark .border-neutral-300 { border-color: rgba(63, 63, 70, 0.95) !important; }
-        html.dark .shadow-sm, html.dark .shadow-xl, html.dark .shadow-2xl { box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28) !important; }
-        body{font-family:Inter,sans-serif;background:#fbfbfc;color:#171717}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 650,'GRAD' 0,'opsz' 24}.action-card:active{transform:scale(.985)}.star.active{color:#f97316}.toast-show{opacity:1;transform:translateY(0)}
-    </style>
+        body{font-family:Inter,sans-serif;background:#fbfbfc;color:#171717}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 650,'GRAD' 0,'opsz' 24}.action-card:active{transform:scale(.985)}.star.active{color:#f97316}.toast-show{opacity:1;transform:translateY(0)}    </style>
+    <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}">
 </head>
 <body>
 <form class="hidden">{% csrf_token %}</form>
 <div id="toast" class="fixed left-4 right-4 top-4 z-50 mx-auto max-w-md -translate-y-3 rounded-2xl bg-neutral-950 px-4 py-3 text-sm font-black text-white opacity-0 shadow-2xl transition">Action enregistrée.</div>
 <main class="mx-auto min-h-screen max-w-2xl px-4 pb-28 pt-5">
+    {% trial_ad_banner order.bar "client" %}
     <section class="rounded-[32px] bg-neutral-950 p-5 text-white shadow-2xl shadow-neutral-950/10">
         <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
@@ -358,5 +350,6 @@ connectClientOrderSocket();
 refreshStatus();
 </script>
     <script src="{% static 'js/barpilote-theme.js' %}"></script>
+    <script src="{% static 'js/barpilote-pwa.js' %}"></script>
 </body>
 </html>

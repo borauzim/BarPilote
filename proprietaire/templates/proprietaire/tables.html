@@ -75,6 +75,15 @@
                     <a href="{% url 'table_download_qr' %}?table_id={{ table.id }}" class="w-10 h-10 rounded-xl flex items-center justify-center text-orange-600 hover:bg-orange-50 transition-colors" title="Télécharger QR">
                         <span class="material-symbols-outlined text-lg">qr_code_2</span>
                     </a>
+                    <form method="post" action="{% url 'table_action' %}" data-live-action="true" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="activate_subscription">
+                        <input type="hidden" name="table_id" value="{{ table.id }}">
+                        <input type="hidden" name="days" value="30">
+                        <button type="submit" class="w-10 h-10 rounded-xl flex items-center justify-center {% if table.subscription_is_active %}text-emerald-600 hover:bg-emerald-50{% else %}text-blue-600 hover:bg-blue-50{% endif %} transition-colors" title="{% if table.subscription_is_active %}Renouveler 30 jours{% else %}Activer 30 jours{% endif %}">
+                            <span class="material-symbols-outlined text-lg">{% if table.subscription_is_active %}autorenew{% else %}payments{% endif %}</span>
+                        </button>
+                    </form>
                     <form method="post" action="{% url 'table_action' %}" data-live-action="true" onsubmit="return confirm('Supprimer définitivement la {{ table.nom }} ?')" class="inline">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete">
@@ -88,28 +97,21 @@
             
             <div class="relative z-10">
                 <h3 id="table-name-{{ table.id }}" class="text-2xl font-black text-on-surface tracking-tight mb-1">{{ table.nom }}</h3>
-                {% if table.is_occupied %}
-                    <div class="mt-4 p-4 rounded-2xl bg-orange-50/50 border border-orange-100/50 group-hover:bg-orange-50 transition-colors">
-                        <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse"></span>
-                            Total Actuel
-                        </p>
-                        <p class="text-2xl font-black text-on-surface mt-1">
-                            {% display_price table.order_info.total_usd table.order_info.total_cdf %}
-                        </p>
-                        <div class="mt-2 flex flex-col gap-1">
-                            <span class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Statut : {{ table.order_info.statut }}</span>
-                            {% if is_server_interface %}<span class="text-[9px] font-black {% if table.is_mine %}text-orange-600{% else %}text-blue-600{% endif %} uppercase tracking-widest">{% if table.is_mine %}Votre table{% else %}Serveur : {{ table.order_info.server_name }}{% endif %}</span>{% endif %}
-                        </div>
+                <div class="mt-4 p-4 rounded-2xl {% if table.subscription_is_active %}bg-emerald-50/30 border border-emerald-100/30{% else %}bg-red-50/40 border border-red-100/40{% endif %}">
+                    <p class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1 {% if table.subscription_is_active %}text-emerald-600{% else %}text-red-600{% endif %}">
+                        <span class="w-1.5 h-1.5 rounded-full {% if table.subscription_is_active %}bg-emerald-600{% else %}bg-red-500{% endif %} animate-pulse"></span>
+                        {% if table.subscription_is_active %}Abonnement actif{% else %}Sans abonnement{% endif %}
+                    </p>
+                    <p class="text-2xl font-black text-on-surface mt-1">{% if table.subscription_is_active %}{{ table.subscription_days_left }} j restants{% else %}Bloquée{% endif %}</p>
+                    <div class="mt-2 flex flex-col gap-1">
+                        {% if table.subscription_is_active %}
+                        <span class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Expire le {{ table.subscription_expires_at|date:"d/m/Y H:i" }}</span>
+                        {% else %}
+                        <span class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Le client ne verra pas les menus</span>
+                        {% endif %}
+                        {% if table.is_occupied %}<span class="text-[9px] font-black {% if table.is_mine %}text-orange-600{% else %}text-blue-600{% endif %} uppercase tracking-widest">{% if table.is_mine %}Votre table{% else %}Serveur : {{ table.order_info.server_name }}{% endif %}</span>{% endif %}
                     </div>
-                {% else %}
-                    <div class="mt-4 p-4 rounded-2xl bg-emerald-50/30 border border-emerald-100/30">
-                        <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1">
-                            Disponible
-                        </p>
-                        <p class="text-2xl font-black text-on-surface-variant/10 mt-1">Prête</p>
-                    </div>
-                {% endif %}
+                </div>
             </div>
             
             <div class="mt-8 pt-8 border-t border-surface-container-high flex items-center justify-between relative z-10">

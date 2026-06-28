@@ -1,22 +1,23 @@
 from django import template
+from django.conf import settings
 
 register = template.Library()
 
 ADS = [
     {
         "icon": "campaign",
-        "headline": "BarPilote reste visible pendant l'essai gratuit",
-        "message": "Votre établissement est encore dans sa période de découverte. Les espaces sponsorisés restent affichés pour tous les utilisateurs.",
+        "headline": "BarPilote sponsorise votre mois d'essai",
+        "message": "Cet établissement utilise BarPilote gratuitement pendant 30 jours. Cette publicité finance l'accès découverte.",
     },
     {
         "icon": "ads_click",
-        "headline": "Lancement SaaS par table",
-        "message": "Chaque table participe à la facturation du bar après la période gratuite. Le tarif est défini par établissement.",
+        "headline": "Commandes QR, stock et finances en direct",
+        "message": "BarPilote centralise les tables, les serveurs, les clients et les pertes pendant l'essai gratuit.",
     },
     {
         "icon": "local_offer",
         "headline": "Offre de démarrage active",
-        "message": "Profitez de 30 jours gratuits pendant lesquels une bannière sponsorisée accompagne chaque interface.",
+        "message": "Le premier mois est gratuit pour tester l'établissement avec propriétaires, serveurs et clients.",
     },
 ]
 
@@ -37,12 +38,24 @@ def trial_ad_banner(context, bar=None, audience='owner'):
         'client': 'Client',
     }.get(audience, 'Utilisateur')
 
+    adsense_client = getattr(settings, 'GOOGLE_ADSENSE_CLIENT_ID', '')
+    adsense_slots = {
+        'owner': getattr(settings, 'GOOGLE_ADSENSE_SLOT_OWNER', ''),
+        'server': getattr(settings, 'GOOGLE_ADSENSE_SLOT_SERVER', ''),
+        'client': getattr(settings, 'GOOGLE_ADSENSE_SLOT_CLIENT', ''),
+    }
+    adsense_slot = adsense_slots.get(audience, '')
+
     return {
         'show_banner': True,
+        'use_adsense': bool(adsense_client and adsense_slot),
+        'adsense_client': adsense_client,
+        'adsense_slot': adsense_slot,
         'days_left': days_left,
         'audience_label': audience_label,
         'icon': creative['icon'],
         'headline': creative['headline'],
         'message': creative['message'],
         'banner_key': f"trial-ad-{getattr(bar, 'id', 'global')}-{audience}",
+        'bar_name': getattr(bar, 'nom', 'cet établissement'),
     }

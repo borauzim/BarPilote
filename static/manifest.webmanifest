@@ -1,0 +1,20 @@
+{
+  "name": "BarPilote",
+  "short_name": "BarPilote",
+  "description": "Gestion de bar, commandes, équipe, stock et finances.",
+  "start_url": "/auth/login/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f9f9fb",
+  "theme_color": "#ff5e00",
+  "icons": [
+    {
+      "src": "/static/logo_orange.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "food"]
+}

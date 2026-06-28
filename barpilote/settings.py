@@ -267,6 +267,14 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-5.5')
 OPENAI_REQUEST_TIMEOUT = int(os.environ.get('OPENAI_REQUEST_TIMEOUT', '20'))
 
+# Google AdSense. Renseigner GOOGLE_ADSENSE_CLIENT_ID au format ca-pub-xxxxxxxxxxxxxxxx
+# et un slot par audience pour afficher de vraies publicites Google pendant l'essai gratuit.
+GOOGLE_ADSENSE_CLIENT_ID = os.environ.get('GOOGLE_ADSENSE_CLIENT_ID', '')
+GOOGLE_ADSENSE_SLOT_OWNER = os.environ.get('GOOGLE_ADSENSE_SLOT_OWNER', '')
+GOOGLE_ADSENSE_SLOT_SERVER = os.environ.get('GOOGLE_ADSENSE_SLOT_SERVER', '')
+GOOGLE_ADSENSE_SLOT_CLIENT = os.environ.get('GOOGLE_ADSENSE_SLOT_CLIENT', '')
+GOOGLE_ADSENSE_SELLER_ID = os.environ.get('GOOGLE_ADSENSE_SELLER_ID', 'f08c47fec0942fa0')
+
 
 # Realtime / Push notifications
 REDIS_URL = os.environ.get('REDIS_URL', '')
