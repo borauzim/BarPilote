@@ -6,7 +6,8 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from proprietaire.models import Bar, Category, MasterProduct, Order, Perte, PilotProfile, StockItem, Table
+from proprietaire.models import Bar, Category, Facture, MasterProduct, Order, Perte, PilotProfile, StockItem, Table
+from client.models import ClientOrderMeta
 from serveur.invitations import extract_invitation_token, resolve_invitation
 from serveur.models import InvitationCode, ServeurProfile, Shift
 
@@ -520,6 +521,38 @@ class ServeurTakeOrderTests(TestCase):
         self.assertEqual(order.items.count(), 1)
         self.assertEqual(order.items.first().quantite, 2)
         self.assertEqual(order.total_usd, self.stock_item.prix_vente_unitaire * 2)
+
+
+    def test_waiter_can_cancel_own_client_order(self):
+        self.client.force_login(self.server)
+        pilot = PilotProfile.objects.get(user=self.server)
+        order = Order.objects.create(bar=self.bar, table=self.table, serveur=pilot, statut="PENDING")
+        ClientOrderMeta.objects.create(order=order)
+        facture = Facture.objects.create(
+            bar=self.bar,
+            numero="FAC-CANCEL-001",
+            client_fournisseur="Client",
+            montant_usd=Decimal("2.50"),
+            type_facture="CLIENT",
+            statut="IMPAYEE",
+        )
+        facture.orders.add(order)
+
+        response = self.client.post(reverse("serveur_client_order_action"), {
+            "order_id": order.id,
+            "action": "cancel",
+            "reason": "Erreur client",
+        }, HTTP_ACCEPT="application/json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])
+        order.refresh_from_db()
+        facture.refresh_from_db()
+        meta = order.client_meta
+        self.assertEqual(order.statut, "CANCELLED")
+        self.assertEqual(facture.statut, "ANNULEE")
+        self.assertEqual(meta.cancelled_by, "SERVEUR")
+        self.assertEqual(meta.cancellation_reason, "Erreur client")
 
     def test_waiter_glass_order_uses_inventory_glass_price(self):
         whisky_category = Category.objects.create(nom="Whiskies")

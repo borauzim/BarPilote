@@ -4,12 +4,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.http import JsonResponse
+from django.core import signing
 from django.utils import timezone
 from django.db.models import Q, Count, Sum, F
 from django.contrib import messages
 from django.contrib.auth import logout
 from decimal import Decimal, ROUND_HALF_UP
-from datetime import timedelta
+from datetime import datetime, timedelta
 import uuid
 
 from proprietaire.models import PilotProfile, StockItem, Order, OrderItem, Table, Bar, Category, Perte, Facture, Client
@@ -69,9 +70,75 @@ def _convert_payment_amount(bar, total_usd, total_cdf, currency):
 
 
 def _payment_label(amount, currency):
-    if currency == 'CDF':
-        return f"{amount:,.0f} FC".replace(',', ' ')
-    return f"{amount:.2f} $"
+    if currency == "CDF":
+        return f"{amount:,.0f} FC".replace(",", " ")
+    return f"{amount:.2f} \x24"
+
+
+def _mark_client_invoice_paid(order):
+    now = timezone.now()
+    factures = order.factures.filter(type_facture="CLIENT")
+    if factures.exists():
+        factures.update(statut="PAYEE", date_paiement=now)
+        return
+    facture = Facture.objects.create(
+        bar=order.bar,
+        numero="FAC-" + timezone.localtime().strftime("%y%m%d") + "-" + order.id.hex[:6].upper(),
+        client_fournisseur=order.client_name or "Client",
+        montant_usd=order.total_usd,
+        montant_cdf=order.total_cdf,
+        type_facture="CLIENT",
+        statut="PAYEE",
+        date_paiement=now,
+    )
+    facture.orders.add(order)
+
+
+class ServeurLiveOrdersAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        profile = get_object_or_404(ServeurProfile, user=request.user, confirmation_status='CONFIRMED', actif=True)
+        bar = profile.bar
+        pilot_profile = PilotProfile.objects.filter(user=request.user, bar=bar).first()
+        if not bar or not pilot_profile:
+            return JsonResponse({'orders': [], 'last_paid_timestamp': None})
+
+        active_orders = (
+            Order.objects.filter(Q(serveur=pilot_profile) | Q(serveur__isnull=True), bar=bar, statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED'])
+            .select_related('table', 'serveur')
+            .prefetch_related('items__product_item__produit')
+            .order_by('-date_creation')
+        )
+        orders = []
+        for order in active_orders:
+            items = []
+            for item in order.items.all():
+                items.append({
+                    'id': str(item.product_item_id),
+                    'name': item.product_item.produit.nom,
+                    'qty': int(item.quantite or 0),
+                    'price': float(item.prix_unitaire or 0),
+                    'unit': item.unite_vente,
+                    'devise': item.devise,
+                })
+            orders.append({
+                'id': str(order.id),
+                'table_nom': order.table.nom if order.table else 'Comptoir',
+                'statut': order.statut,
+                'status_label': order.get_statut_display(),
+                'total_usd': float(order.total_usd or 0),
+                'total_cdf': float(order.total_cdf or 0),
+                'timestamp': order.date_creation.timestamp(),
+                'date_creation': order.date_creation.isoformat(),
+                'date_service': order.date_service.isoformat() if order.date_service else None,
+                'delivery_duration': int((order.date_service - order.date_creation).total_seconds()) if order.date_service else None,
+                'server_id': str(order.serveur_id) if order.serveur_id else '',
+                'server': f'{order.serveur.prenom} {order.serveur.nom}'.strip() if order.serveur else '',
+                'items': items,
+            })
+
+        last_paid_order = Order.objects.filter(bar=bar, serveur=pilot_profile, statut='PAID').order_by('-date_maj').first()
+        last_paid_timestamp = int(last_paid_order.date_maj.timestamp()) if last_paid_order else None
+        return JsonResponse({'orders': orders, 'last_paid_timestamp': last_paid_timestamp})
 
 
 def _order_payment_currency(order, fallback='CDF'):
@@ -380,9 +447,23 @@ class ServeurRecordLossView(LoginRequiredMixin, View):
             created_count += 1
 
         if created_count:
-            messages.success(request, f"{created_count} perte(s) enregistrée(s). Stock mis à jour.")
+            payload = {
+                'success': True,
+                'message': f'{created_count} perte(s) enregistrée(s). Stock mis à jour.',
+                'reset_form': True,
+                'close_selector': '#lossModal',
+                'dispatch_event': {'type': 'barpilote:server-loss-recorded', 'detail': {'count': created_count}},
+            }
+            live = _live_payload(request, payload)
+            if live:
+                return live
+            messages.success(request, payload['message'])
         else:
-            messages.error(request, "Aucune perte valide à enregistrer.")
+            payload = {'success': False, 'error': 'Aucune perte valide à enregistrer.'}
+            live = _live_payload(request, payload, status=400)
+            if live:
+                return live
+            messages.error(request, payload['error'])
         return redirect('serveur_dashboard')
 
 class ServeurAuthorizedSectionMixin(ServeurOwnerStyleSectionMixin):
@@ -462,7 +543,7 @@ class ServeurFinanceView(ServeurOwnerStyleSectionMixin, TemplateView):
             orders__serveur=pilot_profile,
         ).filter(
             Q(date_emission__range=(start_date, end_date)) | Q(statut='IMPAYEE')
-        ).order_by('-date_emission').distinct()
+        ).order_by(F('date_echeance').asc(nulls_last=True), '-date_emission').distinct()
         context['factures'] = personal_factures
         unpaid_personal = personal_factures.filter(type_facture='CLIENT', statut='IMPAYEE')
         unpaid_data = unpaid_personal.aggregate(total_usd=Sum('montant_usd'), total_cdf=Sum('montant_cdf'), count=Count('id'))
@@ -727,9 +808,12 @@ class ServeurTableActionView(LoginRequiredMixin, View):
         updated = Order.objects.filter(id__in=[order.id for order in orders_to_close]).update(statut='PAID', date_maj=now)
 
         if orders_to_close:
+            Facture.objects.filter(orders__in=orders_to_close, type_facture='CLIENT').update(statut='PAYEE', date_paiement=now)
             ClientOrderMeta.objects.filter(order__in=orders_to_close).update(payment_requested=False, payment_confirmed_by=pilot_profile, payment_confirmed_at=now, table_released_at=now, updated_at=now)
             notify_bar_owners(profile.bar, actor=request.user, category='TABLE', title=f'Table libérée - {table.nom}', message=f'{profile.prenom} {profile.nom} a libéré {table.nom}. {updated} commande(s) clôturée(s).', url=reverse('tables_html'))
             for order in orders_to_close:
+                order.statut = 'PAID'
+                order.date_maj = now
                 notify_order_status(order, actor=request.user, status_label='Payé')
 
         payload = {
@@ -967,9 +1051,24 @@ class ServeurTakeOrderView(LoginRequiredMixin, View):
             items_raw=request.POST.getlist('items[]'),
         )
         if order:
-            messages.success(request, f"Commande enregistree pour {order.table.nom}.")
+            payload = {
+                'success': True,
+                'message': f'Commande enregistrée pour {order.table.nom}.',
+                'reset_form': True,
+                'remove_selectors': '#takeOrderForm input[name="items[]"]',
+                'close_selector': '#takeOrderPopover',
+                'dispatch_event': {'type': 'barpilote:server-order-created', 'detail': {'order_id': str(order.id)}},
+            }
+            live = _live_payload(request, payload)
+            if live:
+                return live
+            messages.success(request, payload['message'])
         else:
-            messages.error(request, "Veuillez choisir une table et au moins un article.")
+            payload = {'success': False, 'error': 'Veuillez choisir une table et au moins un article.'}
+            live = _live_payload(request, payload, status=400)
+            if live:
+                return live
+            messages.error(request, payload['error'])
         return redirect('serveur_dashboard')
 
 class ServeurCommandeDetailView(LoginRequiredMixin, View):
@@ -1032,6 +1131,7 @@ class ServeurShiftActionView(LoginRequiredMixin, View):
             order = get_object_or_404(Order, id=order_id, bar=profile.bar)
             order.statut = 'PAID'
             order.save(update_fields=['statut', 'date_maj'])
+            _mark_client_invoice_paid(order)
             notify_order_status(order, actor=request.user, status_label=order.get_statut_display())
             payload = {'success': True, 'message': f"La commande pour {order.table.nom} a été payée.", 'dispatch_event': {'type': 'barpilote:order-changed', 'detail': {'order_id': str(order.id), 'action': 'pay', 'status': 'PAID'}}}
 
@@ -1078,6 +1178,7 @@ class ServeurClientOrderActionView(LoginRequiredMixin, View):
             amount, rate = _convert_payment_amount(order.bar, order.total_usd, order.total_cdf, currency)
             order.statut = 'PAID'
             order.save(update_fields=['statut', 'date_maj'])
+            _mark_client_invoice_paid(order)
             meta.payment_currency = currency
             meta.payment_amount = amount
             meta.payment_rate = rate
@@ -1094,13 +1195,136 @@ class ServeurClientOrderActionView(LoginRequiredMixin, View):
             reason = request.POST.get('reason', '').strip()
             order.statut = 'CANCELLED'
             order.save(update_fields=['statut', 'date_maj'])
+            order.factures.filter(type_facture='CLIENT').update(statut='ANNULEE', date_paiement=None)
             meta.cancelled_by = 'SERVEUR'
             meta.cancellation_reason = reason[:500]
             meta.save(update_fields=['cancelled_by', 'cancellation_reason', 'updated_at'])
             notify_bar_owners(profile.bar, actor=request.user, category='ORDER', title=f'Commande annulée - {order.table.nom}', message=f'Motif serveur: {reason or "Non précisé"}', url=reverse('dashboard_html'))
-            return JsonResponse({'success': True})
+            notify_order_status(order, actor=request.user, status_label='Annulée')
+            return JsonResponse({'success': True, 'status': order.statut, 'status_label': order.get_statut_display()})
 
         return JsonResponse({'error': 'Action invalide.'}, status=400)
+
+
+def _ensure_accepted_debt_facture(order, meta, pilot_profile):
+    existing = order.factures.filter(type_facture='CLIENT', statut='IMPAYEE').first()
+    if existing:
+        return existing
+    client_name = ' '.join(filter(None, [meta.client_prenom, order.client_name, meta.client_postnom])).strip()
+    if not client_name:
+        client_name = f'Client - {order.table.nom}'
+    if order.client_phone:
+        client_name = f'{client_name} ({order.client_phone})'
+    facture = Facture.objects.create(
+        bar=order.bar,
+        numero=f'FAC-{timezone.now():%y%m%d}-{str(uuid.uuid4())[:4].upper()}',
+        client_fournisseur=client_name,
+        montant_usd=order.total_usd,
+        montant_cdf=order.total_cdf,
+        type_facture='CLIENT',
+        statut='IMPAYEE',
+        date_echeance=(
+            timezone.make_aware(datetime.combine(meta.debt_due_date, datetime.min.time()))
+            if meta.debt_due_date else None
+        ),
+        guaranteed_by=pilot_profile,
+        notes=f'Dette client approuvée par {_server_display_name(pilot_profile)} pour {order.table.nom}.',
+    )
+    facture.orders.add(order)
+    notify_debt_created(facture, actor=pilot_profile.user)
+    return facture
+
+
+class ServeurOrderNotificationActionView(View):
+    def _payload(self, request):
+        token = request.GET.get('token') or request.POST.get('token')
+        if not token:
+            return None, JsonResponse({'error': 'Jeton manquant.'}, status=400)
+        try:
+            return signing.loads(token, salt='barpilote-server-order-notification-action', max_age=60 * 60), None
+        except signing.BadSignature:
+            return None, JsonResponse({'error': 'Jeton invalide ou expiré.'}, status=403)
+
+    def get(self, request, *args, **kwargs):
+        return self.post(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        payload, error = self._payload(request)
+        if error:
+            return error
+        action = payload.get('action')
+        kind = payload.get('kind') or 'order'
+        if action not in {'accept', 'refuse'}:
+            return JsonResponse({'error': 'Action invalide.'}, status=400)
+        pilot_profile = get_object_or_404(PilotProfile, id=payload.get('server_id'), role='SERVEUR')
+        order = get_object_or_404(Order.objects.select_related('bar', 'table', 'serveur'), id=payload.get('order_id'), bar=pilot_profile.bar)
+
+        if kind == 'debt':
+            meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
+            if not meta.debt_requested:
+                return JsonResponse({'success': False, 'message': 'Aucune dette en attente.'}, status=400)
+            if action == 'accept':
+                if meta.debt_status == 'ACCEPTED':
+                    _ensure_accepted_debt_facture(order, meta, pilot_profile)
+                    return JsonResponse({'success': True, 'message': 'Dette déjà acceptée.', 'status': meta.debt_status})
+                meta.debt_status = 'ACCEPTED'
+                meta.debt_handled_at = timezone.now()
+                meta.debt_handled_by = pilot_profile
+                meta.debt_response_reason = ''
+                meta.save(update_fields=['debt_status', 'debt_handled_at', 'debt_handled_by', 'debt_response_reason', 'updated_at'])
+                _ensure_accepted_debt_facture(order, meta, pilot_profile)
+                notify_bar_owners(
+                    order.bar,
+                    actor=pilot_profile.user,
+                    category='DEBT',
+                    title=f'Dette acceptée - {order.table.nom}',
+                    message=f'{_server_display_name(pilot_profile)} a accepté la dette pour la commande #{order.id.hex[:6].upper()}.',
+                    url=reverse('dashboard_html'),
+                )
+                from services.order_realtime import broadcast_order_changed
+                broadcast_order_changed(order)
+                return JsonResponse({'success': True, 'message': 'Dette acceptée.', 'status': meta.debt_status})
+
+            meta.debt_status = 'REFUSED'
+            meta.debt_handled_at = timezone.now()
+            meta.debt_handled_by = pilot_profile
+            meta.debt_response_reason = ''
+            meta.save(update_fields=['debt_status', 'debt_handled_at', 'debt_handled_by', 'debt_response_reason', 'updated_at'])
+            notify_bar_owners(
+                order.bar,
+                actor=pilot_profile.user,
+                category='DEBT',
+                title=f'Dette refusée - {order.table.nom}',
+                message=f'{_server_display_name(pilot_profile)} a refusé la dette pour la commande #{order.id.hex[:6].upper()}.',
+                url=reverse('dashboard_html'),
+            )
+            from services.order_realtime import broadcast_order_changed
+            broadcast_order_changed(order)
+            return JsonResponse({'success': True, 'message': 'Dette refusée.', 'status': meta.debt_status})
+
+        if action == 'accept':
+            if order.statut != 'PENDING':
+                return JsonResponse({'success': False, 'message': 'Commande déjà traitée.', 'status': order.statut})
+            order.serveur = pilot_profile
+            order.statut = 'ACCEPTEE'
+            order.save(update_fields=['serveur', 'statut', 'date_maj'])
+            notify_order_status(order, actor=pilot_profile.user, status_label='Acceptée')
+            return JsonResponse({'success': True, 'message': 'Commande acceptée.', 'status': order.statut})
+
+        if order.statut == 'PENDING' and order.serveur_id == pilot_profile.id:
+            order.serveur = None
+            order.save(update_fields=['serveur', 'date_maj'])
+            notify_bar_owners(
+                order.bar,
+                actor=pilot_profile.user,
+                category='ORDER',
+                title=f'Commande refusée - {order.table.nom}',
+                message=f'{_server_display_name(pilot_profile)} a refusé la commande. Elle reste disponible.',
+                url=reverse('dashboard_html'),
+            )
+            from services.order_realtime import broadcast_order_changed
+            broadcast_order_changed(order)
+        return JsonResponse({'success': True, 'message': 'Commande refusée.', 'status': order.statut})
 
 
 class ServeurUpdateOrderStatusView(LoginRequiredMixin, View):
@@ -1144,8 +1368,6 @@ class ServeurUpdateOrderStatusView(LoginRequiredMixin, View):
             if not order.serveur_id:
                 order.serveur = pilot_profile
             order.statut = new_status
-            if new_status in {'ACCEPTEE', 'PREPARING'} and not order.date_service:
-                order.date_service = timezone.now()
             if new_status == 'SERVED':
                 order.date_service = timezone.now()
             if client_name:

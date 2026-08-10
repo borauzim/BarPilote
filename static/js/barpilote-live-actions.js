@@ -44,6 +44,15 @@
     });
   }
 
+  function closeTargets(targets) {
+    toArray(targets).forEach((selector) => {
+      document.querySelectorAll(selector).forEach((node) => {
+        node.classList.add('hidden');
+        node.classList.remove('flex');
+      });
+    });
+  }
+
   function refreshCurrency(payload) {
     if (!window.BarPiloteCurrency) return;
     if (payload && payload.exchange_rate) {
@@ -106,6 +115,8 @@
     try {
       const payload = await submitLiveForm(form);
       if (payload.message) flashMessage(payload.message);
+      if (payload.reset_form) form.reset();
+      closeTargets(payload.close_selectors || payload.close_selector);
       removeTargets(payload.remove_selectors || payload.remove_selector);
       applyTextUpdates(payload.text_updates);
       applyHtmlUpdates(payload.html_updates);
@@ -130,9 +141,11 @@
   window.BarPiloteLiveActions = {
     submitLiveForm,
     removeTargets,
+    closeTargets,
     applyTextUpdates,
     applyHtmlUpdates,
     applyValueUpdates,
     refreshCurrency,
+    flashMessage,
   };
 })();

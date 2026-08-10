@@ -3,7 +3,7 @@ from django.views.generic import RedirectView
 
 from .views import (
     ClientHistoryView, ClientInvoiceDownloadView, ClientInvoicesView, ClientMenuView, ClientOrderActionView,
-    ClientOrderStatusAPIView, ClientTrackOrderView,
+    ClientOrderStatusAPIView, ClientStatusLandingView, ClientTrackOrderView,
 )
 
 urlpatterns = [
@@ -11,6 +11,8 @@ urlpatterns = [
     path('<uuid:table_id>/', ClientMenuView.as_view(), name='client_menu'),
     path('<uuid:table_id>/history', RedirectView.as_view(pattern_name='client_history', permanent=False)),
     path('<uuid:table_id>/history/', ClientHistoryView.as_view(), name='client_history'),
+    path('<uuid:table_id>/status', RedirectView.as_view(pattern_name='client_status_landing', permanent=False)),
+    path('<uuid:table_id>/status/', ClientStatusLandingView.as_view(), name='client_status_landing'),
     path('<uuid:table_id>/invoices', RedirectView.as_view(pattern_name='client_invoices', permanent=False)),
     path('<uuid:table_id>/invoices/', ClientInvoicesView.as_view(), name='client_invoices'),
     path('order/<uuid:order_id>/', ClientTrackOrderView.as_view(), name='client_track_order'),

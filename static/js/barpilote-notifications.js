@@ -1,5 +1,5 @@
 (() => {
-  const state = { socket: null, fcmToken: null, audioContext: null, audioUnlocked: false };
+  const state = { socket: null, fcmToken: null, audioContext: null, audioUnlocked: false, seenNotifications: new Map(), permissionPrompt: null };
 
 
 
@@ -10,6 +10,68 @@
     state.audioContext = state.audioContext || new AudioContextClass();
     if (state.audioContext.state === 'suspended') state.audioContext.resume().catch(() => {});
     state.audioUnlocked = true;
+  }
+
+
+  function notificationKey(item) {
+    return String(item.id || item.data?.notification_id || `${item.title || 'BarPilote'}:${item.body || ''}`);
+  }
+
+  function wasRecentlyShown(item) {
+    const key = notificationKey(item);
+    const now = Date.now();
+    const last = state.seenNotifications.get(key) || 0;
+    state.seenNotifications.set(key, now);
+    for (const [storedKey, timestamp] of state.seenNotifications.entries()) {
+      if (now - timestamp > 12000) state.seenNotifications.delete(storedKey);
+    }
+    return now - last < 12000;
+  }
+
+  function systemNotificationOptions(item) {
+    return {
+      body: item.body || '',
+      icon: '/static/logo_orange.png',
+      badge: '/static/logo_orange.png',
+      tag: notificationKey(item),
+      renotify: true,
+      data: { ...(item.data || {}), url: item.url || item.data?.url || '/' },
+    };
+  }
+
+  function showSystemNotification(item) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const title = item.title || 'BarPilote';
+    const options = systemNotificationOptions(item);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready
+        .then((registration) => registration.showNotification(title, options))
+        .catch(() => new Notification(title, options));
+      return;
+    }
+    new Notification(title, options);
+  }
+
+  function showPermissionPrompt() {
+    if (!('Notification' in window) || Notification.permission !== 'default' || state.permissionPrompt) return;
+    const prompt = document.createElement('section');
+    state.permissionPrompt = prompt;
+    prompt.className = 'fixed left-4 right-4 bottom-24 z-[9998] mx-auto grid max-w-md grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-orange-100 bg-white p-4 text-neutral-950 shadow-2xl md:right-4 md:left-auto';
+    prompt.innerHTML = `
+      <div class="min-w-0">
+        <p class="text-[10px] font-black uppercase tracking-widest text-orange-600">Alertes commandes</p>
+        <p class="mt-1 text-sm font-bold text-neutral-700">Activez les notifications pour recevoir les commandes même quand BarPilote est en arrière-plan.</p>
+      </div>
+      <button type="button" class="rounded-xl bg-orange-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white">Activer</button>
+    `;
+    const button = prompt.querySelector('button');
+    button.addEventListener('click', async () => {
+      const permission = await Notification.requestPermission();
+      prompt.remove();
+      state.permissionPrompt = null;
+      if (permission === 'granted') setupFirebasePush().catch((error) => console.warn('Notifications push indisponibles', error));
+    });
+    document.body.appendChild(prompt);
   }
 
   function playNotificationSound() {
@@ -78,9 +140,15 @@
   function showRealtimeNotification(item) {
     const title = item.title || 'BarPilote';
     const body = item.body || '';
+    if (wasRecentlyShown(item)) return;
 
     window.dispatchEvent(new CustomEvent('barpilote:notification', { detail: item }));
     playNotificationSound();
+
+    if (document.hidden) {
+      showSystemNotification(item);
+      return;
+    }
 
     const toast = document.createElement('a');
     toast.href = item.url || item.data?.url || '#';
@@ -88,10 +156,6 @@
     toast.innerHTML = `<div class="text-orange-300">${title}</div><div class="mt-1 text-white/80">${body}</div>`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 6000);
-
-    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
-      new Notification(title, { body, icon: '/static/logo_orange.png', data: item.data || {} });
-    }
   }
 
   function connectWebSocket() {
@@ -179,8 +243,11 @@
     const config = await configResponse.json();
     if (!config.apiKey || !config.projectId || !config.messagingSenderId || !config.appId || !config.vapidKey) return;
 
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
+    if (Notification.permission === 'default') {
+      showPermissionPrompt();
+      return;
+    }
+    if (Notification.permission !== 'granted') return;
 
     const [{ initializeApp }, { getMessaging, getToken, onMessage }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js'),
@@ -213,11 +280,16 @@
     });
   }
 
-  window.BarPiloteNotifications = { connectWebSocket, setupFirebasePush, setupCapacitorPush, playNotificationSound };
+  window.BarPiloteNotifications = { connectWebSocket, setupFirebasePush, setupCapacitorPush, playNotificationSound, showSystemNotification, showPermissionPrompt };
   document.addEventListener('DOMContentLoaded', () => {
     ['click', 'touchstart', 'keydown'].forEach((eventName) => {
       document.addEventListener(eventName, unlockNotificationSound, { once: true, passive: true });
     });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type === 'barpilote-notification-click' && event.data.url) window.location.href = event.data.url;
+      });
+    }
     connectWebSocket();
     setupFirebasePush().catch((error) => console.warn('Notifications push indisponibles', error));
   });

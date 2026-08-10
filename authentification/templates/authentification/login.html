@@ -4,22 +4,46 @@
 {% block title %}Connexion - BarPilote{% endblock %}
 
 {% block content %}
-<div class="min-h-[80vh] flex items-center justify-center">
-    <div class="w-full max-w-md bg-surface-container-lowest rounded-[24px] p-10 executive-shadow relative z-10 text-center">
-        <!-- Logo and Welcome -->
-        <div class="flex flex-col items-center mb-8">
+<div class="min-h-[80vh] flex items-center justify-center px-4">
+    <div class="w-full max-w-md bg-surface-container-lowest rounded-[24px] p-8 sm:p-10 executive-shadow relative z-10">
+        <div class="flex flex-col items-center mb-8 text-center">
             <div class="w-16 h-16 mb-4 flex items-center justify-center">
                 <img src="{% static 'logo_orange.png' %}" alt="BarPilote Logo" width="64" height="64" class="w-full h-full object-contain">
             </div>
-            <h1 class="text-2xl font-black tracking-tight text-orange-600 mb-2">
-                BarPilote
-            </h1>
+            <h1 class="text-2xl font-black tracking-tight text-orange-600 mb-2">BarPilote</h1>
             <p class="text-on-surface-variant/70 text-sm font-medium">
-                Connectez-vous pour accéder à votre espace (Propriétaire ou Serveur).
+                Connectez-vous avec votre adresse email.
             </p>
         </div>
 
-        <!-- Google Auth Button -->
+        {% if messages %}
+            <div class="mb-5 space-y-2">
+                {% for message in messages %}
+                    <div class="rounded-lg border border-surface-container-high bg-surface-container-low px-4 py-3 text-sm text-on-surface">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <label class="block text-left">
+                <span class="mb-2 block text-sm font-semibold text-on-surface">Adresse email</span>
+                <input type="email" name="email" value="{{ email|default:'' }}" autocomplete="email" required class="w-full rounded-xl border-surface-container-high bg-white px-4 py-3 text-on-surface focus:border-primary focus:ring-primary" placeholder="nom@exemple.com">
+            </label>
+            <button type="submit" class="w-full flex items-center justify-center gap-2 citrus-gradient text-white transition-all duration-200 font-semibold py-3.5 px-4 rounded-xl active:scale-95">
+                <span class="material-symbols-outlined text-[20px]">mail</span>
+                Recevoir le code
+            </button>
+        </form>
+
+        <div class="my-6 flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-on-surface-variant/60">
+            <div class="h-px flex-1 bg-surface-container-high"></div>
+            <span>ou</span>
+            <div class="h-px flex-1 bg-surface-container-high"></div>
+        </div>
+
         <a href="{% provider_login_url 'google' %}" class="w-full flex items-center justify-center gap-3 bg-white border border-surface-container-high text-on-surface hover:bg-surface-container hover:shadow-sm transition-all duration-200 font-semibold py-3.5 px-4 rounded-xl active:scale-95">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M23.766 12.2764C23.766 11.4607 23.6999 10.6406 23.5588 9.83807H12.24V14.4591H18.7217C18.4528 15.9494 17.5885 17.2678 16.323 18.1056V21.1039H20.19C22.4608 19.0139 23.766 15.9274 23.766 12.2764Z" fill="#4285F4" />

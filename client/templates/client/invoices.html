@@ -6,9 +6,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BarPilote - Factures client</title>
-    <meta name="theme-color" content="#ff5e00">
-    <link rel="manifest" href="{% static 'manifest.webmanifest' %}">
-    <link rel="apple-touch-icon" href="{% static 'logo_orange.png' %}">
+    <meta name="theme-color" content="#ff5e00"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <meta name="apple-mobile-web-app-title" content="BarPilote"/>
+    <link rel="manifest" href="{% static 'manifest.webmanifest' %}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'barpilote_icon_transparent_512.png' %}"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
@@ -29,41 +33,192 @@
     </header>
 
     <section class="mt-4 rounded-[28px] bg-neutral-950 p-5 text-white shadow-xl shadow-neutral-950/10">
-        <p class="text-[10px] font-black uppercase tracking-widest text-orange-300">Coffre client</p>
-        <h2 class="mt-2 text-2xl font-black tracking-tight">Téléchargements PDF</h2>
-        <p class="mt-2 text-sm font-semibold leading-6 text-white/60">Les factures gardent le même format que l'espace propriétaire.</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-orange-300">Factures impayees</p>
+        <h2 class="mt-2 text-2xl font-black tracking-tight"><span id="unpaidTotalCdf">{{ unpaid_totals.cdf_equivalent|floatformat:0 }}</span> FC</h2>
+        <p class="mt-1 text-sm font-semibold leading-6 text-white/60">Equivalent: {{ unpaid_totals.usd_equivalent|floatformat:2 }} USD. Vous pouvez payer toutes les factures ou une seule.</p>
+        <div class="mt-4 rounded-2xl bg-white/10 p-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-orange-300">phone_iphone</span>
+                <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Mobile Money</p>
+            </div>
+            {% if mobile_money_accounts %}
+            <div class="mt-3 grid gap-2">
+                {% for account in mobile_money_accounts %}
+                <div class="flex items-center justify-between gap-3 rounded-xl bg-white/10 px-3 py-2">
+                    <span class="text-xs font-black text-white">{{ account.provider }}</span>
+                    <a href="tel:{{ account.phone }}" class="text-sm font-black text-orange-200">{{ account.phone }}</a>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="mt-3 text-xs font-semibold leading-5 text-white/60">Envoyez le montant sur un de ces numéros, puis touchez le bouton de paiement pour prévenir le serveur.</p>
+            {% else %}
+            <p class="mt-3 text-xs font-semibold leading-5 text-white/60">Aucun numéro Mobile Money n'est encore configuré. Demandez au serveur le moyen de paiement disponible.</p>
+            {% endif %}
+        </div>
+        {% if unpaid_factures %}
+        <form method="post" action="{% url "client_invoices" table.id %}" class="invoice-pay-form mt-4 grid grid-cols-2 gap-2" data-scope="all">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="pay_all">
+            <button type="submit" name="payment_currency" value="CDF" class="h-12 rounded-2xl bg-orange-600 text-xs font-black text-white">Tout payer en FC</button>
+            <button type="submit" name="payment_currency" value="USD" class="h-12 rounded-2xl bg-white text-xs font-black text-neutral-950">Tout payer en USD</button>
+        </form>
+        {% endif %}
     </section>
 
-    <section class="mt-4 space-y-3">
-        {% for facture in factures %}
-        <article class="rounded-[28px] border border-neutral-200 bg-white p-4 shadow-sm">
-            <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                    <p class="text-[10px] font-black uppercase tracking-[.18em] text-neutral-400">{{ facture.date_emission|date:'d/m/Y H:i' }}</p>
-                    <h2 class="mt-1 truncate text-base font-black text-neutral-950">{{ facture.numero }}</h2>
-                    <p class="mt-1 truncate text-xs font-bold text-neutral-500">{{ facture.client_fournisseur }}</p>
-                </div>
-                <span class="rounded-full px-3 py-1 text-[10px] font-black uppercase {% if facture.statut == 'PAYEE' %}bg-emerald-50 text-emerald-700{% else %}bg-orange-50 text-orange-700{% endif %}">{{ facture.get_statut_display }}</span>
-            </div>
-            <div class="mt-3 grid grid-cols-2 gap-2 rounded-2xl bg-neutral-50 p-2">
-                <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">USD</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_usd|floatformat:2 }} $</p></div>
-                <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">CDF</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_cdf|floatformat:0 }} FC</p></div>
-            </div>
-            {% with order=facture.orders.first %}{% if order %}
-            <a href="{% url 'client_invoice_download' order.id %}" class="mt-3 flex h-12 items-center justify-center gap-2 rounded-2xl bg-orange-600 text-sm font-black text-white"><span class="material-symbols-outlined text-base">download</span>Télécharger</a>
-            {% endif %}{% endwith %}
-        </article>
-        {% empty %}
-        <div class="rounded-[28px] border border-dashed border-neutral-300 bg-white p-8 text-center">
-            <span class="material-symbols-outlined text-5xl text-neutral-300">receipt_long</span>
-            <h2 class="mt-3 text-xl font-black">Aucune facture</h2>
-            <p class="mt-2 text-sm font-bold text-neutral-500">Les factures des commandes passées depuis ce QR seront listées ici.</p>
+    <section class="mt-5">
+        <div class="mb-3 flex items-center justify-between gap-3">
+            <h2 class="text-lg font-black text-neutral-950">Impayees</h2>
+            <span class="rounded-full bg-orange-50 px-3 py-1 text-[10px] font-black uppercase text-orange-700">{{ unpaid_factures|length }} facture(s)</span>
         </div>
-        {% endfor %}
+        <div class="space-y-3" id="unpaidInvoices">
+            {% for facture in unpaid_factures %}
+            <article class="invoice-card rounded-[28px] border border-orange-200 bg-white p-4 shadow-sm" data-invoice-id="{{ facture.id }}">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black uppercase tracking-[.18em] text-neutral-400">{{ facture.date_emission|date:"d/m/Y H:i" }}</p>
+                        <h3 class="mt-1 truncate text-base font-black text-neutral-950">{{ facture.numero }}</h3>
+                        <p class="mt-1 truncate text-xs font-bold text-neutral-500">{{ facture.client_fournisseur }}</p>
+                    </div>
+                    <span class="invoice-status rounded-full bg-orange-50 px-3 py-1 text-[10px] font-black uppercase text-orange-700">Impayee</span>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2 rounded-2xl bg-neutral-50 p-2">
+                    <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">USD</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_usd|floatformat:2 }} USD</p></div>
+                    <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">CDF</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_cdf|floatformat:0 }} FC</p></div>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2">
+                    <form method="post" action="{% url "client_invoices" table.id %}" class="invoice-pay-form" data-scope="one">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="pay_one">
+                        <input type="hidden" name="facture_id" value="{{ facture.id }}">
+                        <button type="submit" name="payment_currency" value="CDF" class="h-11 w-full rounded-2xl bg-orange-600 text-xs font-black text-white">Payer FC</button>
+                    </form>
+                    {% with order=facture.orders.first %}{% if order %}
+                    <a href="{% url "client_invoice_download" order.id %}" class="flex h-11 items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white text-xs font-black text-neutral-900"><span class="material-symbols-outlined text-base">download</span>PDF</a>
+                    {% endif %}{% endwith %}
+                </div>
+                {% with order=facture.orders.first %}{% if order and order.statut != 'CANCELLED' %}
+                <form class="repeat-order-form mt-2" method="post" action="{% url 'client_order_action' order.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="repeat">
+                    <button type="submit" class="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 text-xs font-black text-orange-700"><span class="material-symbols-outlined text-base">repeat</span>Commander la même commande</button>
+                </form>
+                {% endif %}{% endwith %}
+            </article>
+            {% empty %}
+            <div class="rounded-[28px] border border-dashed border-emerald-200 bg-emerald-50 p-8 text-center">
+                <span class="material-symbols-outlined text-5xl text-emerald-500">verified</span>
+                <h3 class="mt-3 text-xl font-black text-emerald-900">Aucune facture impayee</h3>
+                <p class="mt-2 text-sm font-bold text-emerald-700">Toutes les factures de cette table sont reglees ou en attente de nouvelles commandes.</p>
+            </div>
+            {% endfor %}
+        </div>
     </section>
+
+    <section class="mt-6">
+        <div class="mb-3 flex items-center justify-between gap-3">
+            <h2 class="text-lg font-black text-neutral-950">Payees</h2>
+            <span class="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase text-emerald-700">{{ paid_factures|length }} facture(s)</span>
+        </div>
+        <div class="space-y-3">
+            {% for facture in paid_factures %}
+            <article class="rounded-[28px] border border-neutral-200 bg-white p-4 shadow-sm">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black uppercase tracking-[.18em] text-neutral-400">{{ facture.date_emission|date:"d/m/Y H:i" }}</p>
+                        <h3 class="mt-1 truncate text-base font-black text-neutral-950">{{ facture.numero }}</h3>
+                        <p class="mt-1 truncate text-xs font-bold text-neutral-500">{{ facture.client_fournisseur }}</p>
+                    </div>
+                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase text-emerald-700">Payee</span>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2 rounded-2xl bg-neutral-50 p-2">
+                    <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">USD</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_usd|floatformat:2 }} USD</p></div>
+                    <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">CDF</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_cdf|floatformat:0 }} FC</p></div>
+                </div>
+                {% with order=facture.orders.first %}{% if order %}
+                <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <a href="{% url "client_invoice_download" order.id %}" class="flex h-11 items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white text-xs font-black text-neutral-900"><span class="material-symbols-outlined text-base">download</span>Telecharger PDF</a>
+                    {% if order.statut != 'CANCELLED' %}
+                    <form class="repeat-order-form" method="post" action="{% url 'client_order_action' order.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="repeat">
+                        <button type="submit" class="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 text-xs font-black text-orange-700"><span class="material-symbols-outlined text-base">repeat</span>Même commande</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}{% endwith %}
+            </article>
+            {% empty %}
+            <div class="rounded-[28px] border border-dashed border-neutral-300 bg-white p-8 text-center">
+                <span class="material-symbols-outlined text-5xl text-neutral-300">receipt_long</span>
+                <h3 class="mt-3 text-xl font-black">Aucune facture payee</h3>
+                <p class="mt-2 text-sm font-bold text-neutral-500">Les factures confirmees par le serveur apparaitront ici.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
 </main>
 {% include 'client/_client_nav.html' with table=table active_order=active_order active_tab='invoices' %}
+<div id='invoiceToast' class='fixed left-1/2 top-5 z-50 hidden -translate-x-1/2 rounded-2xl bg-neutral-950 px-4 py-3 text-sm font-black text-white shadow-xl'></div>
+<script>
+const invoiceToast=document.getElementById('invoiceToast');
+function showInvoiceToast(message){invoiceToast.textContent=message;invoiceToast.classList.remove('hidden');setTimeout(()=>invoiceToast.classList.add('hidden'),2400);}
+function invoiceCsrf(form){const token=form.querySelector('[name=csrfmiddlewaretoken]');if(token)return token.value;const cookie=document.cookie.split('; ').find(row=>row.startsWith('csrftoken='));return cookie ? cookie.split('=')[1] : '';}
+document.querySelectorAll('.repeat-order-form').forEach(form=>{
+    form.addEventListener('submit', async event=>{
+        event.preventDefault();
+        const button=form.querySelector('button[type=submit]');
+        if(!button || button.disabled)return;
+        button.disabled=true;
+        const originalText=button.textContent;
+        button.textContent='Envoi...';
+        try{
+            const response=await fetch(form.getAttribute('action') || window.location.href,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':invoiceCsrf(form),'X-Requested-With':'XMLHttpRequest','Accept':'application/json'},body:new URLSearchParams(new FormData(form)).toString()});
+            const data=await response.json();
+            if(!response.ok || !data.success)throw new Error(data.error || 'Erreur');
+            showInvoiceToast(data.message || 'Nouvelle commande prête.');
+            if(data.order_url) window.location.href = data.order_url;
+        }catch(error){
+            showInvoiceToast(error.message || 'Erreur.');
+        }finally{
+            button.disabled=false;
+            button.textContent=originalText;
+        }
+    });
+});
+document.querySelectorAll('.invoice-pay-form').forEach(form=>{
+    form.addEventListener('submit', async event=>{
+        event.preventDefault();
+        const button=event.submitter || form.querySelector('button[type=submit]');
+        if(!button || button.disabled)return;
+        const body=new URLSearchParams(new FormData(form));
+        if(button.name)body.set(button.name, button.value);
+        button.disabled=true;
+        const originalText=button.textContent;
+        button.textContent='Envoi...';
+        try{
+            const response=await fetch(form.getAttribute('action') || window.location.href,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':invoiceCsrf(form)},body:body.toString()});
+            const data=await response.json();
+            if(!response.ok || !data.success)throw new Error(data.error || 'Erreur');
+            showInvoiceToast(data.message || 'Demande envoyee.');
+            if(form.dataset.scope==='all'){
+                document.querySelectorAll('.invoice-pay-form button').forEach(btn=>{btn.disabled=true;btn.textContent='Demande envoyee';});
+                document.querySelectorAll('.invoice-status').forEach(status=>{status.textContent='Paiement demande';status.classList.remove('bg-orange-50','text-orange-700');status.classList.add('bg-blue-50','text-blue-700');});
+            }else{
+                button.textContent='Demande envoyee';
+                const card=form.closest('.invoice-card');
+                const status=card ? card.querySelector('.invoice-status') : null;
+                if(status){status.textContent='Paiement demande';status.classList.remove('bg-orange-50','text-orange-700');status.classList.add('bg-blue-50','text-blue-700');}
+            }
+        }catch(error){
+            button.disabled=false;
+            button.textContent=originalText;
+            showInvoiceToast(error.message || 'Erreur.');
+        }
+    });
+});
+</script>
     <script src="{% static 'js/barpilote-theme.js' %}"></script>
-    <script src="{% static 'js/barpilote-pwa.js' %}"></script>
+    <script src="{% static 'js/barpilote-pwa.js' %}?v=4"></script>
 </body>
 </html>

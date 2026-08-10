@@ -6,8 +6,10 @@ from django.urls import reverse
 import os
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum, Q, Count, F
+from django.db import IntegrityError, OperationalError, close_old_connections
 from django.utils import timezone
 from datetime import timedelta
+import time
 from django.http import HttpResponse, FileResponse, JsonResponse
 from decimal import Decimal
 from django.conf import settings
@@ -60,13 +62,54 @@ class AdvisorAPIView(LoginRequiredMixin, View):
 
         return JsonResponse(generate_advisor_response(profile, question, history))
 
+
+def _notification_target_url(notification, user):
+    url = notification.url or ''
+    category = (notification.category or '').upper()
+    title = (notification.title or '').lower()
+    message = (notification.message or '').lower()
+    text = f'{title} {message}'
+    profile = PilotProfile.objects.filter(user=user).first()
+    role = getattr(profile, 'role', '') if profile else ''
+
+    paid_words = ('payé', 'payee', 'payée', 'paid', 'cash confirmé', 'cash confirme', 'encaisse')
+    unpaid_words = ('impay', 'dette', 'à payer', 'a payer')
+    if category == 'ORDER':
+        if any(word in text for word in paid_words):
+            return (reverse('serveur_finance') if role == 'SERVEUR' else reverse('finance_html')) + '#factures-payees'
+        if any(word in text for word in unpaid_words):
+            return (reverse('serveur_finance') if role == 'SERVEUR' else reverse('finance_html')) + '#factures-impayees'
+        return url or (reverse('serveur_dashboard') if role == 'SERVEUR' else reverse('dashboard_html'))
+    if category == 'DEBT':
+        return (reverse('serveur_finance') if role == 'SERVEUR' else reverse('finance_html')) + '#factures-impayees'
+    if category == 'TABLE':
+        return reverse('serveur_tables') if role == 'SERVEUR' else reverse('tables_html')
+    if category == 'TEAM':
+        if role == 'SERVEUR':
+            if 'inventaire' in text or 'stock' in text:
+                return reverse('serveur_inventory')
+            if 'table' in text:
+                return reverse('serveur_tables')
+            if 'rapport' in text or 'finance' in text:
+                return reverse('serveur_report')
+            return reverse('serveur_team')
+        return reverse('team_html')
+    return url or (reverse('serveur_dashboard') if role == 'SERVEUR' else reverse('dashboard_html'))
+
 class NotificationsAPIView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         ensure_daily_debt_reminders(request.user)
         qs = Notification.objects.filter(recipient=request.user).select_related('bar', 'actor').order_by('-created_at')
         unread_count = qs.filter(read_at__isnull=True).count()
+        read_filter = request.GET.get('filter', 'all')
+        if read_filter == 'unread':
+            qs = qs.filter(read_at__isnull=True)
+        elif read_filter == 'read':
+            qs = qs.filter(read_at__isnull=False)
+        else:
+            read_filter = 'all'
         items = []
-        for notification in qs[:30]:
+        for notification in qs[:40]:
             actor_name = ''
             if notification.actor:
                 actor_name = notification.actor.get_full_name() or notification.actor.get_username()
@@ -75,12 +118,13 @@ class NotificationsAPIView(LoginRequiredMixin, View):
                 'category': notification.category,
                 'title': notification.title,
                 'message': notification.message,
-                'url': notification.url,
+                'url': _notification_target_url(notification, request.user),
+                'data': notification.data or {},
                 'is_read': notification.is_read,
                 'actor': actor_name,
                 'created_at': timezone.localtime(notification.created_at).strftime('%d/%m %H:%M'),
             })
-        return JsonResponse({'unread_count': unread_count, 'notifications': items})
+        return JsonResponse({'unread_count': unread_count, 'filter': read_filter, 'notifications': items})
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
@@ -191,8 +235,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 # Recent Transactions
                 context['recent_orders'] = Order.objects.filter(bar=bar).order_by('-date_creation')[:10]
                 
-                # Data for Service Mode (Taking Orders)
-                context['tables'] = Table.objects.filter(bar=bar).order_by('nom')
+                context['order_assignment_mode'] = bar.order_assignment_mode
+                context['tables'] = Table.objects.filter(bar=bar).select_related('assigned_server').order_by('nom')
                 context['categories'] = Category.objects.all().order_by('nom')
                 context['inventory_items'] = StockItem.objects.filter(bar=bar).select_related('produit', 'produit__categorie')
                 
@@ -228,6 +272,20 @@ class TakeOrderView(LoginRequiredMixin, View):
         )
         if order:
             notify_order_created(order, actor=request.user)
+            live = _live_payload(request, {
+                'success': True,
+                'message': f'Commande enregistrée pour {order.table.nom}.',
+                'reset_form': True,
+                'remove_selectors': '#takeOrderForm input[name="items[]"]',
+                'close_selector': '#serviceModal',
+                'dispatch_event': {'type': 'barpilote:order-created', 'detail': {'order_id': str(order.id)}},
+            })
+            if live:
+                return live
+        else:
+            live = _live_payload(request, {'success': False, 'error': 'Veuillez choisir une table et au moins un article.'}, status=400)
+            if live:
+                return live
         return redirect('dashboard_html')
 
 class EstablishmentSetupView(LoginRequiredMixin, TemplateView):
@@ -247,25 +305,22 @@ class EstablishmentDetailsView(LoginRequiredMixin, TemplateView):
         context['profile'] = PilotProfile.objects.get(user=self.request.user)
         context['bar_type'] = self.request.session.get('setup_bar_type', 'BAR')
         context['google_maps_api_key'] = getattr(settings, 'GOOGLE_MAPS_API_KEY', '')
+        context['monthly_price_per_table_usd'] = Bar._meta.get_field('prix_mensuel_par_table_usd').default
         return context
     
     def post(self, request, *args, **kwargs):
         name = request.POST.get('name')
         address = request.POST.get('address')
         bar_type = request.session.get('setup_bar_type', 'BAR')
-        monthly_price_per_table_usd = request.POST.get('monthly_price_per_table_usd', 2.5)
-        try:
-            monthly_price_per_table_usd = Decimal(str(monthly_price_per_table_usd or 2.5))
-        except Exception:
-            monthly_price_per_table_usd = Decimal('2.50')
-        
         if name:
             # Create the bar
             new_bar = Bar.objects.create(
                 nom=name, 
                 adresse=address,
                 type_etablissement=bar_type,
-                prix_mensuel_par_table_usd=monthly_price_per_table_usd,
+                mobile_money_orange=request.POST.get('mobile_money_orange', '').strip(),
+                mobile_money_mpesa=request.POST.get('mobile_money_mpesa', '').strip(),
+                mobile_money_airtel=request.POST.get('mobile_money_airtel', '').strip(),
             )
             
             if 'logo' in request.FILES:
@@ -362,20 +417,36 @@ class TableSetupView(LoginRequiredMixin, TemplateView):
 
 class ProfileSetupView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/profile_setup.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = PilotProfile.objects.get(user=self.request.user)
+        context['profile'] = profile
+        context['is_profile_edit'] = bool(profile.nom and profile.prenom and profile.telephone)
+        return context
     
     def post(self, request, *args, **kwargs):
         profile = PilotProfile.objects.get(user=request.user)
+        was_complete = bool(profile.nom and profile.prenom and profile.telephone)
         
-        profile.nom = request.POST.get('nom', '').upper()
-        profile.postnom = request.POST.get('postnom', '').upper()
-        profile.prenom = request.POST.get('prenom', '').capitalize()
+        profile.nom = request.POST.get('nom', '').strip().upper()
+        profile.postnom = request.POST.get('postnom', '').strip().upper()
+        profile.prenom = request.POST.get('prenom', '').strip().capitalize()
         profile.sexe = request.POST.get('sexe', 'M')
-        profile.telephone = request.POST.get('telephone', '')
+        profile.telephone = request.POST.get('telephone', '').strip()
+
+        request.user.first_name = profile.prenom
+        request.user.last_name = profile.nom
+        request.user.save(update_fields=['first_name', 'last_name'])
         
         if 'photo_profil' in request.FILES:
             profile.photo_profil = request.FILES['photo_profil']
         
         profile.save()
+
+        if was_complete and profile.bar:
+            messages.success(request, 'Vos informations ont été mises à jour.')
+            return redirect(request.POST.get('next') or 'dashboard_html')
         
         return redirect('login_redirect')
 
@@ -460,6 +531,29 @@ class FinanceView(LoginRequiredMixin, TemplateView):
                 if live is not None:
                     return live
                 messages.success(request, payload['message'])
+
+        elif action == 'update_mobile_money':
+            if not bar:
+                payload = {'success': False, 'error': 'Aucun établissement actif.'}
+                live = _live_payload(request, payload, status=400)
+                if live is not None:
+                    return live
+                messages.error(request, payload['error'])
+                return redirect('finance_html')
+
+            bar.mobile_money_orange = request.POST.get('mobile_money_orange', '').strip()
+            bar.mobile_money_mpesa = request.POST.get('mobile_money_mpesa', '').strip()
+            bar.mobile_money_airtel = request.POST.get('mobile_money_airtel', '').strip()
+            bar.save(update_fields=['mobile_money_orange', 'mobile_money_mpesa', 'mobile_money_airtel'])
+            payload = {
+                'success': True,
+                'message': 'Numéros Mobile Money mis à jour.',
+                'dispatch_event': {'type': 'barpilote:mobile-money-changed', 'detail': {'bar_id': str(bar.id)}},
+            }
+            live = _live_payload(request, payload)
+            if live is not None:
+                return live
+            messages.success(request, payload['message'])
         
         return redirect('finance_html')
 
@@ -586,7 +680,7 @@ class FinanceView(LoginRequiredMixin, TemplateView):
         # On inclut toutes les factures de la période, PLUS toutes les factures IMPAYÉES historiques (pour pouvoir les chercher et les encaisser)
         factures = Facture.objects.filter(bar=bar).filter(
             Q(date_emission__range=(start_date, end_date)) | Q(statut='IMPAYEE')
-        ).order_by('-date_emission').distinct()
+        ).order_by(F('date_echeance').asc(nulls_last=True), '-date_emission').distinct()
         context['factures'] = factures
         
         # Les factures clients IMPAYÉES créées dans la période sont considérées comme de la perte pour cette période
@@ -600,7 +694,34 @@ class FinanceView(LoginRequiredMixin, TemplateView):
         unpaid_cdf = unpaid_client_invoices_period.aggregate(Sum('montant_cdf'))['montant_cdf__sum'] or 0
         
         context['total_perte_usd'] += unpaid_usd
-        context['total_perte_cdf'] += unpaid_cdf
+        context["total_perte_cdf"] += unpaid_cdf
+
+        # Les salaires mensuels sont proratisés sur la période sélectionnée.
+        from serveur.models import ServeurProfile
+        period_start, period_end = start_date.date(), end_date.date()
+        salary_total_usd = Decimal("0")
+        salary_total_cdf = Decimal("0")
+        salary_details = []
+        salary_profiles = ServeurProfile.objects.filter(
+            bar=bar, confirmation_status="CONFIRMED", actif=True, salaire_mensuel__isnull=False,
+        ).order_by("prenom", "nom")
+        for server in salary_profiles:
+            effective_start = max(period_start, server.date_embauche)
+            if effective_start > period_end:
+                continue
+            paid_days = (period_end - effective_start).days + 1
+            amount = (Decimal(server.salaire_mensuel) * paid_days / Decimal("30")).quantize(Decimal("0.01"))
+            if server.salaire_devise == "USD": salary_total_usd += amount
+            else: salary_total_cdf += amount
+            salary_details.append({"name": f"{server.prenom} {server.nom}".strip(), "monthly_amount": server.salaire_mensuel, "amount": amount, "currency": server.salaire_devise, "days": paid_days})
+
+        context["salary_total_usd"] = salary_total_usd
+        context["salary_total_cdf"] = salary_total_cdf
+        context["salary_details"] = salary_details
+        context["operating_costs_usd"] = Decimal(context["total_perte_usd"] or 0) + salary_total_usd
+        context["operating_costs_cdf"] = Decimal(context["total_perte_cdf"] or 0) + salary_total_cdf
+        context["net_profit_usd"] = Decimal(context["revenue_usd"] or 0) - context["operating_costs_usd"]
+        context["net_profit_cdf"] = Decimal(context["revenue_cdf"] or 0) - context["operating_costs_cdf"]
         
         # Pour le modal d'enregistrement de perte
         context['inventory_items'] = StockItem.objects.filter(bar=bar).select_related('produit')
@@ -608,7 +729,6 @@ class FinanceView(LoginRequiredMixin, TemplateView):
         # 5. Performance des ventes (pour la section Performance Ventes)
         from .models import OrderItem, Category
         from django.db import models as django_models
-        from decimal import Decimal
         
         # Calculer les ventes sur la période via OrderItem (lié aux orders payés)
         order_items = OrderItem.objects.filter(
@@ -1014,6 +1134,11 @@ class TeamAccessActionView(LoginRequiredMixin, View):
             'tables': 'tables',
             'reports': 'rapports',
         }
+        permission_urls = {
+            'inventory': reverse('serveur_inventory'),
+            'tables': reverse('serveur_tables'),
+            'reports': reverse('serveur_report'),
+        }
         state = 'accordé' if enabled else 'retiré'
         notify_user(
             server_profile.user,
@@ -1022,7 +1147,7 @@ class TeamAccessActionView(LoginRequiredMixin, View):
             category='TEAM',
             title=f"Accès {labels[permission]} {state}",
             message=f"Votre accès {labels[permission]} a été {state}.",
-            url='/serveur/dashboard/',
+            url=permission_urls.get(permission, reverse('serveur_team')),
         )
         payload = {
             'success': True,
@@ -1043,6 +1168,36 @@ class TeamAccessActionView(LoginRequiredMixin, View):
         return redirect('team_html')
 
 
+class TeamSalaryActionView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        from serveur.models import ServeurProfile
+
+        owner = get_object_or_404(PilotProfile, user=request.user, role="PROPRIETAIRE")
+        server_profile = get_object_or_404(
+            ServeurProfile, id=request.POST.get("server_profile_id"), bar=owner.bar,
+            confirmation_status="CONFIRMED", actif=True,
+        )
+        raw_amount = (request.POST.get("salaire_mensuel") or "").strip().replace(",", ".")
+        currency = request.POST.get("salaire_devise")
+        if currency not in {"USD", "CDF"}:
+            messages.error(request, "Devise de salaire invalide.")
+            return redirect("team_html")
+        try:
+            amount = Decimal(raw_amount)
+        except (ArithmeticError, ValueError):
+            messages.error(request, "Veuillez saisir un salaire valide.")
+            return redirect("team_html")
+        if not amount.is_finite() or amount < 0 or amount >= Decimal("10000000000"):
+            messages.error(request, "Veuillez saisir un salaire positif valide.")
+            return redirect("team_html")
+
+        server_profile.salaire_mensuel = amount
+        server_profile.salaire_devise = currency
+        server_profile.save(update_fields=["salaire_mensuel", "salaire_devise", "updated_at"])
+        messages.success(request, f"Salaire de {server_profile.prenom} mis à jour.")
+        return redirect("team_html")
+
+
 class TablesView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/tables.html'
     
@@ -1058,7 +1213,7 @@ class TablesView(LoginRequiredMixin, TemplateView):
             active_orders = Order.objects.filter(
                 bar=bar,
                 statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']
-            ).select_related('table')
+            ).select_related('table', 'serveur')
             
             occupied_tables = {}
             for order in active_orders:
@@ -1068,7 +1223,8 @@ class TablesView(LoginRequiredMixin, TemplateView):
                     'total_usd': order.total_usd,
                     'total_cdf': order.total_cdf,
                     'statut': order.get_statut_display(),
-                    'heure': order.date_creation
+                    'heure': order.date_creation,
+                    'server_name': f'{order.serveur.prenom} {order.serveur.nom}'.strip() if order.serveur else 'Non assignée'
                 }
             
             # Enrichir les objets tables pour le template
@@ -1085,6 +1241,11 @@ class TablesView(LoginRequiredMixin, TemplateView):
                     table.order_info = info
             
             context['tables'] = tables
+            context['order_assignment_mode'] = bar.order_assignment_mode
+            context['server_profiles'] = PilotProfile.objects.filter(bar=bar, role='SERVEUR').select_related('user').order_by('prenom', 'nom')
+            context['subscription_price_per_table'] = bar.prix_table_mensuel_usd
+            context['subscription_selected_count'] = bar.tables_facturables_count
+            context['subscription_monthly_total'] = bar.prix_mensuel_estime
             context['occupied_count'] = len(occupied_tables)
             context['free_count'] = tables.count() - len(occupied_tables)
         return context
@@ -1107,7 +1268,34 @@ class TableActionView(LoginRequiredMixin, View):
         profile = PilotProfile.objects.get(user=request.user)
         payload = {'success': False}
         
-        if action == 'rename' and table_id:
+        if action == 'set_assignment_mode':
+            mode = request.POST.get('mode')
+            if mode in {'AUTO', 'TABLE'} and profile.bar:
+                profile.bar.order_assignment_mode = mode
+                profile.bar.save(update_fields=['order_assignment_mode'])
+                label = 'automatique' if mode == 'AUTO' else 'par table'
+                payload = {'success': True, 'message': f'Mode attribution des commandes: {label}.', 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'action': 'set_assignment_mode', 'mode': mode}}}
+            else:
+                payload = {'success': False, 'message': 'Mode attribution invalide.'}
+
+        elif action == 'assign_table_server' and table_id:
+            table = Table.objects.get(id=table_id, bar=profile.bar)
+            server_id = request.POST.get('server_id')
+            server = None
+            if server_id:
+                server = PilotProfile.objects.filter(id=server_id, bar=profile.bar, role='SERVEUR').first()
+                if not server:
+                    payload = {'success': False, 'message': 'Serveur introuvable pour cet établissement.'}
+                else:
+                    table.assigned_server = server
+                    table.save(update_fields=['assigned_server'])
+                    payload = {'success': True, 'message': f'{table.nom} assignée à {server.prenom} {server.nom}.', 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table.id), 'action': 'assign_table_server', 'server_id': str(server.id)}}}
+            else:
+                table.assigned_server = None
+                table.save(update_fields=['assigned_server'])
+                payload = {'success': True, 'message': f'Assignation retirée pour {table.nom}.', 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table.id), 'action': 'assign_table_server', 'server_id': ''}}}
+
+        elif action == 'rename' and table_id:
             new_name = request.POST.get('name')
             if new_name:
                 table = Table.objects.get(id=table_id, bar=profile.bar)
@@ -1127,6 +1315,10 @@ class TableActionView(LoginRequiredMixin, View):
                     ClientOrderMeta.objects.filter(order__in=orders_to_close).update(payment_requested=False, payment_confirmed_at=now, table_released_at=now, updated_at=now)
                 except Exception:
                     pass
+                for order in orders_to_close:
+                    order.statut = 'PAID'
+                    order.date_maj = now
+                    notify_order_status(order, actor=request.user, status_label='Payé')
             payload = {'success': True, 'message': f"La table a été libérée. {updated} commande(s) clôturée(s).", 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table_id), 'action': 'liberate', 'updated_orders': updated}}}
 
         elif action == 'delete' and table_id:
@@ -1156,6 +1348,48 @@ class TableActionView(LoginRequiredMixin, View):
             table.est_active = True
             table.save(update_fields=['subscription_started_at', 'subscription_expires_at', 'est_active'])
             payload = {'success': True, 'message': f"Abonnement activé pour {table.nom} jusqu'au {timezone.localtime(table.subscription_expires_at).strftime('%d/%m/%Y %H:%M')}.", 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table.id), 'action': 'activate_subscription'}}}
+
+        elif action == 'activate_subscriptions_bulk':
+            table_ids = request.POST.getlist('table_ids')
+            try:
+                days = int(request.POST.get('days', 30) or 30)
+            except ValueError:
+                days = 30
+            days = max(1, days)
+            selected_tables = list(Table.objects.filter(id__in=table_ids, bar=profile.bar).order_by('nom'))
+            if not selected_tables:
+                payload = {'success': False, 'message': 'Sélectionnez au moins une table à abonner.'}
+            else:
+                now = timezone.now()
+                for table in selected_tables:
+                    base = table.subscription_expires_at if table.subscription_expires_at and table.subscription_expires_at > now else now
+                    if not table.subscription_started_at or not table.subscription_expires_at or table.subscription_expires_at <= now:
+                        table.subscription_started_at = now
+                    table.subscription_expires_at = base + timedelta(days=days)
+                    table.est_active = True
+                    table.save(update_fields=['subscription_started_at', 'subscription_expires_at', 'est_active'])
+
+                selected_count = len(selected_tables)
+                unit_price = profile.bar.prix_table_mensuel_usd
+                final_price = selected_count * unit_price
+                names = ', '.join(table.nom for table in selected_tables[:5])
+                if selected_count > 5:
+                    names += f' +{selected_count - 5}'
+                payload = {
+                    'success': True,
+                    'message': f"{selected_count} table(s) sélectionnée(s) pour abonnement. Total calculé: {final_price:.2f} USD ({unit_price:.2f} USD/table).",
+                    'dispatch_event': {
+                        'type': 'barpilote:tables-changed',
+                        'detail': {
+                            'table_ids': [str(table.id) for table in selected_tables],
+                            'action': 'activate_subscriptions_bulk',
+                            'selected_count': selected_count,
+                            'unit_price_usd': float(unit_price),
+                            'final_price_usd': float(final_price),
+                            'table_names': names,
+                        },
+                    },
+                }
 
         elif action == 'add':
             count = request.POST.get('count', 0)
@@ -1216,6 +1450,9 @@ class TableDownloadQRView(LoginRequiredMixin, View):
         
         response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
         response['Content-Disposition'] = f'attachment; filename="{table.nom.replace(" ", "_")}_Badge.pdf"'
+        response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
         return response
 
     def draw_badge(self, buffer, table):
@@ -1601,6 +1838,8 @@ class LiveOrdersAPIView(LoginRequiredMixin, View):
                     'date_creation': order.date_creation.isoformat(),
                     'date_service': order.date_service.isoformat() if order.date_service else None,
                     'delivery_duration': int((order.date_service - order.date_creation).total_seconds()) if order.date_service else None,
+                    'server_id': str(order.serveur_id) if order.serveur_id else '',
+                    'server': f'{order.serveur.prenom} {order.serveur.nom}'.strip() if order.serveur else '',
                     'items': items_data
                 })
                 
@@ -1636,15 +1875,23 @@ class UpdateOrderStatusView(LoginRequiredMixin, View):
             
             orders = Order.objects.filter(id__in=order_ids, bar=profile.bar)
             
+            status_now = timezone.now()
             for order in orders:
                 order.statut = new_status
                 if new_status == 'SERVED':
-                    order.date_service = timezone.now()
+                    order.date_service = status_now
                 if client_name:
                     order.client_name = client_name
                 if client_phone:
                     order.client_phone = client_phone
                 order.save()
+
+            if new_status == 'PAID' and orders.exists():
+                try:
+                    from client.models import ClientOrderMeta
+                    ClientOrderMeta.objects.filter(order__in=orders).update(payment_requested=False, payment_confirmed_by=profile, payment_confirmed_at=status_now, updated_at=status_now)
+                except Exception:
+                    pass
             
             # Auto-generate Facture if PAID
             if new_status == 'PAID' and orders.exists():
@@ -2118,6 +2365,52 @@ class FCMConfigAPIView(LoginRequiredMixin, View):
 
 
 class FCMTokenAPIView(LoginRequiredMixin, View):
+    def _store_token(self, request, token, payload):
+        from .models import FCMDeviceToken
+
+        platform = payload.get('platform') or 'web'
+        user_agent = request.META.get('HTTP_USER_AGENT', '')[:1000]
+        defaults = {
+            'user': request.user,
+            'platform': platform,
+            'user_agent': user_agent,
+            'is_active': True,
+        }
+
+        for attempt in range(3):
+            try:
+                device = FCMDeviceToken.objects.filter(token=token).first()
+                if device:
+                    changed = (
+                        device.user_id != request.user.id
+                        or device.platform != platform
+                        or device.user_agent != user_agent
+                        or not device.is_active
+                    )
+                    if changed:
+                        FCMDeviceToken.objects.filter(pk=device.pk).update(**defaults)
+                        device.user = request.user
+                        device.platform = platform
+                        device.user_agent = user_agent
+                        device.is_active = True
+                    return device
+
+                try:
+                    return FCMDeviceToken.objects.create(token=token, **defaults)
+                except IntegrityError:
+                    device = FCMDeviceToken.objects.get(token=token)
+                    FCMDeviceToken.objects.filter(pk=device.pk).update(**defaults)
+                    device.user = request.user
+                    device.platform = platform
+                    device.user_agent = user_agent
+                    device.is_active = True
+                    return device
+            except OperationalError as exc:
+                if 'database is locked' not in str(exc).lower() or attempt == 2:
+                    raise
+                close_old_connections()
+                time.sleep(0.2 * (attempt + 1))
+
     def post(self, request, *args, **kwargs):
         try:
             payload = json.loads(request.body.decode() or '{}')
@@ -2126,16 +2419,7 @@ class FCMTokenAPIView(LoginRequiredMixin, View):
         token = (payload.get('token') or '').strip()
         if not token:
             return JsonResponse({'error': 'Token FCM manquant.'}, status=400)
-        from .models import FCMDeviceToken
-        device, _ = FCMDeviceToken.objects.update_or_create(
-            token=token,
-            defaults={
-                'user': request.user,
-                'platform': payload.get('platform') or 'web',
-                'user_agent': request.META.get('HTTP_USER_AGENT', '')[:1000],
-                'is_active': True,
-            },
-        )
+        device = self._store_token(request, token, payload)
         return JsonResponse({'success': True, 'device_id': str(device.id)})
 
     def delete(self, request, *args, **kwargs):
@@ -2168,19 +2452,33 @@ firebase.initializeApp({json.dumps(config)});
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {{
-  const title = payload.notification?.title || payload.data?.title || 'BarPilote';
+  const data = payload.data || {{}};
+  const title = payload.notification?.title || data.title || 'BarPilote';
+  const actions = [];
+  if (data.action_accept_url) actions.push({{ action: 'accept', title: 'Accepter' }});
+  if (data.action_refuse_url) actions.push({{ action: 'refuse', title: 'Refuser' }});
   const options = {{
-    body: payload.notification?.body || payload.data?.body || '',
+    body: payload.notification?.body || data.body || '',
     icon: '/static/logo_orange.png',
     badge: '/static/logo_orange.png',
-    data: payload.data || {{}},
+    tag: data.notification_id || data.order_id || title,
+    renotify: true,
+    requireInteraction: true,
+    actions,
+    data,
   }};
   self.registration.showNotification(title, options);
 }});
 
 self.addEventListener('notificationclick', (event) => {{
   event.notification.close();
-  const url = event.notification.data?.url || '/';
+  const data = event.notification.data || {{}};
+  const actionUrl = event.action === 'accept' ? data.action_accept_url : event.action === 'refuse' ? data.action_refuse_url : '';
+  if (actionUrl) {{
+    event.waitUntil(fetch(actionUrl, {{ method: 'POST', credentials: 'include' }}).then(() => clients.openWindow(data.url || '/serveur/dashboard/')).catch(() => clients.openWindow(data.url || '/serveur/dashboard/')));
+    return;
+  }}
+  const url = data.url || '/';
   event.waitUntil(clients.openWindow(url));
 }});
 """

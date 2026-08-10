@@ -35,12 +35,12 @@ def ads_txt(request):
 
 def barpilote_sw(request):
     script = """
-const CACHE_NAME = 'barpilote-shell-v1';
+const CACHE_NAME = 'barpilote-shell-v3';
 const OFFLINE_URL = '/auth/login/';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll([OFFLINE_URL, '/static/logo_orange.png'])));
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll([OFFLINE_URL, '/static/barpilote_icon_transparent_512.png?v=5'])));
 });
 
 self.addEventListener('activate', (event) => {
@@ -50,6 +50,20 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(fetch(event.request).catch(() => caches.match(event.request).then((cached) => cached || caches.match(OFFLINE_URL))));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data && event.notification.data.url ? event.notification.data.url : '/auth/login/';
+  event.waitUntil(clients.matchAll({type: 'window', includeUncontrolled: true}).then((clientList) => {
+    for (const client of clientList) {
+      if ('focus' in client) {
+        client.navigate(targetUrl);
+        return client.focus();
+      }
+    }
+    if (clients.openWindow) return clients.openWindow(targetUrl);
+  }));
 });
 """
     return HttpResponse(script, content_type='application/javascript')

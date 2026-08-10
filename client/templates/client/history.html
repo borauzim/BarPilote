@@ -7,9 +7,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BarPilote - Historique client</title>
-    <meta name="theme-color" content="#ff5e00">
-    <link rel="manifest" href="{% static 'manifest.webmanifest' %}">
-    <link rel="apple-touch-icon" href="{% static 'logo_orange.png' %}">
+    <meta name="theme-color" content="#ff5e00"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <meta name="apple-mobile-web-app-title" content="BarPilote"/>
+    <link rel="manifest" href="{% static 'manifest.webmanifest' %}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'barpilote_icon_transparent_512.png' %}"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
@@ -36,6 +40,18 @@
     </a>
     {% endif %}
 
+    <section class="mt-4 rounded-[28px] border border-neutral-200 bg-white p-4 shadow-sm">
+        <div class="flex items-start justify-between gap-3">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-orange-600">Factures</p>
+                <h2 class="mt-1 text-xl font-black text-neutral-950">{{ unpaid_totals.cdf_equivalent|floatformat:0 }} FC impayes</h2>
+                <p class="mt-1 text-xs font-bold text-neutral-500">{{ unpaid_factures|length }} impayee(s) · {{ paid_factures|length }} payee(s)</p>
+            </div>
+            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-orange-50 text-orange-700"><span class="material-symbols-outlined">receipt_long</span></span>
+        </div>
+        <a href="{% url "client_invoices" table.id %}" class="mt-4 flex h-12 items-center justify-center gap-2 rounded-2xl bg-orange-600 text-sm font-black text-white"><span class="material-symbols-outlined text-base">payments</span>Payer ou voir les factures</a>
+    </section>
+
     <section class="mt-4 space-y-3">
         {% for order in orders %}
         <article class="rounded-[28px] border border-neutral-200 bg-white p-4 shadow-sm">
@@ -55,6 +71,13 @@
                 <a href="{% url 'client_track_order' order.id %}" class="flex h-11 items-center justify-center gap-2 rounded-2xl bg-neutral-950 text-xs font-black text-white"><span class="material-symbols-outlined text-base">visibility</span>Voir</a>
                 <a href="{% url 'client_invoice_download' order.id %}" class="flex h-11 items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white text-xs font-black text-neutral-900"><span class="material-symbols-outlined text-base">download</span>Facture</a>
             </div>
+            {% if order.statut != 'CANCELLED' %}
+            <form class="repeat-order-form mt-2" method="post" action="{% url 'client_order_action' order.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="repeat">
+                <button type="submit" class="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 text-xs font-black text-orange-700"><span class="material-symbols-outlined text-base">repeat</span>Commander la même commande</button>
+            </form>
+            {% endif %}
         </article>
         {% empty %}
         <div class="rounded-[28px] border border-dashed border-neutral-300 bg-white p-8 text-center">
@@ -64,11 +87,40 @@
         </div>
         {% endfor %}
     </section>
+
 </main>
 {% include 'client/_client_nav.html' with table=table active_order=active_order active_tab='history' %}
 <script>window.BARPILOTE_CURRENCY_KEY = 'barpilote_currency_{{ bar.id }}'; window.BARPILOTE_INITIAL_CURRENCY = localStorage.getItem('barpilote_client_currency_{{ bar.id }}') || 'USD'; window.BARPILOTE_EXCHANGE_RATE = {{ bar.taux_change_usd_to_cdf|default:2800 }};</script>
 <script src="{% static 'js/barpilote-currency.js' %}"></script>
+<div id="historyToast" class="fixed left-4 right-4 top-4 z-50 mx-auto max-w-md -translate-y-3 rounded-2xl bg-neutral-950 px-4 py-3 text-sm font-black text-white opacity-0 shadow-2xl transition">Action enregistrée.</div>
+<script>
+const historyToast=document.getElementById('historyToast');
+function showHistoryToast(message){if(!historyToast)return;historyToast.textContent=message||'Action enregistrée.';historyToast.classList.add('opacity-100','translate-y-0');setTimeout(()=>historyToast.classList.remove('opacity-100','translate-y-0'),2400);}
+function historyCsrf(form){const token=form.querySelector('[name=csrfmiddlewaretoken]');if(token)return token.value;const cookie=document.cookie.split('; ').find(row=>row.startsWith('csrftoken='));return cookie ? cookie.split('=')[1] : '';}
+document.querySelectorAll('.repeat-order-form').forEach(form=>{
+    form.addEventListener('submit', async event=>{
+        event.preventDefault();
+        const button=form.querySelector('button[type=submit]');
+        if(!button || button.disabled)return;
+        button.disabled=true;
+        const originalText=button.textContent;
+        button.textContent='Envoi...';
+        try{
+            const response=await fetch(form.getAttribute('action') || window.location.href,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':historyCsrf(form),'X-Requested-With':'XMLHttpRequest','Accept':'application/json'},body:new URLSearchParams(new FormData(form)).toString()});
+            const data=await response.json();
+            if(!response.ok || !data.success)throw new Error(data.error || 'Erreur');
+            showHistoryToast(data.message || 'Nouvelle commande prête.');
+            if(data.order_url) window.location.href = data.order_url;
+        }catch(error){
+            showHistoryToast(error.message || 'Erreur.');
+        }finally{
+            button.disabled=false;
+            button.textContent=originalText;
+        }
+    });
+});
+</script>
     <script src="{% static 'js/barpilote-theme.js' %}"></script>
-    <script src="{% static 'js/barpilote-pwa.js' %}"></script>
+    <script src="{% static 'js/barpilote-pwa.js' %}?v=4"></script>
 </body>
 </html>

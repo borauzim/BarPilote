@@ -7,9 +7,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BarPilote - Menu client</title>
-    <meta name="theme-color" content="#ff5e00">
-    <link rel="manifest" href="{% static 'manifest.webmanifest' %}">
-    <link rel="apple-touch-icon" href="{% static 'logo_orange.png' %}">
+    <meta name="theme-color" content="#ff5e00"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <meta name="apple-mobile-web-app-title" content="BarPilote"/>
+    <link rel="manifest" href="{% static 'manifest.webmanifest' %}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'barpilote_icon_transparent_512.png' %}"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
@@ -22,10 +26,12 @@
         .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { appearance: none; margin: 0; }
         .selected-card { border-color: #f97316; box-shadow: 0 18px 45px rgba(249,115,22,.14); }
         .sheet-open { transform: translateY(0) !important; opacity: 1 !important; pointer-events: auto !important; }
-        .backdrop-open { opacity: 1 !important; pointer-events: auto !important; }    </style>
+        .backdrop-open { opacity: 1 !important; pointer-events: auto !important; }
+        .toast-show { opacity: 1 !important; transform: translateY(0) !important; }    </style>
     <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}">
 </head>
 <body class="min-h-screen">
+    <div id="clientMenuToast" class="fixed left-4 right-4 top-4 z-[70] mx-auto max-w-md -translate-y-3 rounded-2xl bg-neutral-950 px-4 py-3 text-sm font-black text-white opacity-0 shadow-2xl transition">Commande envoyée.</div>
     <main class="mx-auto min-h-screen max-w-3xl pb-48">
         {% trial_ad_banner bar "client" %}
         <header class="sticky top-0 z-30 border-b border-neutral-200/70 bg-white/90 backdrop-blur-xl">
@@ -35,7 +41,7 @@
                         <img src="{% static 'logo_orange.png' %}" alt="BarPilote" class="h-11 w-11 shrink-0 rounded-2xl object-contain">
                         <div class="min-w-0">
                             <p class="text-[11px] font-black uppercase tracking-[.18em] text-orange-600">{{ table.nom }}</p>
-                            <h1 class="truncate text-[22px] font-black tracking-tight text-neutral-950">BarPilote</h1>
+                            <h1 class="bp-client-brand-name text-[22px] font-black tracking-tight text-neutral-950">BarPilote</h1>
                         </div>
                     </div>
                     <button type="button" id="openSearch" aria-expanded="false" class="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800 shadow-sm transition-colors active:scale-95 hover:border-orange-200 hover:text-orange-700" aria-label="Rechercher">
@@ -43,12 +49,12 @@
                     </button>
                 </div>
                 {% if active_order %}
-                <a href="{% url 'client_track_order' active_order.id %}" class="mt-3 flex items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-extrabold text-orange-900">
+                <a id="activeOrderBanner" href="{% url 'client_track_order' active_order.id %}" class="mt-3 flex items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-extrabold text-orange-900">
                     <span>Commande en cours</span>
                     <span class="material-symbols-outlined text-lg">arrow_forward</span>
                 </a>
                 <div class="mt-3 rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-xs font-bold text-orange-900">
-                    Vous pouvez ajouter de nouveaux produits ici sans perdre les produits déjà sélectionnés.
+                    Vous pouvez ajouter, retirer ou modifier les quantités avant d'envoyer la commande.
                 </div>
                 {% endif %}
             </div>
@@ -85,7 +91,7 @@
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[.18em] text-orange-300">Bienvenue</p>
                         <h2 class="mt-2 text-3xl font-black tracking-tight">Prêt pour la tournée ?</h2>
-                        <p class="mt-2 max-w-sm text-sm font-semibold leading-6 text-white/65">Choisissez vos boissons, validez votre identité et la vigie s'occupe du service.</p>
+                        <p class="mt-2 max-w-sm text-sm font-semibold leading-6 text-white/65">Choisissez vos boissons, validez votre identité et le serveur s'occupe du service.</p>
                     </div>
                     <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-white p-2">
                         <img src="{% static 'logo_orange.png' %}" alt="BarPilote" class="h-full w-full object-contain">
@@ -342,23 +348,77 @@ menuSearch.addEventListener('input', filterMenu);
 submitOrder.addEventListener('click', () => { if(selectedCount() > 0) openIdentitySheet(); });
 document.getElementById('closeIdentity').addEventListener('click', closeIdentitySheet);
 identityBackdrop.addEventListener('click', closeIdentitySheet);
-confirmOrder.addEventListener('click', () => {
+function csrf(){ return orderForm.querySelector("[name=csrfmiddlewaretoken]")?.value || document.cookie.split("; ").find(row => row.startsWith("csrftoken="))?.split("=")[1] || ""; }
+function showClientMenuToast(message){ const toast=document.getElementById("clientMenuToast"); if(!toast) return; toast.textContent=message || "Commande envoyée."; toast.classList.add("toast-show"); setTimeout(()=>toast.classList.remove("toast-show"),2400); }
+function resetClientCart(){ inputs.forEach(input => { input.value = 0; }); refreshCart(); }
+function upsertActiveOrderBanner(data){
+    const headerBox = document.querySelector("header .px-4");
+    if(!headerBox || !data || !data.order_url) return;
+    let banner = document.getElementById("activeOrderBanner");
+    if(!banner){
+        banner = document.createElement("a");
+        banner.id = "activeOrderBanner";
+        banner.className = "mt-3 flex items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-extrabold text-orange-900";
+        const hint = document.createElement("div");
+        hint.id = "activeOrderHint";
+        hint.className = "mt-3 rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-xs font-bold text-orange-900";
+        hint.textContent = "Vous pouvez ajouter, retirer ou modifier les quantités avant d'envoyer la commande.";
+        const topRow = document.getElementById("openSearch")?.closest(".flex");
+        if(topRow && topRow.parentNode === headerBox){
+            topRow.insertAdjacentElement("afterend", banner);
+            banner.insertAdjacentElement("afterend", hint);
+        } else {
+            headerBox.appendChild(banner);
+            headerBox.appendChild(hint);
+        }
+    }
+    banner.href = data.order_url;
+    banner.innerHTML = "<span>Commande en cours</span><span class=\"material-symbols-outlined text-lg\">arrow_forward</span>";
+}
+async function submitClientOrder(){
     if(selectedCount() <= 0) return;
     confirmOrder.disabled = true;
-    confirmOrder.classList.add('opacity-70');
-    orderForm.submit();
-});
-orderForm.addEventListener('submit', (event) => {
-    if(selectedCount() <= 0){
-        event.preventDefault();
-        return;
+    confirmOrder.classList.add("opacity-70");
+    try{
+        const response = await fetch(orderForm.action || window.location.href, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {"X-Requested-With":"XMLHttpRequest","Accept":"application/json","X-CSRFToken":csrf()},
+            body: new FormData(orderForm)
+        });
+        const contentType = response.headers.get("content-type") || "";
+        const payload = contentType.includes("application/json")
+            ? await response.json()
+            : {success: response.ok, order_url: response.url};
+        if(!response.ok || !payload.success){
+            showClientMenuToast(payload.error || "Commande impossible.");
+            return;
+        }
+        if (payload.order_url) {
+            window.location.href = payload.order_url;
+            return;
+        }
+        showClientMenuToast(payload.message || "Commande envoyée au serveur.");
+        closeIdentitySheet();
+        resetClientCart();
+        upsertActiveOrderBanner(payload);
+    }catch(error){
+        showClientMenuToast("Erreur réseau.");
+    }finally{
+        confirmOrder.disabled = false;
+        confirmOrder.classList.remove("opacity-70");
     }
-    submitOrder.disabled = true;
+}
+confirmOrder.addEventListener("click", submitClientOrder);
+orderForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if(selectedCount() <= 0) return;
+    submitClientOrder();
 });
 applyCurrencyToggle();
 refreshPrices(); refreshCart();
 </script>
     <script src="{% static 'js/barpilote-theme.js' %}"></script>
-    <script src="{% static 'js/barpilote-pwa.js' %}"></script>
+    <script src="{% static 'js/barpilote-pwa.js' %}?v=4"></script>
 </body>
 </html>

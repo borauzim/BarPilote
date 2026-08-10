@@ -1,0 +1,40 @@
+<div id="code-timer-panel" class="mb-5 rounded-2xl border border-orange-100 bg-orange-50 px-4 py-4 text-center" aria-live="polite">
+    <p class="text-[10px] font-black uppercase tracking-widest text-orange-700">Temps restant</p>
+    <p id="code-timer" class="mt-1 text-3xl font-black tabular-nums text-orange-600">15:00</p>
+    <p id="code-expiry-message" class="mt-2 text-xs font-semibold text-on-surface-variant/70">
+        Après 15 minutes, redemandez un nouveau code pour vous connecter.
+    </p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const timer = document.getElementById('code-timer');
+    const panel = document.getElementById('code-timer-panel');
+    const message = document.getElementById('code-expiry-message');
+    const codeInput = document.querySelector('input[name="code"]');
+    const loginButton = codeInput && codeInput.form.querySelector('button[type="submit"]');
+    let remaining = Math.max(0, Number('{{ remaining_seconds|default:0 }}'));
+
+    function renderTimer() {
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        timer.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        if (remaining > 0) return true;
+
+        panel.classList.remove('border-orange-100', 'bg-orange-50');
+        panel.classList.add('border-red-200', 'bg-red-50');
+        timer.classList.remove('text-orange-600');
+        timer.classList.add('text-red-600');
+        message.textContent = 'Ce code a expiré. Demandez un nouveau code pour vous connecter.';
+        if (codeInput) codeInput.disabled = true;
+        if (loginButton) loginButton.disabled = true;
+        return false;
+    }
+
+    renderTimer();
+    const countdown = window.setInterval(function () {
+        remaining = Math.max(0, remaining - 1);
+        if (!renderTimer()) window.clearInterval(countdown);
+    }, 1000);
+});
+</script>

@@ -13,8 +13,12 @@
     </script>
     <title>{% block title %}BarPilote{% endblock %}</title>
     <meta name="theme-color" content="#ff5e00"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <meta name="apple-mobile-web-app-title" content="BarPilote"/>
     <link rel="manifest" href="{% static 'manifest.webmanifest' %}"/>
-    <link rel="apple-touch-icon" href="{% static 'logo_orange.png' %}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'barpilote_icon_transparent_512.png' %}"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -75,6 +79,6 @@
     </main>
     {% block extra_body %}{% endblock %}
     <script src="{% static 'js/barpilote-theme.js' %}"></script>
-    <script src="{% static 'js/barpilote-pwa.js' %}"></script>
+    <script src="{% static 'js/barpilote-pwa.js' %}?v=4"></script>
 </body>
 </html>

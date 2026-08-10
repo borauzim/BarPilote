@@ -26,12 +26,11 @@ class Bar(models.Model):
         ('PUB', 'Pub'),
         ('EVENT', 'Événement Éphémère'),
     ]
-    type_etablissement = models.CharField(
-        max_length=20, 
-        choices=BAR_TYPES, 
-        default='BAR', 
-        verbose_name="Type d'établissement"
-    )
+    type_etablissement = models.CharField(max_length=20, choices=BAR_TYPES, default='BAR', verbose_name="Type d'établissement")
+    ORDER_ASSIGNMENT_CHOICES = [
+        ('AUTO', 'Automatique vers les serveurs disponibles'),
+        ('TABLE', 'Selon le serveur assigné à la table'),
+    ]
     # Code unique pour le QR — les serveurs scannent ce code pour rejoindre le bar
     code_invitation = models.UUIDField(
         default=uuid.uuid4, 
@@ -43,6 +42,10 @@ class Bar(models.Model):
     taux_change_usd_to_cdf = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('2800.00'), verbose_name="Taux de change (1$ en FC)")
     seuil_dette_eligible = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('100000.00'), verbose_name="Seuil d'éligibilité pour dette (FC)")
     prix_mensuel_par_table_usd = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('2.50'), verbose_name="Prix mensuel par table (USD)")
+    order_assignment_mode = models.CharField(max_length=10, choices=ORDER_ASSIGNMENT_CHOICES, default='AUTO', verbose_name='Mode attribution commandes')
+    mobile_money_orange = models.CharField(max_length=32, blank=True, verbose_name="Orange Money")
+    mobile_money_mpesa = models.CharField(max_length=32, blank=True, verbose_name="M-Pesa")
+    mobile_money_airtel = models.CharField(max_length=32, blank=True, verbose_name="Airtel Money")
     
     # Abonnement & Période d'essai
     abonnement_expire_le = models.DateTimeField(null=True, blank=True, verbose_name="Date d'expiration de l'abonnement")
@@ -81,6 +84,15 @@ class Bar(models.Model):
     def prix_annuel_estime(self):
         """Estimation annuelle avec l'offre standard de -10 %."""
         return self.prix_mensuel_estime * Decimal('12') * Decimal('0.90')
+
+    @property
+    def mobile_money_accounts(self):
+        accounts = [
+            ('Orange Money', self.mobile_money_orange),
+            ('M-Pesa', self.mobile_money_mpesa),
+            ('Airtel Money', self.mobile_money_airtel),
+        ]
+        return [{'provider': provider, 'phone': phone} for provider, phone in accounts if phone]
 
     def __str__(self):
         return self.nom
@@ -193,6 +205,7 @@ class Table(models.Model):
     # Le QR code généré sera stocké ici ou construit dynamiquement
     code_qr_image = models.ImageField(upload_to='qr_codes/', blank=True, null=True, verbose_name="Flyer QR Code")
     est_active = models.BooleanField(default=True, verbose_name="Table active")
+    assigned_server = models.ForeignKey('PilotProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tables', limit_choices_to={'role': 'SERVEUR'}, verbose_name='Serveur assigné')
     subscription_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Début d'abonnement")
     subscription_expires_at = models.DateTimeField(null=True, blank=True, verbose_name="Expiration d'abonnement")
     date_creation = models.DateTimeField(auto_now_add=True)
@@ -553,6 +566,7 @@ class Facture(models.Model):
     STATUS_CHOICES = [
         ('PAYEE', 'Payée'),
         ('IMPAYEE', 'Impayée'),
+        ('ANNULEE', 'Annulée'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -599,6 +613,7 @@ class Notification(models.Model):
     title = models.CharField(max_length=160)
     message = models.TextField(blank=True)
     url = models.CharField(max_length=255, blank=True)
+    data = models.JSONField(default=dict, blank=True)
     dedupe_key = models.CharField(max_length=180, unique=True, null=True, blank=True)
     read_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

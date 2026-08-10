@@ -25,6 +25,8 @@ class ServeurProfile(models.Model):
     inventory_access_granted = models.BooleanField(default=False, verbose_name="Accès inventaire autorisé")
     tables_access_granted = models.BooleanField(default=False, verbose_name="Accès tables autorisé")
     reports_access_granted = models.BooleanField(default=False, verbose_name="Accès rapports autorisé")
+    salaire_mensuel = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Salaire mensuel")
+    salaire_devise = models.CharField(max_length=3, choices=[("USD", "USD"), ("CDF", "CDF")], default="CDF", verbose_name="Devise du salaire")
     confirmation_status = models.CharField(
         max_length=20,
         choices=[

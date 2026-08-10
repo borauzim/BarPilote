@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "BarPilote",
   "short_name": "BarPilote",
   "description": "Gestion de bar, commandes, équipe, stock et finances.",
@@ -10,11 +11,18 @@
   "theme_color": "#ff5e00",
   "icons": [
     {
-      "src": "/static/logo_orange.png",
+      "src": "/static/barpilote_icon_transparent_192.png?v=5",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/barpilote_icon_transparent_512.png?v=5",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
-  "categories": ["business", "productivity", "food"]
+  "categories": ["business", "productivity", "food"],
+  "prefer_related_applications": false
 }

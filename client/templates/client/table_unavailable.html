@@ -5,9 +5,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Table non activée - BarPilote</title>
-    <meta name="theme-color" content="#ff5e00">
-    <link rel="manifest" href="{% static 'manifest.webmanifest' %}">
-    <link rel="apple-touch-icon" href="{% static 'logo_orange.png' %}">
+    <meta name="theme-color" content="#ff5e00"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <meta name="apple-mobile-web-app-title" content="BarPilote"/>
+    <link rel="manifest" href="{% static 'manifest.webmanifest' %}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'barpilote_icon_transparent_512.png' %}"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
@@ -44,6 +48,6 @@
             </a>
         </div>
     </main>
-    <script src="{% static 'js/barpilote-pwa.js' %}"></script>
+    <script src="{% static 'js/barpilote-pwa.js' %}?v=4"></script>
 </body>
 </html>

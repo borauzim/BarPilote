@@ -1,0 +1,53 @@
+{% extends 'authentification/base_auth.html' %}
+{% load static %}
+
+{% block title %}Code de connexion - BarPilote{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center px-4">
+    <div class="w-full max-w-md bg-surface-container-lowest rounded-[24px] p-8 sm:p-10 executive-shadow relative z-10">
+        <div class="flex flex-col items-center mb-8 text-center">
+            <div class="w-16 h-16 mb-4 flex items-center justify-center">
+                <img src="{% static 'logo_orange.png' %}" alt="BarPilote Logo" width="64" height="64" class="w-full h-full object-contain">
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-orange-600 mb-2">Code de connexion</h1>
+            <p class="text-on-surface-variant/70 text-sm font-medium">
+                Entrez le code envoye a {{ email }}.
+            </p>
+        </div>
+
+        {% if messages %}
+            <div class="mb-5 space-y-2">
+                {% for message in messages %}
+                    <div class="rounded-lg border border-surface-container-high bg-surface-container-low px-4 py-3 text-sm text-on-surface">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% include "authentification/includes/login_code_timer.html" %}
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <label class="block text-left">
+                <span class="mb-2 block text-sm font-semibold text-on-surface">Code a 6 chiffres</span>
+                <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required class="w-full rounded-xl border-surface-container-high bg-white px-4 py-3 text-center text-2xl font-black tracking-[0.35em] text-on-surface focus:border-primary focus:ring-primary" placeholder="000000">
+            </label>
+            <button type="submit" class="w-full flex items-center justify-center gap-2 citrus-gradient text-white transition-all duration-200 font-semibold py-3.5 px-4 rounded-xl active:scale-95">
+                <span class="material-symbols-outlined text-[20px]">lock_open</span>
+                Se connecter
+            </button>
+        </form>
+
+        <form method="post" class="mt-5">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="resend_code">
+            <button type="submit" class="w-full flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:text-orange-700">
+                <span class="material-symbols-outlined text-[18px]">refresh</span>
+                Demander un nouveau code
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

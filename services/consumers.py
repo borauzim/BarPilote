@@ -19,7 +19,11 @@ def client_order_group_name(order_id):
 
 
 def bar_dashboard_group_name(bar_id):
-    return 'notifications_proprietaire'
+    return f'proprietaires_bar_{bar_id}'
+
+
+def server_dashboard_group_name(bar_id):
+    return f'serveurs_bar_{bar_id}'
 
 
 def is_user_ws_online(user_id):
@@ -95,11 +99,14 @@ class ClientOrderConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-    async def commande_accepted(self, event):
+    async def commande_changed(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'commande.accepted',
+            'type': 'commande.changed',
             'commande': event.get('commande', {}),
         }))
+
+    async def commande_accepted(self, event):
+        await self.commande_changed(event)
 
 
 class BarDashboardConsumer(AsyncWebsocketConsumer):
@@ -112,12 +119,12 @@ class BarDashboardConsumer(AsyncWebsocketConsumer):
             return
 
         from channels.db import database_sync_to_async
-        allowed = await database_sync_to_async(self._is_owner)(user)
-        if not allowed:
+        bar_id = await database_sync_to_async(self._owner_bar_id)(user)
+        if not bar_id:
             await self.close(code=4403)
             return
 
-        self.group_name = bar_dashboard_group_name(None)
+        self.group_name = bar_dashboard_group_name(bar_id)
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
@@ -127,11 +134,67 @@ class BarDashboardConsumer(AsyncWebsocketConsumer):
 
     async def proprietaire_commande_accepted(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'proprietaire.commande_accepted',
+            'type': 'proprietaire.commande_changed',
             'commande': event.get('commande', {}),
             'dashboard': event.get('dashboard', {}),
         }))
 
-    def _is_owner(self, user):
+    async def proprietaire_commande_changed(self, event):
+        await self.proprietaire_commande_accepted(event)
+
+    def _owner_bar_id(self, user):
         from proprietaire.models import PilotProfile
-        return PilotProfile.objects.filter(user=user, role='PROPRIETAIRE').exists()
+        profile = (
+            PilotProfile.objects
+            .filter(user=user, role='PROPRIETAIRE')
+            .select_related('bar')
+            .prefetch_related('owned_bars')
+            .first()
+        )
+        if not profile:
+            return None
+        if profile.bar_id:
+            return profile.bar_id
+        fallback_bar = profile.owned_bars.order_by('-date_creation').first()
+        return fallback_bar.id if fallback_bar else None
+
+
+class ServerDashboardConsumer(AsyncWebsocketConsumer):
+    """Canal privé des serveurs d'un bar pour recevoir les commandes en temps réel."""
+
+    async def connect(self):
+        user = self.scope.get('user')
+        if not user or not user.is_authenticated:
+            await self.close(code=4401)
+            return
+
+        from channels.db import database_sync_to_async
+        bar_id = await database_sync_to_async(self._server_bar_id)(user)
+        if not bar_id:
+            await self.close(code=4403)
+            return
+
+        self.group_name = server_dashboard_group_name(bar_id)
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        if hasattr(self, 'group_name'):
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def serveur_commande_changed(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'serveur.commande_changed',
+            'commande': event.get('commande', {}),
+            'dashboard': event.get('dashboard', {}),
+        }))
+
+    def _server_bar_id(self, user):
+        from proprietaire.models import PilotProfile
+        profile = (
+            PilotProfile.objects
+            .filter(user=user, role='SERVEUR', bar__isnull=False)
+            .select_related('bar')
+            .first()
+        )
+        return profile.bar_id if profile else None

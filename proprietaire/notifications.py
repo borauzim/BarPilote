@@ -7,7 +7,7 @@ from .models import Facture, Notification, PilotProfile
 from services.notifications import send_bar_notification
 
 
-def notify_user(user, *, title, message='', category='SYSTEM', bar=None, actor=None, url='', dedupe_key=None):
+def notify_user(user, *, title, message='', category='SYSTEM', bar=None, actor=None, url='', dedupe_key=None, extra_data=None):
     if not user or not getattr(user, 'is_authenticated', False):
         return None
 
@@ -26,16 +26,20 @@ def notify_user(user, *, title, message='', category='SYSTEM', bar=None, actor=N
     if dedupe_key and Notification.objects.filter(dedupe_key=dedupe_key).exists():
         return Notification.objects.filter(dedupe_key=dedupe_key).first()
 
+    notification_data = {
+        'category': category,
+        'url': url,
+        'bar_id': str(bar.id) if bar else '',
+        'actor_id': str(actor.id) if actor else '',
+    }
+    if extra_data:
+        notification_data.update({str(k): str(v) for k, v in extra_data.items()})
+
     result = send_bar_notification(
         user.id,
         title,
         message,
-        {
-            'category': category,
-            'url': url,
-            'bar_id': str(bar.id) if bar else '',
-            'actor_id': str(actor.id) if actor else '',
-        },
+        notification_data,
     )
     notification_id = result.get('notification_id')
     if notification_id and dedupe_key:
@@ -100,6 +104,11 @@ def notify_order_created(order, *, actor=None):
             message='La commande est visible dans votre tableau de bord.',
             url=reverse('serveur_dashboard'),
         )
+    try:
+        from services.order_realtime import broadcast_order_changed
+        broadcast_order_changed(order)
+    except Exception:
+        pass
 
 
 def notify_order_status(order, *, actor=None, status_label=None):
@@ -122,6 +131,11 @@ def notify_order_status(order, *, actor=None, status_label=None):
             message=f'Le ticket #{order.id.hex[:6].upper()} a changé de statut.',
             url=reverse('serveur_dashboard'),
         )
+    try:
+        from services.order_realtime import broadcast_order_changed
+        broadcast_order_changed(order)
+    except Exception:
+        pass
 
 
 def notify_debt_created(facture, *, actor=None):
@@ -129,9 +143,12 @@ def notify_debt_created(facture, *, actor=None):
     message = f'Facture {facture.numero} enregistrée comme impayée.'
     notify_bar_owners(facture.bar, actor=actor, category='DEBT', title=title, message=message, url=reverse('finance_html'))
 
-    server_profiles = PilotProfile.objects.filter(bar=facture.bar, role='SERVEUR', orders__factures=facture).select_related('user').distinct()
+    server_ids = set(PilotProfile.objects.filter(
+        bar=facture.bar, role='SERVEUR', order__factures=facture
+    ).values_list('id', flat=True))
     if facture.guaranteed_by_id:
-        server_profiles = (server_profiles | PilotProfile.objects.filter(id=facture.guaranteed_by_id).select_related('user')).distinct()
+        server_ids.add(facture.guaranteed_by_id)
+    server_profiles = PilotProfile.objects.filter(id__in=server_ids).select_related('user')
     for profile in server_profiles:
         notify_user(profile.user, actor=actor, bar=facture.bar, category='DEBT', title=title, message=message, url=reverse('serveur_finance'))
 

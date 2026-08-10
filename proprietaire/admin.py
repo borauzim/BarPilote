@@ -33,8 +33,8 @@ class BarAdvisorSettingsAdmin(admin.ModelAdmin):
 
 @admin.register(Bar)
 class BarAdmin(admin.ModelAdmin):
-    list_display = ('nom', 'adresse', 'type_etablissement', 'prix_mensuel_par_table_usd', 'tables_facturables_count', 'date_creation')
-    search_fields = ('nom',)
+    list_display = ('nom', 'adresse', 'type_etablissement', 'mobile_money_orange', 'mobile_money_mpesa', 'mobile_money_airtel', 'prix_mensuel_par_table_usd', 'tables_facturables_count', 'date_creation')
+    search_fields = ('nom', 'mobile_money_orange', 'mobile_money_mpesa', 'mobile_money_airtel')
     list_filter = ('type_etablissement',)
 
 # ── GESTION DE L'ÉQUIPE ──────────────────────────────────────────────────────

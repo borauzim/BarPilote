@@ -3,7 +3,7 @@ from proprietaire.html_views import AdvisorAPIView, NotificationsAPIView, FCMCon
 from .html_views import (
     ServeurDashboardView, ServeurScanQRView, ServeurProfilSetupView,
     ServeurWelcomeView, ServeurCommandeDetailView, ServeurMissionView,
-    ServeurShiftActionView, ServeurWaitingConfirmationView, ServeurJoinView, ServeurLogoutView, ServeurToggleCurrencyView, ServeurClientHistoryView, ServeurClientOrderActionView, ServeurUpdateOrderStatusView, ServeurTakeOrderView, ServeurInventoryView, ServeurFinanceView, ServeurClientsView, ServeurTeamView, ServeurTablesView, ServeurTableActionView, ServeurReportView, ServeurRecordLossView
+    ServeurShiftActionView, ServeurWaitingConfirmationView, ServeurJoinView, ServeurLogoutView, ServeurToggleCurrencyView, ServeurClientHistoryView, ServeurClientOrderActionView, ServeurUpdateOrderStatusView, ServeurTakeOrderView, ServeurInventoryView, ServeurFinanceView, ServeurClientsView, ServeurTeamView, ServeurTablesView, ServeurTableActionView, ServeurReportView, ServeurRecordLossView, ServeurLiveOrdersAPIView, ServeurOrderNotificationActionView
 )
 
 urlpatterns = [
@@ -13,8 +13,10 @@ urlpatterns = [
     path('toggle-currency/', ServeurToggleCurrencyView.as_view(), name='serveur_toggle_currency'),
     path('api/client-history/', ServeurClientHistoryView.as_view(), name='serveur_client_history'),
     path('api/update-order-status/', ServeurUpdateOrderStatusView.as_view(), name='serveur_update_order_status'),
+    path('api/order-notification-action/', ServeurOrderNotificationActionView.as_view(), name='serveur_order_notification_action'),
     path('api/client-order-action/', ServeurClientOrderActionView.as_view(), name='serveur_client_order_action'),
     path('api/notifications/', NotificationsAPIView.as_view(), name='serveur_notifications_api'),
+    path('api/live-orders/', ServeurLiveOrdersAPIView.as_view(), name='serveur_live_orders_api'),
     path('api/fcm/config/', FCMConfigAPIView.as_view(), name='serveur_fcm_config_api'),
     path('api/fcm/token/', FCMTokenAPIView.as_view(), name='serveur_fcm_token_api'),
     path('api/advisor/', AdvisorAPIView.as_view(), name='serveur_advisor_api'),

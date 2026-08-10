@@ -14,8 +14,12 @@
     </script>
     <title>{% block title %}BarPilote Dashboard{% endblock %}</title>
     <meta name="theme-color" content="#ff5e00"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <meta name="apple-mobile-web-app-title" content="BarPilote"/>
     <link rel="manifest" href="{% static 'manifest.webmanifest' %}"/>
-    <link rel="apple-touch-icon" href="{% static 'logo_orange.png' %}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'barpilote_icon_transparent_512.png' %}"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -150,6 +154,56 @@
             background: #ccc;
             border-radius: 4px;
         }
+        .bp-fab { position: fixed; right: 1rem; bottom: 7rem; z-index: 65; display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem; }
+        .bp-fab-menu { display: flex; flex-direction: column; align-items: flex-end; gap: 0.625rem; opacity: 0; transform: translateY(12px) scale(0.96); pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
+        .bp-fab.is-open .bp-fab-menu { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .bp-fab-action { min-height: 3rem; display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.625rem; border-radius: 9999px; background: #1a1c1d; color: white; padding: 0.75rem 1rem; box-shadow: 0 18px 42px rgba(26, 28, 29, 0.22); font-size: 0.72rem; font-weight: 900; text-transform: uppercase; white-space: nowrap; transition: transform 160ms ease, background-color 160ms ease; }
+        .bp-fab-action:hover { background: #ff5e00; transform: translateX(-2px); }
+        .bp-fab-main { width: 4rem; height: 4rem; border-radius: 1.5rem; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(255, 94, 0, 0.3); transition: transform 180ms ease; }
+        .bp-fab.is-open .bp-fab-main { transform: rotate(45deg); }
+        @media (min-width: 768px) { .bp-fab { bottom: 1.5rem; right: 1.5rem; } }
+
+        .bp-global-order-alert-stack {
+            position: fixed;
+            right: 1rem;
+            top: 5.25rem;
+            z-index: 80;
+            display: flex;
+            width: min(23rem, calc(100vw - 2rem));
+            flex-direction: column;
+            gap: 0.75rem;
+            pointer-events: none;
+        }
+        .bp-global-order-alert-bubble {
+            pointer-events: auto;
+            overflow: hidden;
+            border: 1px solid rgba(255, 94, 0, 0.18);
+            border-radius: 1.25rem;
+            background: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 22px 60px rgba(26, 28, 29, 0.2);
+            opacity: 0;
+            transform: translateY(-12px) scale(0.97);
+            transition: opacity 180ms ease, transform 180ms ease;
+        }
+        .bp-global-order-alert-bubble.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        .bp-global-order-alert-bubble.is-urgent {
+            animation: bpGlobalOrderPulse 1.25s ease-in-out infinite;
+        }
+        @keyframes bpGlobalOrderPulse {
+            0%, 100% { box-shadow: 0 22px 60px rgba(26, 28, 29, 0.2), 0 0 0 0 rgba(255, 94, 0, 0.32); }
+            50% { box-shadow: 0 22px 60px rgba(26, 28, 29, 0.22), 0 0 0 7px rgba(255, 94, 0, 0.06); }
+        }
+        @media (max-width: 640px) {
+            .bp-global-order-alert-stack {
+                left: 0.75rem;
+                right: 0.75rem;
+                top: 4.75rem;
+                width: auto;
+            }
+        }
     </style>
     <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}"/>
     {% block extra_head %}{% endblock %}
@@ -157,16 +211,16 @@
 <body class="text-on-surface min-h-screen pb-32">
     <!-- TopAppBar -->
     <header id="main-header" class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
-        <div class="flex items-center justify-between px-8 h-16 w-full max-w-none mx-0">
-            <div class="flex items-center gap-4">
+        <div class="bp-main-header-inner flex items-center justify-between px-8 h-16 w-full max-w-none mx-0">
+            <div class="bp-header-brand flex items-center gap-4">
                 {% if is_server_interface and profile.photo %}
-                <img alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ profile.photo.url }}"/>
+                <img alt="Profile" class="bp-header-avatar w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ profile.photo.url }}"/>
                 {% elif user.pilot_profile.photo_profil %}
-                <img alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.pilot_profile.photo_profil.url }}"/>
+                <img alt="Profile" class="bp-header-avatar w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.pilot_profile.photo_profil.url }}"/>
                 {% else %}
-                <img alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.socialaccount_set.all.0.get_avatar_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN' }}"/>
+                <img alt="Profile" class="bp-header-avatar w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.socialaccount_set.all.0.get_avatar_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN' }}"/>
                 {% endif %}
-                <span class="text-2xl font-black tracking-tighter text-orange-600">BarPilote</span>
+                <span class="bp-brand-name text-2xl font-black tracking-tighter text-orange-600">BarPilote</span>
             </div>
             
             <nav class="hidden md:flex items-center gap-8">
@@ -178,8 +232,8 @@
                 <a class="{% if request.resolver_match.url_name == 'tables_html' or request.resolver_match.url_name == 'serveur_tables' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'serveur_tables' %}">Tables</a>
             </nav>
 
-            <div class="flex items-center gap-2">
-                <div class="mr-2">
+            <div class="bp-header-actions flex items-center gap-2">
+                <div class="bp-currency-control mr-2">
                     <button onclick="toggleCurrency()" id="currencyToggleBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container hover:bg-orange-50 hover:text-orange-600 transition-all active:scale-90 group relative overflow-hidden">
                         <span id="labelUSD" class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300 {% if profile.preferred_currency == 'USD' %}text-orange-600{% else %}text-gray-400{% endif %}">USD</span>
                         <div class="w-9 h-5 bg-gray-200 rounded-full relative p-1 transition-colors duration-300 group-hover:bg-orange-100">
@@ -255,11 +309,162 @@
         </a>
     </nav>
 
+    <div id="bpFloatingActions" class="bp-fab">
+        <div id="bpFloatingActionsMenu" class="bp-fab-menu" aria-hidden="true">
+            {% include 'includes/developer_contact_button.html' %}
+            {% block floating_actions %}{% endblock %}
+        </div>
+        <button type="button" class="bp-fab-main citrus-gradient" aria-label="Actions rapides" aria-expanded="false" aria-controls="bpFloatingActionsMenu" onclick="toggleFloatingActions()">
+            <span class="material-symbols-outlined text-3xl">add</span>
+        </button>
+    </div>
+
+    <script>
+        function toggleFloatingActions(forceOpen) {
+            const fab = document.getElementById("bpFloatingActions");
+            const menu = document.getElementById("bpFloatingActionsMenu");
+            if (!fab || !menu) return;
+            const open = typeof forceOpen === "boolean" ? forceOpen : !fab.classList.contains("is-open");
+            fab.classList.toggle("is-open", open);
+            menu.setAttribute("aria-hidden", open ? "false" : "true");
+            const button = fab.querySelector(".bp-fab-main");
+            if (button) button.setAttribute("aria-expanded", open ? "true" : "false");
+        }
+        document.addEventListener("click", function (event) {
+            const fab = document.getElementById("bpFloatingActions");
+            if (fab && !fab.contains(event.target)) toggleFloatingActions(false);
+        });
+    </script>
     <script src="{% static 'js/barpilote-currency.js' %}"></script>
     <script src="{% static 'js/barpilote-live-actions.js' %}"></script>
     <script src="{% static 'js/barpilote-notifications.js' %}"></script>
+
+    <div id="bpServerGlobalOrderAlertStack" class="bp-global-order-alert-stack" aria-live="assertive" aria-atomic="false"></div>
+    <script>
+        (function () {
+            if (window.__barpiloteServerGlobalOrderAlertsStarted) return;
+            if (window.location.pathname.indexOf('/serveur/dashboard') === 0) return;
+            window.__barpiloteServerGlobalOrderAlertsStarted = true;
+            const alertedOrders = new Set();
+            const dashboardUrl = "{% url 'serveur_dashboard' %}";
+            const currentServerPilotId = "{{ profile.id|default:'' }}";
+
+            function escapeHtml(value) {
+                const div = document.createElement('div');
+                div.textContent = value == null ? '' : String(value);
+                return div.innerHTML;
+            }
+
+            function formatMoney(usd, cdf) {
+                if (window.BarPiloteCurrency && typeof window.BarPiloteCurrency.formatPair === 'function') {
+                    return window.BarPiloteCurrency.formatPair(usd, cdf);
+                }
+                const parts = [];
+                const usdValue = Number(usd || 0);
+                const cdfValue = Number(cdf || 0);
+                if (usdValue) parts.push(usdValue.toFixed(2) + ' $');
+                if (cdfValue) parts.push(Math.floor(cdfValue).toLocaleString('fr-FR') + ' FC');
+                return parts.length ? parts.join(' + ') : '0.00 $';
+            }
+
+            function ringAlarm() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return;
+                    const audioCtx = new AudioContext();
+                    if (audioCtx.state === 'suspended') audioCtx.resume().catch(function () {});
+                    [0, 0.18, 0.36].forEach(function (offset) {
+                        const oscillator = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + offset);
+                        oscillator.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + offset + 0.08);
+                        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime + offset);
+                        gain.gain.exponentialRampToValueAtTime(0.16, audioCtx.currentTime + offset + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + offset + 0.16);
+                        oscillator.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        oscillator.start(audioCtx.currentTime + offset);
+                        oscillator.stop(audioCtx.currentTime + offset + 0.18);
+                    });
+                } catch (error) {}
+            }
+
+            function closeBubble(orderId) {
+                const bubble = document.querySelector('[data-bp-server-global-order-alert-id="' + String(orderId) + '"]');
+                if (!bubble) return;
+                bubble.classList.remove('is-visible');
+                setTimeout(function () { bubble.remove(); }, 220);
+            }
+
+            function showBubble(order) {
+                if (!order || !order.id || alertedOrders.has(String(order.id))) return;
+                const status = String(order.statut || '').toUpperCase();
+                const assignedToOtherServer = order.server_id && currentServerPilotId && String(order.server_id) !== String(currentServerPilotId);
+                if (status !== 'PENDING' || assignedToOtherServer) return;
+                alertedOrders.add(String(order.id));
+                const stack = document.getElementById('bpServerGlobalOrderAlertStack');
+                if (!stack) return;
+                const items = order.items || [];
+                const itemLabel = items.slice(0, 2).map(function (item) {
+                    return Number(item.qty || 0) + 'x ' + escapeHtml(item.name || 'Produit');
+                }).join(' · ') || 'Nouvelle commande';
+                const bubble = document.createElement('article');
+                bubble.className = 'bp-global-order-alert-bubble is-urgent';
+                bubble.dataset.bpServerGlobalOrderAlertId = String(order.id);
+                bubble.innerHTML = `
+                    <div class="flex items-start gap-3 p-4">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-600 text-white shadow-lg">
+                            <span class="material-symbols-outlined">notifications_active</span>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-orange-600">Nouvelle commande</p>
+                                    <h3 class="truncate text-base font-black text-on-surface">${escapeHtml(order.table_nom || 'Table')}</h3>
+                                </div>
+                                <button type="button" data-bp-close-alert class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface-container text-on-surface-variant" aria-label="Fermer"><span class="material-symbols-outlined text-sm">close</span></button>
+                            </div>
+                            <p class="mt-1 line-clamp-2 text-xs font-bold text-on-surface-variant/70">${itemLabel}</p>
+                            <p class="mt-2 text-lg font-black text-on-surface">${formatMoney(order.total_usd, order.total_cdf)}</p>
+                            <div class="mt-3 grid grid-cols-1 gap-2">
+                                <a href="${dashboardUrl}" class="rounded-xl bg-orange-600 px-3 py-2 text-center text-[10px] font-black uppercase tracking-widest text-white">Ouvrir dashboard</a>
+                            </div>
+                        </div>
+                    </div>`;
+                const closeButton = bubble.querySelector('[data-bp-close-alert]');
+                if (closeButton) closeButton.addEventListener('click', function () { closeBubble(order.id); });
+                if (document.hidden && window.BarPiloteNotifications && typeof window.BarPiloteNotifications.showSystemNotification === 'function') {
+                    window.BarPiloteNotifications.showSystemNotification({
+                        id: 'order-' + String(order.id),
+                        title: 'Nouvelle commande - ' + (order.table_nom || 'Table'),
+                        body: itemLabel + ' · ' + formatMoney(order.total_usd, order.total_cdf),
+                        url: dashboardUrl,
+                        data: { url: dashboardUrl, order_id: String(order.id), category: 'ORDER' }
+                    });
+                }
+                stack.prepend(bubble);
+                Array.from(stack.children).slice(4).forEach(function (node) { node.remove(); });
+                requestAnimationFrame(function () { bubble.classList.add('is-visible'); });
+                ringAlarm();
+            }
+
+            function connect() {
+                const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+                const socket = new WebSocket(protocol + '://' + window.location.host + '/ws/serveur/dashboard/');
+                socket.onmessage = function (event) {
+                    let payload = {};
+                    try { payload = JSON.parse(event.data || '{}'); } catch (error) { return; }
+                    if (payload.type !== 'serveur.commande_changed') return;
+                    showBubble(payload.commande);
+                };
+                socket.onclose = function () { setTimeout(connect, 3000); };
+            }
+            connect();
+        })();
+    </script>
     {% block extra_body %}{% endblock %}
     <script src="{% static 'js/barpilote-theme.js' %}"></script>
-    <script src="{% static 'js/barpilote-pwa.js' %}"></script>
+    <script src="{% static 'js/barpilote-pwa.js' %}?v=4"></script>
 </body>
 </html>

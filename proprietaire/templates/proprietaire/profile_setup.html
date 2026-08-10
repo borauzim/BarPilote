@@ -13,24 +13,25 @@
                 style="-webkit-mask-image: url('{% static 'logo.png' %}'); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-image: url('{% static 'logo.png' %}'); mask-size: contain; mask-repeat: no-repeat; mask-position: center;"
             ></div>
         </div>
-        <span class="text-xl font-black tracking-tighter text-on-surface">BarPilote</span>
+        <span class="bp-brand-name text-xl font-black tracking-tighter text-on-surface">BarPilote</span>
     </div>
 
     <!-- Header -->
     <div class="text-center mb-12 space-y-3">
-        <h1 class="text-3xl font-black tracking-tight text-on-surface">Parlez-nous de vous</h1>
-        <p class="text-on-surface-variant font-medium">Complétez votre profil de pilote pour continuer.</p>
+        <h1 class="text-3xl font-black tracking-tight text-on-surface">{% if is_profile_edit %}Modifier mes informations{% else %}Parlez-nous de vous{% endif %}</h1>
+        <p class="text-on-surface-variant font-medium">{% if is_profile_edit %}Gardez vos coordonnées propriétaire à jour.{% else %}Complétez votre profil de pilote pour continuer.{% endif %}</p>
     </div>
 
     <form method="post" enctype="multipart/form-data" class="w-full space-y-6">
         {% csrf_token %}
+        {% if is_profile_edit %}<input type="hidden" name="next" value="{{ request.GET.next|default:request.META.HTTP_REFERER|default:'' }}">{% endif %}
         
         <!-- WhatsApp Style Avatar Upload -->
         <div class="flex justify-center mb-10">
             <div class="relative group cursor-pointer">
                 <!-- Avatar Container -->
                 <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl bg-surface-container flex items-center justify-center relative">
-                    <img id="photo-preview" src="{{ user.socialaccount_set.all.0.get_avatar_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN' }}" 
+                    <img id="photo-preview" src="{% if profile.photo_profil %}{{ profile.photo_profil.url }}{% else %}{{ user.socialaccount_set.all.0.get_avatar_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN' }}{% endif %}" 
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 brightness-95" alt="Avatar">
                     <!-- Plus Sign Overlay -->
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -59,21 +60,21 @@
             <!-- Prénom -->
             <div class="space-y-2">
                 <label for="prenom" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Prénom</label>
-                <input type="text" id="prenom" name="prenom" required placeholder="Ex: Jean" value="{{ user.first_name }}"
+                <input type="text" id="prenom" name="prenom" required placeholder="Ex: Jean" value="{{ profile.prenom|default:user.first_name }}"
                        class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium">
             </div>
 
             <!-- Nom -->
             <div class="space-y-2">
                 <label for="nom" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Nom</label>
-                <input type="text" id="nom" name="nom" required placeholder="Ex: KABILA" value="{{ user.last_name }}"
+                <input type="text" id="nom" name="nom" required placeholder="Ex: KABILA" value="{{ profile.nom|default:user.last_name }}"
                        class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium uppercase">
             </div>
 
             <!-- Postnom -->
             <div class="space-y-2">
                 <label for="postnom" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Postnom (Optionnel)</label>
-                <input type="text" id="postnom" name="postnom" placeholder="Ex: MWANZA" 
+                <input type="text" id="postnom" name="postnom" placeholder="Ex: MWANZA" value="{{ profile.postnom }}" 
                        class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium uppercase">
             </div>
 
@@ -81,8 +82,8 @@
             <div class="space-y-2">
                 <label for="sexe" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Sexe</label>
                 <select id="sexe" name="sexe" class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium appearance-none">
-                    <option value="M">Masculin</option>
-                    <option value="F">Féminin</option>
+                    <option value="M" {% if profile.sexe == 'M' %}selected{% endif %}>Masculin</option>
+                    <option value="F" {% if profile.sexe == 'F' %}selected{% endif %}>Féminin</option>
                 </select>
             </div>
         </div>
@@ -91,17 +92,21 @@
         <div class="space-y-2">
             <label for="telephone" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Numéro WhatsApp</label>
             <div class="relative">
-                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-bold">+243</span>
-                <input type="tel" id="telephone" name="telephone" required placeholder="812345678" 
-                       class="w-full bg-white border-2 border-surface-container-high rounded-2xl pl-16 pr-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium">
+                <input type="tel" id="telephone" name="telephone" required placeholder="Ex: +243 812 345 678" value="{{ profile.telephone }}"
+                       class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-medium">
             </div>
         </div>
 
-        <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-[0.98] transition-all mt-4">
-            Enregistrer et continuer
-        </button>
+        <div class="flex flex-col sm:flex-row gap-3 mt-4">
+            {% if is_profile_edit %}
+            <a href="{% url 'dashboard_html' %}" class="flex-1 bg-surface-container-high text-on-surface py-5 rounded-2xl font-black uppercase tracking-widest text-center active:scale-[0.98] transition-all">Annuler</a>
+            {% endif %}
+            <button type="submit" class="flex-1 citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-[0.98] transition-all">
+                {% if is_profile_edit %}Mettre à jour{% else %}Enregistrer et continuer{% endif %}
+            </button>
+        </div>
         
-        <p class="text-center text-[0.6875rem] uppercase tracking-widest text-on-surface-variant/60 font-semibold mt-4">Étape 1 sur 2</p>
+        {% if not is_profile_edit %}<p class="text-center text-[0.6875rem] uppercase tracking-widest text-on-surface-variant/60 font-semibold mt-4">Étape 1 sur 2</p>{% endif %}
     </form>
 </div>
 {% endblock %}
@@ -118,8 +123,10 @@
         }
     }
 </script>
+{% if not is_profile_edit %}
 <style>
     header, nav { display: none !important; }
     main { padding-top: 0 !important; }
 </style>
+{% endif %}
 {% endblock %}

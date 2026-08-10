@@ -5,12 +5,19 @@
     </button>
 
     <div id="notificationPanel" class="hidden absolute right-0 top-12 w-[min(92vw,420px)] bg-white rounded-3xl executive-shadow border border-surface-container-high overflow-hidden z-[80]">
-        <div class="px-5 py-4 border-b border-surface-container flex items-center justify-between gap-3 bg-surface-container-lowest">
-            <div>
-                <h3 class="text-sm font-black text-on-surface tracking-tight">Notifications</h3>
-                <p id="notificationSummary" class="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">Chargement</p>
+        <div class="px-5 py-4 border-b border-surface-container bg-surface-container-lowest">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-sm font-black text-on-surface tracking-tight">Notifications</h3>
+                    <p id="notificationSummary" class="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">Chargement</p>
+                </div>
+                <button type="button" onclick="markAllNotificationsRead()" class="px-3 py-2 rounded-xl bg-surface-container text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:bg-orange-50 hover:text-orange-600 transition-colors">Tout lu</button>
             </div>
-            <button type="button" onclick="markAllNotificationsRead()" class="px-3 py-2 rounded-xl bg-surface-container text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:bg-orange-50 hover:text-orange-600 transition-colors">Tout lu</button>
+            <div id="notificationFilters" class="mt-3 grid grid-cols-3 gap-1 rounded-2xl bg-white p-1 border border-surface-container">
+                <button type="button" data-notification-filter="all" class="notification-filter-btn rounded-xl px-2 py-2 text-[10px] font-black uppercase tracking-wide transition-colors">Toutes</button>
+                <button type="button" data-notification-filter="unread" class="notification-filter-btn rounded-xl px-2 py-2 text-[10px] font-black uppercase tracking-wide transition-colors">Non vues</button>
+                <button type="button" data-notification-filter="read" class="notification-filter-btn rounded-xl px-2 py-2 text-[10px] font-black uppercase tracking-wide transition-colors">Vues</button>
+            </div>
         </div>
         <div id="notificationList" class="max-h-[420px] overflow-y-auto divide-y divide-surface-container">
             <div class="p-6 text-center text-xs font-bold text-on-surface-variant/50">Chargement des notifications...</div>
@@ -26,6 +33,10 @@
         <div class="min-w-0 flex-1">
             <p id="notificationToastTitle" class="text-sm font-black leading-tight text-on-surface">Nouvelle notification</p>
             <p id="notificationToastMessage" class="mt-1 text-xs font-bold leading-snug text-on-surface-variant/70"></p>
+            <div id="notificationToastActions" class="mt-3 hidden grid grid-cols-2 gap-2">
+                <button type="button" id="notificationToastAcceptBtn" class="rounded-xl bg-emerald-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white">Accepter</button>
+                <button type="button" id="notificationToastRefuseBtn" class="rounded-xl bg-red-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white">Refuser</button>
+            </div>
         </div>
     </div>
 </div>
@@ -39,6 +50,9 @@
     let firstNotificationLoad = true;
     let notificationRequestInFlight = false;
     let notificationSocket = null;
+    let activeNotificationFilter = 'all';
+    let currentToastActionUrls = {accept: '', refuse: ''};
+    let currentToastNotificationId = '';
 
     const categoryIcons = {
         ORDER: 'room_service',
@@ -65,19 +79,77 @@
         });
     }
 
+    function notificationFilterLabel(value) {
+        if (value === 'unread') return 'Non vues';
+        if (value === 'read') return 'Vues';
+        return 'Toutes';
+    }
+
+    function paintNotificationFilters() {
+        document.querySelectorAll('[data-notification-filter]').forEach(function (button) {
+            const active = button.dataset.notificationFilter === activeNotificationFilter;
+            button.classList.toggle('bg-orange-600', active);
+            button.classList.toggle('text-white', active);
+            button.classList.toggle('text-on-surface-variant', !active);
+            button.classList.toggle('hover:bg-orange-50', !active);
+            button.classList.toggle('hover:text-orange-600', !active);
+        });
+    }
+
+    function notificationTargetUrl(item) {
+        return (item && item.url) ? item.url : '#';
+    }
+
+    function handleNotificationAction(url, label) {
+        if (!url) return;
+        fetch(url, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'X-CSRFToken': getCookie('csrftoken')}
+        })
+            .then(res => res.ok ? res.json() : Promise.reject(res))
+            .then(data => {
+                if (window.loadNotifications) window.loadNotifications();
+                showNotificationToast({title: label || 'Action envoyée', message: data.message || 'Réponse enregistrée.'});
+            })
+            .catch(() => showNotificationToast({title: 'Erreur', message: 'Impossible de traiter la notification.'}));
+    }
+
     function showNotificationToast(item) {
         const toast = document.getElementById('notificationToast');
         const title = document.getElementById('notificationToastTitle');
         const message = document.getElementById('notificationToastMessage');
+        const actions = document.getElementById('notificationToastActions');
+        const acceptBtn = document.getElementById('notificationToastAcceptBtn');
+        const refuseBtn = document.getElementById('notificationToastRefuseBtn');
         if (!toast || !title || !message || !item) return;
+        currentToastNotificationId = item.id || '';
         title.textContent = item.title || 'Nouvelle notification';
         message.textContent = item.message || '';
+        const data = item.data || {};
+        currentToastActionUrls = {
+            accept: data.action_accept_url || '',
+            refuse: data.action_refuse_url || '',
+        };
+        const hasActions = Boolean(currentToastActionUrls.accept || currentToastActionUrls.refuse);
+        if (actions && acceptBtn && refuseBtn && hasActions) {
+            actions.classList.remove('hidden');
+            acceptBtn.disabled = !currentToastActionUrls.accept;
+            refuseBtn.disabled = !currentToastActionUrls.refuse;
+            acceptBtn.onclick = () => { handleNotificationAction(currentToastActionUrls.accept, 'Accepté'); if (currentToastNotificationId) window.markNotificationRead(currentToastNotificationId); };
+            refuseBtn.onclick = () => { handleNotificationAction(currentToastActionUrls.refuse, 'Refusé'); if (currentToastNotificationId) window.markNotificationRead(currentToastNotificationId); };
+        } else if (actions) {
+            actions.classList.add('hidden');
+            if (acceptBtn) acceptBtn.onclick = null;
+            if (refuseBtn) refuseBtn.onclick = null;
+        }
         toast.classList.remove('hidden');
         requestAnimationFrame(() => {
             toast.classList.remove('translate-y-2', 'opacity-0');
             toast.classList.add('translate-y-0', 'opacity-100');
         });
         clearTimeout(window.__barPiloteNotificationToastTimer);
+        if (hasActions) return;
         window.__barPiloteNotificationToastTimer = setTimeout(() => {
             toast.classList.add('translate-y-2', 'opacity-0');
             toast.classList.remove('translate-y-0', 'opacity-100');
@@ -101,7 +173,7 @@
 
         const icon = categoryIcons[item.category] || categoryIcons.SYSTEM;
         const html = `
-                <a href="${escapeHtml(item.url || '#')}" onclick="markNotificationRead('${item.id}')" class="flex gap-3 p-4 bg-orange-50/70 hover:bg-surface-container-lowest transition-colors">
+                <a href="${escapeHtml(notificationTargetUrl(item))}" onclick="handleNotificationClick(event, '${item.id}')" class="flex gap-3 p-4 bg-orange-50/70 hover:bg-surface-container-lowest transition-colors">
                     <div class="w-10 h-10 rounded-2xl bg-white border border-surface-container flex items-center justify-center text-orange-600 shrink-0">
                         <span class="material-symbols-outlined text-lg">${icon}</span>
                     </div>
@@ -130,7 +202,8 @@
         badge.textContent = unread > 99 ? '99+' : unread;
         badge.classList.toggle('hidden', unread === 0);
         badge.classList.toggle('flex', unread > 0);
-        summary.textContent = unread ? `${unread} non lue(s)` : 'Aucune non lue';
+        summary.textContent = unread ? `${unread} non lue(s) · ${notificationFilterLabel(activeNotificationFilter)}` : `Aucune non lue · ${notificationFilterLabel(activeNotificationFilter)}`;
+        paintNotificationFilters();
 
         const notifications = data.notifications || [];
         if (!firstNotificationLoad) {
@@ -138,6 +211,12 @@
                 .filter(item => item && item.id && !knownNotificationIds.has(item.id) && !item.is_read)
                 .reverse();
             fresh.forEach(showNotificationToast);
+        } else {
+            const pendingDebt = notifications.find(item => {
+                const itemData = (item && item.data) || {};
+                return item && !item.is_read && (itemData.action_accept_url || itemData.action_refuse_url);
+            });
+            if (pendingDebt) showNotificationToast(pendingDebt);
         }
         knownNotificationIds = new Set(notifications.filter(item => item && item.id).map(item => item.id));
         firstNotificationLoad = false;
@@ -151,9 +230,16 @@
             const icon = categoryIcons[item.category] || categoryIcons.SYSTEM;
             const unreadClass = item.is_read ? 'bg-white' : 'bg-orange-50/70';
             const dot = item.is_read ? '' : '<span class="w-2 h-2 rounded-full bg-orange-600 shrink-0 mt-2"></span>';
-            const url = item.url || '#';
+            const url = notificationTargetUrl(item);
+            const itemData = item.data || {};
+            const actionsHtml = (itemData.action_accept_url || itemData.action_refuse_url)
+                ? '<div class="mt-3 grid grid-cols-2 gap-2">'
+                    + (itemData.action_accept_url ? '<button type="button" data-notification-id="' + escapeHtml(item.id) + '" data-notification-action-url="' + escapeHtml(itemData.action_accept_url) + '" data-notification-action-label="Dette acceptée" class="rounded-xl bg-emerald-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white">Accepter</button>' : '')
+                    + (itemData.action_refuse_url ? '<button type="button" data-notification-id="' + escapeHtml(item.id) + '" data-notification-action-url="' + escapeHtml(itemData.action_refuse_url) + '" data-notification-action-label="Dette refusée" class="rounded-xl bg-red-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white">Refuser</button>' : '')
+                    + '</div>'
+                : '';
             return `
-                <a href="${escapeHtml(url)}" onclick="markNotificationRead('${item.id}')" class="flex gap-3 p-4 ${unreadClass} hover:bg-surface-container-lowest transition-colors">
+                <a href="${escapeHtml(url)}" onclick="handleNotificationClick(event, '${item.id}')" class="flex gap-3 p-4 ${unreadClass} hover:bg-surface-container-lowest transition-colors">
                     <div class="w-10 h-10 rounded-2xl bg-white border border-surface-container flex items-center justify-center text-orange-600 shrink-0">
                         <span class="material-symbols-outlined text-lg">${icon}</span>
                     </div>
@@ -164,6 +250,7 @@
                         </div>
                         <p class="text-xs font-medium text-on-surface-variant/70 mt-1 leading-snug">${escapeHtml(item.message)}</p>
                         <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mt-2">${escapeHtml(item.created_at)}</p>
+                        ${actionsHtml}
                     </div>
                 </a>`;
         }).join('');
@@ -173,7 +260,9 @@
         const root = getNotificationRoot();
         if (!root || notificationRequestInFlight) return Promise.resolve();
         notificationRequestInFlight = true;
-        return fetch(root.dataset.apiUrl, {
+        const url = new URL(root.dataset.apiUrl, window.location.origin);
+        url.searchParams.set('filter', activeNotificationFilter);
+        return fetch(url.toString(), {
             headers: {'X-Requested-With': 'XMLHttpRequest'},
             cache: 'no-store'
         })
@@ -202,20 +291,32 @@
     window.toggleNotificationPanel = function () {
         const panel = document.getElementById('notificationPanel');
         if (!panel) return;
+        if (panel.parentElement !== document.body) {
+            document.body.appendChild(panel);
+        }
         panel.classList.toggle('hidden');
         window.loadNotifications();
     };
 
     window.markNotificationRead = function (id) {
         const root = getNotificationRoot();
-        if (!root || !id) return;
+        if (!root || !id) return Promise.resolve();
         const body = new URLSearchParams();
         body.append('notification_id', id);
-        fetch(root.dataset.apiUrl, {
+        return fetch(root.dataset.apiUrl, {
             method: 'POST',
             headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
             body: body.toString()
         }).then(() => window.loadNotifications());
+    };
+
+    window.handleNotificationClick = function (event, id) {
+        if (event) event.preventDefault();
+        const link = event ? event.currentTarget : null;
+        const target = link ? link.getAttribute('href') : '#';
+        window.markNotificationRead(id).finally(function () {
+            if (target && target !== '#') window.location.href = target;
+        });
     };
 
     window.markAllNotificationsRead = function () {
@@ -233,10 +334,31 @@
     document.addEventListener('click', function (event) {
         const root = getNotificationRoot();
         const panel = document.getElementById('notificationPanel');
-        if (root && panel && !panel.classList.contains('hidden') && !root.contains(event.target)) {
+        if (!root || !panel || panel.classList.contains('hidden')) return;
+        if (!root.contains(event.target) && !panel.contains(event.target)) {
             panel.classList.add('hidden');
         }
     });
+
+    document.addEventListener('click', function (event) {
+        const actionButton = event.target.closest('[data-notification-action-url]');
+        if (actionButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            actionButton.disabled = true;
+            handleNotificationAction(
+                actionButton.dataset.notificationActionUrl,
+                actionButton.dataset.notificationActionLabel
+            );
+            if (actionButton.dataset.notificationId) window.markNotificationRead(actionButton.dataset.notificationId);
+            return;
+        }
+        const button = event.target.closest('[data-notification-filter]');
+        if (!button) return;
+        activeNotificationFilter = button.dataset.notificationFilter || 'all';
+        paintNotificationFilters();
+        window.loadNotifications();
+    }, true);
 
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) window.loadNotifications();
@@ -245,6 +367,7 @@
     window.addEventListener('focus', window.loadNotifications);
 
     document.addEventListener('DOMContentLoaded', function () {
+        paintNotificationFilters();
         window.loadNotifications();
         connectNotificationSocket();
     });

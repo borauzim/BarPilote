@@ -13,7 +13,7 @@
                 style="-webkit-mask-image: url('{% static 'logo.png' %}'); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-image: url('{% static 'logo.png' %}'); mask-size: contain; mask-repeat: no-repeat; mask-position: center;"
             ></div>
         </div>
-        <span class="text-xl font-black tracking-tighter text-on-surface">BarPilote</span>
+        <span class="bp-brand-name text-xl font-black tracking-tighter text-on-surface">BarPilote</span>
     </div>
 
     <!-- Header -->
@@ -72,10 +72,15 @@
 
             <!-- Prix SaaS -->
             <div class="space-y-2">
-                <label for="monthly_price_per_table_usd" class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Prix mensuel par table (USD)</label>
-                <input type="number" id="monthly_price_per_table_usd" name="monthly_price_per_table_usd" min="0" step="0.01" value="2.50"
-                       class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-bold text-lg">
-                <p class="text-[10px] text-on-surface-variant/60 ml-1 font-medium">Ce tarif est propre à cet établissement. Le total mensuel sera calculé selon le nombre de tables actives.</p>
+                <p class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Prix mensuel par table (USD)</p>
+                <div class="w-full bg-surface-container-low border-2 border-surface-container-high rounded-2xl px-5 py-4 font-bold text-lg text-on-surface flex items-center justify-between gap-4">
+                    <span>{{ monthly_price_per_table_usd|floatformat:2 }} USD</span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">
+                        <span class="material-symbols-outlined text-sm">lock</span>
+                        Fixe
+                    </span>
+                </div>
+                <p class="text-[10px] text-on-surface-variant/60 ml-1 font-medium">Ce tarif est fixé par l'administrateur. Le total mensuel sera calculé selon le nombre de tables actives.</p>
             </div>
 
             <!-- Adresse (Google Maps Autocomplete) -->
@@ -108,6 +113,21 @@
                 </div>
                 
                 <p class="text-[10px] text-on-surface-variant/60 ml-1 font-medium italic">La carte se mettra à jour automatiquement lors de la sélection de l'adresse.</p>
+            </div>
+
+            <div class="space-y-4 rounded-2xl border border-surface-container-high bg-white p-5">
+                <div>
+                    <p class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant">Paiement Mobile Money</p>
+                    <p class="mt-1 text-xs font-medium text-on-surface-variant/60">Ces numéros seront affichés aux clients au moment de payer leurs factures.</p>
+                </div>
+                <div class="grid gap-3">
+                    <input type="tel" name="mobile_money_orange" placeholder="Orange Money - Ex: +243 89 000 0000"
+                           class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-bold">
+                    <input type="tel" name="mobile_money_mpesa" placeholder="M-Pesa - Ex: +243 81 000 0000"
+                           class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-bold">
+                    <input type="tel" name="mobile_money_airtel" placeholder="Airtel Money - Ex: +243 99 000 0000"
+                           class="w-full bg-white border-2 border-surface-container-high rounded-2xl px-5 py-4 focus:border-orange-500 focus:ring-0 transition-all font-bold">
+                </div>
             </div>
         </div>
 

@@ -70,6 +70,14 @@
         }
     }
 </style>
+<style>
+    .order-alert-stack { position: fixed; right: 1rem; bottom: 6.25rem; z-index: 90; display: flex; flex-direction: column; gap: 0.75rem; width: min(24rem, calc(100vw - 2rem)); pointer-events: none; }
+    .order-alert-bubble { pointer-events: auto; border-radius: 1.5rem; background: #ffffff; border: 1px solid rgba(255, 94, 0, 0.18); box-shadow: 0 24px 60px rgba(26, 28, 29, 0.22); overflow: hidden; transform: translateY(12px) scale(0.96); opacity: 0; transition: transform 220ms ease, opacity 220ms ease; }
+    .order-alert-bubble.is-visible { transform: translateY(0) scale(1); opacity: 1; }
+    .order-alert-bubble.is-urgent { animation: orderBubblePulse 1.2s ease-in-out infinite; }
+    @keyframes orderBubblePulse { 0%, 100% { box-shadow: 0 24px 60px rgba(26, 28, 29, 0.22); } 50% { box-shadow: 0 24px 70px rgba(255, 94, 0, 0.38); } }
+    @media (max-width: 640px) { .order-alert-stack { left: 0.75rem; right: 0.75rem; bottom: 5.75rem; width: auto; } .order-alert-bubble { border-radius: 1.25rem; } }
+</style>
 {% endblock %}
 
 {% block title %}Tableau de Bord - BarPilote{% endblock %}
@@ -269,7 +277,10 @@
                                 {% if order.statut == 'PENDING' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>
                                 <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'ACCEPTEE')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter</button>
-                                {% elif order.statut == 'ACCEPTEE' or order.statut == 'PREPARING' %}
+                                {% elif order.statut == 'ACCEPTEE' %}
+                                <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">Acceptée</span>
+                                <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Préparer</button>
+                                {% elif order.statut == 'PREPARING' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>
                                 <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>
                                 {% elif order.statut == 'SERVED' %}
@@ -379,15 +390,18 @@
     </div>
 {% endblock %}
 
+{% block floating_actions %}
+<button type="button" onclick="toggleChat(); toggleFloatingActions(false);" class="bp-fab-action" title="Ouvrir le chatbot">
+    <span class="material-symbols-outlined text-[20px]">psychology</span>
+    <span>Chat bot</span>
+</button>
+<button type="button" onclick="openServiceModal(); toggleFloatingActions(false);" class="bp-fab-action" title="Aider le service">
+    <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+    <span>Aider le service</span>
+</button>
+{% endblock %}
+
 {% block extra_body %}
-    <!-- ➕ Floating Premium Action -->
-    <button onclick="openServiceModal()" class="fixed bottom-32 right-8 md:bottom-32 md:right-12 citrus-gradient text-white w-16 h-16 rounded-[24px] flex items-center justify-center shadow-[0_20px_50px_rgba(255,94,0,0.3)] hover:rotate-90 transition-all duration-500 z-40 active:scale-90 group">
-        <span class="material-symbols-outlined text-3xl font-bold">add</span>
-        <!-- Tooltip -->
-        <div class="absolute right-24 bg-on-surface text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 pointer-events-none whitespace-nowrap">
-            Aider le Service
-        </div>
-    </button>
 
     <!-- 💰 Modal: Payment & Client Details -->
 
@@ -605,7 +619,7 @@
 
                 <!-- Right: Order Summary -->
                 <div class="w-80 flex flex-col bg-surface-container-lowest overflow-hidden">
-                    <form action="{% url 'take_order' %}" method="post" id="takeOrderForm" class="flex flex-col h-full">
+                    <form action="{% url 'take_order' %}" method="post" id="takeOrderForm" data-live-action="true" class="flex flex-col h-full">
                         {% csrf_token %}
                         <div class="p-6 space-y-6 flex-1 flex flex-col overflow-hidden">
                             <div class="space-y-1.5 shrink-0">
@@ -644,7 +658,7 @@
     </div>
 
     <!-- 🤖 Pilot Advisor Floating Widget -->
-    <div id="aiChatWidget" class="fixed bottom-8 right-8 md:bottom-12 md:right-12 z-50 flex flex-col items-end gap-4">
+    <div id="aiChatWidget" class="fixed bottom-28 right-4 md:bottom-28 md:right-8 z-50 flex flex-col items-end gap-4">
         <!-- Chat Window (Hidden by default) -->
         <div id="chatWindow" class="hidden w-[350px] md:w-[460px] h-[550px] bg-white rounded-[32px] shadow-2xl border border-surface-container-high overflow-hidden flex flex-col transition-all duration-300 translate-y-4 opacity-0">
             <!-- Header -->
@@ -696,13 +710,6 @@
             </div>
         </div>
 
-        <!-- Toggle Button -->
-        <button onclick="toggleChat()" class="w-16 h-16 bg-on-surface text-white rounded-[24px] flex items-center justify-center shadow-2xl active:scale-95 transition-all group relative border-2 border-white">
-            <div class="absolute inset-0 bg-white/20 rounded-[24px] animate-ping opacity-75 group-hover:hidden"></div>
-            <span class="material-symbols-outlined text-3xl">psychology</span>
-            <!-- Notification Badge -->
-            <div class="absolute -top-1 -right-1 w-5 h-5 bg-orange-600 border-2 border-white rounded-full flex items-center justify-center text-[10px] font-black">1</div>
-        </button>
     </div>
 
     <style>
@@ -714,6 +721,7 @@
         .service-cat-btn:not(.active) { background: white; color: #64748B; border: 1px solid #F1F5F9; }
     </style>
 
+    <div id="ownerOrderAlertStack" class="order-alert-stack" aria-live="assertive" aria-atomic="false"></div>
     <script>
         // --- Duration Formatting Helper ---
         function formatDuration(seconds) {
@@ -727,24 +735,31 @@
         }
 
         // --- Reception Mode Logic ---
-        let receptionModeActive = false;
+        const receptionModeStorageKey = 'barpilote_owner_reception_{{ bar.id|default:user.id }}';
+        const receptionModeDefault = '{{ order_assignment_mode|default:"AUTO" }}' === 'AUTO';
+        let receptionModeActive = receptionModeDefault;
+        try {
+            const storedReceptionMode = localStorage.getItem(receptionModeStorageKey);
+            if (storedReceptionMode !== null) receptionModeActive = storedReceptionMode === 'true';
+        } catch (error) {}
+
+        function setReceptionModeUI() {
+            const thumb = document.getElementById('receptionThumb');
+            const toggle = document.getElementById('receptionToggle');
+            if (!thumb || !toggle) return;
+            thumb.classList.toggle('translate-x-6', receptionModeActive);
+            toggle.classList.toggle('bg-orange-600', receptionModeActive);
+            toggle.classList.toggle('bg-surface-container-highest', !receptionModeActive);
+        }
 
         function toggleReceptionMode() {
             receptionModeActive = !receptionModeActive;
-            const thumb = document.getElementById('receptionThumb');
-            const toggle = document.getElementById('receptionToggle');
-            
-            if (receptionModeActive) {
-                thumb.classList.add('translate-x-6');
-                toggle.classList.remove('bg-surface-container-highest');
-                toggle.classList.add('bg-orange-600');
-                fetchLiveOrders(); // chargement initial uniquement
-            } else {
-                thumb.classList.remove('translate-x-6');
-                toggle.classList.add('bg-surface-container-highest');
-                toggle.classList.remove('bg-orange-600');
-            }
+            try { localStorage.setItem(receptionModeStorageKey, receptionModeActive ? 'true' : 'false'); } catch (error) {}
+            setReceptionModeUI();
+            if (receptionModeActive) fetchLiveOrders();
         }
+
+        setReceptionModeUI();
 
         function getCookie(name) {
             let cookieValue = null;
@@ -769,41 +784,119 @@
             return parts.length ? parts.join(' + ') : '0.00 $';
         }
 
+        let ownerLiveOrders = [];
+
+        const ownerAlertedOrderIds = new Set();
+
+        function ringOrderAlarm() {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return;
+                const audioCtx = window.__barpiloteOrderAlarmCtx || new AudioContextClass();
+                window.__barpiloteOrderAlarmCtx = audioCtx;
+                if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+                [0, 0.18, 0.36].forEach((offset) => {
+                    const oscillator = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + offset);
+                    oscillator.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + offset + 0.08);
+                    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime + offset);
+                    gain.gain.exponentialRampToValueAtTime(0.16, audioCtx.currentTime + offset + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + offset + 0.16);
+                    oscillator.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    oscillator.start(audioCtx.currentTime + offset);
+                    oscillator.stop(audioCtx.currentTime + offset + 0.18);
+                });
+            } catch (error) {}
+        }
+
+        function removeOwnerOrderAlertBubble(orderId) {
+            const bubble = document.querySelector('[data-owner-order-alert-id="' + String(orderId) + '"]');
+            if (!bubble) return;
+            bubble.classList.remove('is-visible');
+            setTimeout(() => bubble.remove(), 220);
+        }
+
+        function showOwnerOrderBubble(order) {
+            if (!order || !order.id || ownerAlertedOrderIds.has(String(order.id))) return;
+            const status = String(order.statut || '').toUpperCase();
+            if (status !== 'PENDING') return;
+            ownerAlertedOrderIds.add(String(order.id));
+            const stack = document.getElementById('ownerOrderAlertStack');
+            if (!stack) return;
+            const items = order.items || [];
+            const itemLabel = items.slice(0, 2).map((item) => Number(item.qty || 0) + 'x ' + escapeHtml(item.name || 'Produit')).join(' · ') || 'Nouvelle commande';
+            const itemsJson = encodeURIComponent(JSON.stringify(items));
+            const tableName = escapeHtml(order.table_nom || 'Table');
+            const bubble = document.createElement('article');
+            bubble.className = 'order-alert-bubble is-urgent';
+            bubble.dataset.ownerOrderAlertId = String(order.id);
+            bubble.innerHTML = `
+                <div class="flex items-start gap-3 p-4">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-600 text-white shadow-lg">
+                        <span class="material-symbols-outlined">mark_unread_chat_alt</span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-orange-600">Commande entrante</p>
+                                <h3 class="truncate text-base font-black text-on-surface">${tableName}</h3>
+                            </div>
+                            <button type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface-container text-on-surface-variant" aria-label="Fermer" onclick="removeOwnerOrderAlertBubble('${order.id}')"><span class="material-symbols-outlined text-sm">close</span></button>
+                        </div>
+                        <p class="mt-1 line-clamp-2 text-xs font-bold text-on-surface-variant/70">${itemLabel}</p>
+                        <p class="mt-2 text-lg font-black text-on-surface">${formatRealtimeMoney(order.total_usd, order.total_cdf)}</p>
+                        <div class="mt-3 grid grid-cols-2 gap-2">
+                            <button type="button" class="rounded-xl bg-orange-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white" onclick="removeOwnerOrderAlertBubble('${order.id}'); updateOrderStatus('${order.id}', 'ACCEPTEE')">Accepter</button>
+                            <button type="button" data-order-alert-view class="rounded-xl bg-surface-container px-3 py-2 text-[10px] font-black uppercase tracking-widest text-on-surface">Voir</button>
+                        </div>
+                    </div>
+                </div>`;
+            const viewButton = bubble.querySelector('[data-order-alert-view]');
+            if (viewButton) {
+                viewButton.addEventListener('click', () => openOrderDetailsPopover(order.table_nom || 'Table', 'Commande reçue', itemsJson, Number(order.total_usd || 0), Number(order.total_cdf || 0)));
+            }
+            stack.prepend(bubble);
+            Array.from(stack.children).slice(4).forEach((node) => node.remove());
+            requestAnimationFrame(() => bubble.classList.add('is-visible'));
+            ringOrderAlarm();
+        }
+
+        function mergeOwnerRealtimeOrder(order) {
+            if (!order || !order.id) return;
+            const status = String(order.statut || '').toUpperCase();
+            const wasAlreadyVisible = ownerLiveOrders.some((item) => String(item.id) === String(order.id));
+            ownerLiveOrders = ownerLiveOrders.filter((item) => String(item.id) !== String(order.id));
+            if (!['PAID', 'CANCELLED'].includes(status)) {
+                ownerLiveOrders.push(order);
+                ownerLiveOrders.sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+                if (!wasAlreadyVisible) showOwnerOrderBubble(order);
+            }
+            renderLiveOrders(ownerLiveOrders);
+        }
+
         function connectOwnerDashboardSocket() {
             const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
             const socket = new WebSocket(`${protocol}://${location.host}/ws/proprietaire/dashboard/`);
             socket.onmessage = (event) => {
                 const payload = JSON.parse(event.data || '{}');
-                if (payload.type !== 'proprietaire.commande_accepted' || !payload.commande) return;
-                const commande = payload.commande;
-                const audio = new Audio('/static/sounds/notification.mp3');
-                audio.volume = 0.85;
-                audio.play().catch(() => {});
+                if (!['proprietaire.commande_accepted', 'proprietaire.commande_changed'].includes(payload.type) || !payload.commande) return;
                 if (payload.dashboard) {
-                    const revenueEl = document.getElementById('chiffre-affaires');
+                    const revenueEl = document.getElementById('todayRevenueValue');
                     if (revenueEl) {
                         revenueEl.textContent = formatRealtimeMoney(payload.dashboard.today_revenue_usd, payload.dashboard.today_revenue_cdf);
                     }
+                    const lastCashingEl = document.querySelector('.live-last-cashing');
+                    if (lastCashingEl && payload.dashboard.last_paid_timestamp !== undefined) {
+                        lastCashingEl.setAttribute('data-start', payload.dashboard.last_paid_timestamp || '');
+                        if (!payload.dashboard.last_paid_timestamp) {
+                            lastCashingEl.textContent = "Dernier encaissement : aucun aujourd'hui";
+                        }
+                    }
                 }
-                const list = document.getElementById('liste-commandes-actives');
-                if (list) {
-                    const card = document.createElement('article');
-                    card.className = 'rounded-xl border border-orange-100 bg-white p-4 shadow-sm';
-                    card.dataset.orderId = commande.id;
-                    card.innerHTML = `
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <p class="text-sm font-black text-on-surface">Table ${commande.table_nom || 'Comptoir'}</p>
-                                <p class="text-xs font-semibold text-on-surface-variant">${commande.server || 'Serveur'} </p>
-                            </div>
-                            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase text-emerald-700">Acceptée</span>
-                        </div>
-                        <div class="mt-3 flex items-center justify-between text-xs font-bold text-on-surface-variant">
-                            <span>Commande ${commande.id.slice(0, 8)}</span>
-                            <span>${Number(commande.total_euros || commande.total_usd || 0).toFixed(2)} €</span>
-                        </div>`;
-                    list.prepend(card);
-                }
+                mergeOwnerRealtimeOrder(payload.commande);
             };
             socket.onclose = () => setTimeout(connectOwnerDashboardSocket, 3000);
         }
@@ -821,8 +914,9 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    // Instantly refetch or just reload page for simplicity if reception mode isn't on
-                    fetchLiveOrders();
+                    if (window.BarPiloteLiveActions) {
+                        window.BarPiloteLiveActions.flashMessage('Commande mise a jour.');
+                    }
                 }
             });
         }
@@ -832,7 +926,8 @@
             .then(res => res.json())
             .then(data => {
                 if (data.orders) {
-                    renderLiveOrders(data.orders);
+                    ownerLiveOrders = data.orders;
+                    renderLiveOrders(ownerLiveOrders);
                 }
                 if (data.last_paid_timestamp !== undefined) {
                     const lastCashingEl = document.querySelector('.live-last-cashing');
@@ -906,21 +1001,34 @@
                 let actionBtn = '';
                 
                 const hasPending = group.orders.some(o => o.statut === 'PENDING');
-                const hasPreparing = group.orders.some(o => o.statut === 'ACCEPTEE' || o.statut === 'PREPARING');
+                const hasAccepted = group.orders.some(o => o.statut === 'ACCEPTEE');
+                const hasPreparing = group.orders.some(o => o.statut === 'PREPARING');
+                const cashPendingOrders = group.orders.filter(o => o.payment_requested && !o.payment_confirmed);
+                const cashStartMs = cashPendingOrders.reduce((oldest, o) => {
+                    const t = new Date(o.payment_requested_at || '').getTime();
+                    return Number.isFinite(t) ? Math.min(oldest, t) : oldest;
+                }, Infinity);
+                const cashPending = cashPendingOrders.length > 0;
                 const groupItemsJson = encodeURIComponent(JSON.stringify(Object.values(group.items)));
                 
                 if (hasPending) {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>';
                     const pendingIds = group.orders.filter(o => o.statut === 'PENDING').map(o => o.id).join(',');
                     actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${pendingIds}', 'ACCEPTEE')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter tournée</button>`;
+                } else if (hasAccepted) {
+                    statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">Acceptée</span>';
+                    const acceptedIds = group.orders.filter(o => o.statut === 'ACCEPTEE').map(o => o.id).join(',');
+                    actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${acceptedIds}', 'PREPARING')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Préparer</button>`;
                 } else if (hasPreparing) {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>';
-                    const preparingIds = group.orders.filter(o => o.statut === 'ACCEPTEE' || o.statut === 'PREPARING').map(o => o.id).join(',');
+                    const preparingIds = group.orders.filter(o => o.statut === 'PREPARING').map(o => o.id).join(',');
                     actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${preparingIds}', 'SERVED')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>`;
                 } else {
-                    statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Servi</span>';
+                    statusBadge = cashPending ? cashConfirmationBadgeFromStart(cashStartMs) : '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Servi</span>';
                     const allIds = group.orders.map(o => o.id).join(',');
-                    actionBtn = `<button onclick="event.stopPropagation(); openPaymentModal('${allIds}', '${groupItemsJson}', ${group.total_usd}, ${group.total_cdf})" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>`;
+                    actionBtn = cashPending
+                        ? `<button onclick="event.stopPropagation(); updateOrderStatus('${allIds}', 'PAID')" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Confirmer cash</button>`
+                        : `<button onclick="event.stopPropagation(); openPaymentModal('${allIds}', '${groupItemsJson}', ${group.total_usd}, ${group.total_cdf})" class="hidden group-hover:block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>`;
                 }
 
                 // Chronometer Logic
@@ -1281,10 +1389,8 @@
             .then(data => {
                 if (data.success) {
                     closePaymentModal();
-                    if (typeof fetchLiveOrders === 'function') {
-                        fetchLiveOrders();
-                    } else {
-                        fetchLiveOrders();
+                    if (window.BarPiloteLiveActions) {
+                        window.BarPiloteLiveActions.flashMessage('Dette enregistree.');
                     }
                 } else {
                     alert("Erreur lors de l'enregistrement de la dette : " + (data.error || 'inconnue'));
@@ -1404,7 +1510,9 @@
             .then(data => {
                 if(data.success) {
                     closePaymentModal();
-                    fetchLiveOrders();
+                    if (window.BarPiloteLiveActions) {
+                        window.BarPiloteLiveActions.flashMessage('Paiement enregistre.');
+                    }
                 } else {
                     alert("Erreur lors du paiement");
                 }
@@ -1550,6 +1658,12 @@
             }
         }
 
+        window.addEventListener('barpilote:order-created', function () {
+            currentOrder = {};
+            updateOrderUI();
+            closeServiceModal();
+        });
+
         // Pilot Advisor Logic (already exists in your file)
         function toggleChat() {
             const win = document.getElementById('chatWindow');
@@ -1664,6 +1778,7 @@
 
         // Live ticking chronometers (updates elapsed times every second on the screen)
         setInterval(() => {
+            updateCashConfirmationTimers();
             // 1. Update active table orders timer
             document.querySelectorAll('.live-chrono').forEach(el => {
                 const startTime = parseInt(el.getAttribute('data-start'));

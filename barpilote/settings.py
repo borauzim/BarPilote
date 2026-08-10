@@ -43,6 +43,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+SITE_URL = os.environ.get('SITE_URL', '').rstrip('/')
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Application definition
 
@@ -105,6 +107,21 @@ ACCOUNT_EMAIL_VERIFICATION = 'optional'
 LOGIN_REDIRECT_URL = '/auth/login/redirect/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/auth/login/'
 
+# Email login codes. In development, Django falls back to console output unless SMTP
+# credentials are present in .env.
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() in {'1', 'true', 'yes', 'on'}
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@barpilote.local')
+DEVELOPER_CONTACT_EMAIL = os.environ.get('DEVELOPER_CONTACT_EMAIL', 'barpilote2026@mail.com')
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD else 'django.core.mail.backends.console.EmailBackend',
+)
+
+
 REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'barpilote-auth',
@@ -139,8 +156,8 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         },
         'APP': {
-            'client_id': '1096537323559-8i3ijevjqaok39o7qbgodanppto6k6ma.apps.googleusercontent.com',
-            'secret': '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',
+            'client_id': os.environ.get('GOOGLE_OAUTH_CLIENT_ID', ''),
+            'secret': os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', ''),
             'key': ''
         }
     }
@@ -182,6 +199,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,
+        },
     }
 }
 
@@ -247,7 +267,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Allauth additional settings
-SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'authentification.adapters.SocialAccountAdapter'
 ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Création automatique du User lors du premier login social
 SOCIALACCOUNT_LOGIN_ON_GET = True  # Rediriger immédiatement vers Google sans page intermédiaire

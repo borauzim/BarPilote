@@ -1,3 +1,4 @@
+from django.conf import settings
 from .models import PilotProfile
 
 
@@ -20,6 +21,7 @@ def currency_context(request):
                 'exchange_rate': active_bar.taux_change_usd_to_cdf if active_bar else 2800,
                 'current_bar': active_bar,
                 'owned_bars': list(profile.owned_bars.all()),
+                'developer_contact_email': settings.DEVELOPER_CONTACT_EMAIL,
             }
         except PilotProfile.DoesNotExist:
             pass
@@ -28,4 +30,5 @@ def currency_context(request):
         'exchange_rate': 2800,
         'current_bar': None,
         'owned_bars': [],
+        'developer_contact_email': settings.DEVELOPER_CONTACT_EMAIL,
     }

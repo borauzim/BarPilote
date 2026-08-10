@@ -12,7 +12,11 @@
             <h1 class="text-3xl font-black tracking-tight text-on-surface">Plan de Salle</h1>
             <p class="text-on-surface-variant/60 font-medium text-sm mt-1">{% if is_server_interface %}Suivez vos tables, les tables libres et celles prises par l'équipe.{% else %}Gérez l'occupation de vos tables en temps réel.{% endif %}</p>
         </div>
-        {% if not read_only_interface %}<div class="flex gap-3">
+        {% if not read_only_interface %}<div class="flex flex-wrap gap-3">
+            <button onclick="openSubscriptionModal()" class="bg-orange-50 text-orange-600 border border-orange-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-orange-100 transition-all">
+                <span class="material-symbols-outlined">fact_check</span>
+                <span class="hidden sm:inline">Choisir l'abonnement</span>
+            </button>
             <button onclick="openAddTablesModal()" class="bg-surface-container-high text-on-surface px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-surface-container-highest transition-all">
                 <span class="material-symbols-outlined">add_circle</span>
                 <span class="hidden sm:inline">Ajouter des Tables</span>
@@ -23,6 +27,39 @@
             </button>
         </div>{% endif %}
     </div>
+
+    {% if not read_only_interface %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white border border-surface-container-high rounded-2xl p-5 executive-shadow">
+            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50">Tables abonnées</p>
+            <p class="text-3xl font-black text-on-surface mt-2">{{ subscription_selected_count|default:0 }}</p>
+        </div>
+        <div class="bg-white border border-surface-container-high rounded-2xl p-5 executive-shadow">
+            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50">Prix par table</p>
+            <p class="text-3xl font-black text-on-surface mt-2">{{ subscription_price_per_table|floatformat:2 }}$</p>
+        </div>
+        <div class="bg-orange-50 border border-orange-100 rounded-2xl p-5 executive-shadow">
+            <p class="text-[10px] font-black uppercase tracking-widest text-orange-600/70">Total mensuel calculé</p>
+            <p class="text-3xl font-black text-orange-600 mt-2">{{ subscription_monthly_total|floatformat:2 }}$</p>
+        </div>
+    </div>
+
+    <div class="bg-white border border-surface-container-high rounded-2xl p-5 executive-shadow space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-orange-600">Attribution des commandes</p>
+                <h2 class="text-xl font-black text-on-surface mt-1">Choisissez comment les commandes arrivent aux serveurs</h2>
+            </div>
+            <form method="post" action="{% url 'table_action' %}" data-live-action="true" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="set_assignment_mode">
+                <button type="submit" name="mode" value="AUTO" class="rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest border transition-all {% if order_assignment_mode == 'AUTO' %}bg-orange-600 text-white border-orange-600{% else %}bg-white text-on-surface border-surface-container-high hover:bg-orange-50{% endif %}">Automatique</button>
+                <button type="submit" name="mode" value="TABLE" class="rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest border transition-all {% if order_assignment_mode == 'TABLE' %}bg-orange-600 text-white border-orange-600{% else %}bg-white text-on-surface border-surface-container-high hover:bg-orange-50{% endif %}">Par table</button>
+            </form>
+        </div>
+        <p class="text-xs font-bold text-on-surface-variant/60">En automatique, BarPilote assigne un serveur disponible. En mode par table, chaque QR envoie la commande au serveur choisi sur la carte de la table.</p>
+    </div>
+    {% endif %}
 
     <!-- Status Filters -->
     <div class="flex flex-wrap items-center gap-3 bg-surface-container-low p-2 rounded-2xl w-fit">
@@ -97,6 +134,24 @@
             
             <div class="relative z-10">
                 <h3 id="table-name-{{ table.id }}" class="text-2xl font-black text-on-surface tracking-tight mb-1">{{ table.nom }}</h3>
+                {% if not read_only_interface %}
+                <form method="post" action="{% url 'table_action' %}" data-live-action="true" class="mt-4 rounded-2xl border border-surface-container bg-surface-container-lowest p-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="assign_table_server">
+                    <input type="hidden" name="table_id" value="{{ table.id }}">
+                    <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-2">Serveur assigné</label>
+                    <div class="flex gap-2">
+                        <select name="server_id" class="min-w-0 flex-1 rounded-xl border border-surface-container-high bg-white px-3 py-2 text-xs font-bold text-on-surface outline-none">
+                            <option value="">Aucun</option>
+                            {% for server in server_profiles %}
+                            <option value="{{ server.id }}" {% if table.assigned_server_id == server.id %}selected{% endif %}>{{ server.prenom|default:server.user.first_name }} {{ server.nom|default:server.user.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="rounded-xl bg-on-surface px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white">OK</button>
+                    </div>
+                    <p class="mt-2 text-[9px] font-bold uppercase tracking-widest {% if order_assignment_mode == 'TABLE' %}text-orange-600{% else %}text-on-surface-variant/40{% endif %}">{% if table.assigned_server %}Assignée à {{ table.assigned_server.prenom }} {{ table.assigned_server.nom }}{% else %}Non assignée{% endif %}</p>
+                </form>
+                {% endif %}
                 <div class="mt-4 p-4 rounded-2xl {% if table.subscription_is_active %}bg-emerald-50/30 border border-emerald-100/30{% else %}bg-red-50/40 border border-red-100/40{% endif %}">
                     <p class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1 {% if table.subscription_is_active %}text-emerald-600{% else %}text-red-600{% endif %}">
                         <span class="w-1.5 h-1.5 rounded-full {% if table.subscription_is_active %}bg-emerald-600{% else %}bg-red-500{% endif %} animate-pulse"></span>
@@ -167,6 +222,64 @@
                     <button type="button" onclick="closeRenameModal()" class="flex-1 py-4 font-bold text-on-surface-variant hover:bg-surface-container rounded-2xl transition-all">Annuler</button>
                     <button type="submit" class="flex-1 citrus-gradient text-white py-4 font-bold rounded-2xl executive-shadow transition-all">Enregistrer</button>
                 </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Subscription Selection -->
+<div id="subscriptionModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] w-full max-w-3xl p-8 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform max-h-[90vh] overflow-hidden flex flex-col" id="subscriptionModalContent">
+        <div class="flex items-start justify-between gap-4 mb-6">
+            <div>
+                <h3 class="text-2xl font-black text-on-surface mb-2">Tables à abonner</h3>
+                <p class="text-on-surface-variant text-sm">Sélectionnez les tables à payer. Le montant final est recalculé par BarPilote.</p>
+            </div>
+            <button type="button" onclick="closeSubscriptionModal()" class="w-10 h-10 rounded-xl hover:bg-surface-container flex items-center justify-center text-on-surface-variant" aria-label="Fermer">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form method="post" action="{% url 'table_action' %}" data-live-action="true" class="flex flex-col min-h-0">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="activate_subscriptions_bulk">
+            <input type="hidden" name="days" value="30">
+            <input type="hidden" id="subscriptionUnitPrice" value="{{ subscription_price_per_table|default:0 }}">
+
+            <div class="flex items-center justify-between gap-4 bg-surface-container-low rounded-2xl p-4 mb-5">
+                <label class="inline-flex items-center gap-3 text-xs font-black uppercase tracking-widest text-on-surface cursor-pointer">
+                    <input type="checkbox" id="subscriptionSelectAll" class="rounded border-surface-container-high text-orange-600 focus:ring-orange-500" onchange="toggleAllSubscriptionTables(this)">
+                    Tout sélectionner
+                </label>
+                <div class="text-right">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50">Sélection</p>
+                    <p class="text-sm font-black text-on-surface"><span id="subscriptionSelectedCount">0</span> table(s)</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto pr-1 max-h-[46vh]">
+                {% for table in tables %}
+                <label class="subscription-table-option flex items-center justify-between gap-3 rounded-2xl border border-surface-container-high bg-white p-4 cursor-pointer hover:border-orange-300 hover:bg-orange-50/30 transition-all">
+                    <span class="min-w-0">
+                        <span class="block text-sm font-black text-on-surface truncate">{{ table.nom }}</span>
+                        <span class="block text-[10px] font-bold uppercase tracking-widest {% if table.subscription_is_active %}text-emerald-600{% else %}text-on-surface-variant/50{% endif %}">{% if table.subscription_is_active %}Déjà active{% else %}À activer{% endif %}</span>
+                    </span>
+                    <input type="checkbox" name="table_ids" value="{{ table.id }}" class="subscription-checkbox rounded border-surface-container-high text-orange-600 focus:ring-orange-500" {% if table.subscription_is_active %}checked{% endif %} onchange="updateSubscriptionSummary()">
+                </label>
+                {% empty %}
+                <div class="col-span-full py-10 text-center text-on-surface-variant font-bold">Aucune table disponible.</div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 rounded-3xl bg-orange-50 border border-orange-100 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-orange-600/70">Prix final calculé</p>
+                    <p class="text-3xl font-black text-orange-600"><span id="subscriptionFinalPrice">0.00</span> USD</p>
+                    <p class="text-[10px] font-bold text-orange-900/60 mt-1"><span id="subscriptionFormula">0 table × {{ subscription_price_per_table|floatformat:2 }} USD</span></p>
+                </div>
+                <button type="submit" class="citrus-gradient text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-95 transition-all">
+                    Valider la sélection
+                </button>
             </div>
         </form>
     </div>
@@ -252,6 +365,51 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }, 300);
+    }
+
+    function openSubscriptionModal() {
+        const modal = document.getElementById('subscriptionModal');
+        const content = document.getElementById('subscriptionModalContent');
+        updateSubscriptionSummary();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeSubscriptionModal() {
+        const modal = document.getElementById('subscriptionModal');
+        const content = document.getElementById('subscriptionModalContent');
+        content.classList.add('scale-95', 'opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+
+    function updateSubscriptionSummary() {
+        const boxes = Array.from(document.querySelectorAll('.subscription-checkbox'));
+        const selected = boxes.filter(box => box.checked).length;
+        const unitPrice = Number.parseFloat(document.getElementById('subscriptionUnitPrice')?.value || '0') || 0;
+        const finalPrice = selected * unitPrice;
+        document.getElementById('subscriptionSelectedCount').innerText = selected;
+        document.getElementById('subscriptionFinalPrice').innerText = finalPrice.toFixed(2);
+        document.getElementById('subscriptionFormula').innerText = `${selected} table(s) × ${unitPrice.toFixed(2)} USD`;
+        const selectAll = document.getElementById('subscriptionSelectAll');
+        if (selectAll) {
+            selectAll.checked = boxes.length > 0 && selected === boxes.length;
+            selectAll.indeterminate = selected > 0 && selected < boxes.length;
+        }
+    }
+
+    function toggleAllSubscriptionTables(source) {
+        document.querySelectorAll('.subscription-checkbox').forEach(box => {
+            box.checked = source.checked;
+        });
+        updateSubscriptionSummary();
     }
 
     function openAddTablesModal() {

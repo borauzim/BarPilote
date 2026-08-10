@@ -1,0 +1,27 @@
+{% load currency_tags %}
+{% if not read_only_interface %}
+<section class="bg-white rounded-[32px] p-6 sm:p-8 executive-shadow border border-orange-100">
+    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+        <div>
+            <p class="text-[10px] font-black uppercase tracking-widest text-orange-600">Charges et rentabilité</p>
+            <h2 class="text-xl font-black text-on-surface mt-1">Salaires intégrés aux finances</h2>
+            <p class="text-xs font-medium text-on-surface-variant/60 mt-1">Les salaires mensuels sont proratisés sur la période sélectionnée.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto lg:min-w-[620px]">
+            <div class="rounded-2xl bg-orange-50 border border-orange-100 p-4"><p class="text-[9px] font-black uppercase tracking-widest text-orange-700">Salaires</p><p class="text-lg font-black text-on-surface mt-1">{% display_price salary_total_usd salary_total_cdf %}</p></div>
+            <div class="rounded-2xl bg-red-50 border border-red-100 p-4"><p class="text-[9px] font-black uppercase tracking-widest text-red-700">Charges totales</p><p class="text-lg font-black text-red-600 mt-1">{% display_price operating_costs_usd operating_costs_cdf %}</p><p class="text-[9px] text-red-500 mt-1">Pertes, dettes et salaires</p></div>
+            <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4"><p class="text-[9px] font-black uppercase tracking-widest text-emerald-700">Bénéfice net estimé</p><p class="text-lg font-black {% if net_profit_usd < 0 or net_profit_cdf < 0 %}text-red-600{% else %}text-emerald-700{% endif %} mt-1">{% display_price net_profit_usd net_profit_cdf %}</p></div>
+        </div>
+    </div>
+    {% if salary_details %}
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {% for salary in salary_details %}
+        <div class="rounded-xl border border-surface-container bg-surface-container-low p-4 flex items-center justify-between gap-3">
+            <div><p class="text-sm font-black text-on-surface">{{ salary.name }}</p><p class="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant/50">{{ salary.days }} jour(s) sur la période</p></div>
+            <div class="text-right"><p class="text-sm font-black text-orange-600">{{ salary.amount|floatformat:2 }} {{ salary.currency }}</p><p class="text-[9px] text-on-surface-variant/50">Mensuel : {{ salary.monthly_amount|floatformat:2 }}</p></div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% endif %}

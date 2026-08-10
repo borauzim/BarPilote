@@ -1,7 +1,7 @@
 from django.urls import path
 from .html_views import (
     DashboardView, EstablishmentSetupView, ProfileSetupView,
-    InventoryView, FinanceView, TeamView, TeamRequestActionView, TeamAccessActionView, TablesView, EstablishmentDetailsView, TableSetupView,
+    InventoryView, FinanceView, TeamView, TeamRequestActionView, TeamAccessActionView, TeamSalaryActionView, TablesView, EstablishmentDetailsView, TableSetupView,
     TableActionView, TableDownloadQRView, EstablishmentReadyView, StaffInvitationPDFView,
     RecordLossView, MixedCaseArrivalView, ToggleCurrencyView, FactureActionView, TakeOrderView,
     SwitchEstablishmentView,
@@ -17,6 +17,7 @@ urlpatterns = [
     path('team/', TeamView.as_view(), name='team_html'),
     path('team/request-action/', TeamRequestActionView.as_view(), name='team_request_action'),
     path('team/access-action/', TeamAccessActionView.as_view(), name='team_access_action'),
+    path('team/salary-action/', TeamSalaryActionView.as_view(), name='team_salary_action'),
     path('tables/', TablesView.as_view(), name='tables_html'),
     path('setup-bar/details/', EstablishmentDetailsView.as_view(), name='establishment_details'),
     path('switch-bar/', SwitchEstablishmentView.as_view(), name='switch_establishment'),

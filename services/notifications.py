@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -16,11 +17,14 @@ from services.consumers import is_user_ws_online, user_group_name
 
 logger = logging.getLogger(__name__)
 _firebase_initialized = False
+_firebase_unavailable = False
 
 
 def _firebase_app():
     """Initialise Firebase Admin une seule fois depuis les variables d'environnement."""
-    global _firebase_initialized
+    global _firebase_initialized, _firebase_unavailable
+    if _firebase_unavailable:
+        return None
     if _firebase_initialized:
         return get_app()
 
@@ -29,9 +33,14 @@ def _firebase_app():
             info = json.loads(settings.FCM_SERVICE_ACCOUNT_JSON)
             cred = credentials.Certificate(info)
         elif settings.FCM_SERVICE_ACCOUNT_FILE:
+            if not os.path.exists(settings.FCM_SERVICE_ACCOUNT_FILE):
+                logger.warning('FCM non configuré: fichier de service Firebase introuvable: %s', settings.FCM_SERVICE_ACCOUNT_FILE)
+                _firebase_unavailable = True
+                return None
             cred = credentials.Certificate(settings.FCM_SERVICE_ACCOUNT_FILE)
         else:
             logger.warning('FCM non configuré: aucune clé de service Firebase fournie.')
+            _firebase_unavailable = True
             return None
         app = initialize_app(cred)
         _firebase_initialized = True
@@ -40,6 +49,7 @@ def _firebase_app():
         _firebase_initialized = True
         return get_app()
     except Exception:
+        _firebase_unavailable = True
         logger.exception('Impossible d initialiser Firebase Admin.')
         return None
 
@@ -78,12 +88,30 @@ def _send_fcm(user_id, title, body, data):
     failed = 0
     for token in tokens:
         try:
+            payload_data = {str(k): str(v) for k, v in (data or {}).items()}
+            actions = []
+            if payload_data.get('action_accept_url'):
+                actions.append(messaging.WebpushNotificationAction(action='accept', title='Accepter'))
+            if payload_data.get('action_refuse_url'):
+                actions.append(messaging.WebpushNotificationAction(action='refuse', title='Refuser'))
             message = messaging.Message(
                 token=token,
                 notification=messaging.Notification(title=title, body=body),
-                data={str(k): str(v) for k, v in (data or {}).items()},
+                data=payload_data,
                 webpush=messaging.WebpushConfig(
-                    fcm_options=messaging.WebpushFCMOptions(link=(data or {}).get('url') or '/'),
+                    headers={'Urgency': 'high'},
+                    notification=messaging.WebpushNotification(
+                        title=title,
+                        body=body,
+                        icon='/static/logo_orange.png',
+                        badge='/static/logo_orange.png',
+                        tag=payload_data.get('notification_id') or payload_data.get('order_id') or title,
+                        require_interaction=True,
+                        renotify=True,
+                        actions=actions or None,
+                        data=payload_data,
+                    ),
+                    fcm_options=messaging.WebpushFCMOptions(link=payload_data.get('url') or '/'),
                 ),
             )
             messaging.send(message)
@@ -118,15 +146,22 @@ def send_bar_notification(user_id, title, body, data=None):
         message=body or '',
         category=data.get('category', 'SYSTEM'),
         url=data.get('url', ''),
+        data=data,
     )
     payload = _serialize_notification(notification, title, body, data)
 
+    fcm_data = {**data, 'notification_id': str(notification.id), 'title': title, 'body': body}
     if is_user_ws_online(user_id):
         try:
             _send_websocket(user_id, payload)
+            # Les commandes doivent aussi sortir en push: sur Android/PWA le navigateur
+            # peut suspendre la page alors que la presence WebSocket expire avec retard.
+            if data.get('category') == 'ORDER':
+                fcm_result = _send_fcm(user_id, title, body, fcm_data)
+                return {'channel': 'websocket+fcm', 'notification_id': str(notification.id), **fcm_result}
             return {'channel': 'websocket', 'notification_id': str(notification.id)}
         except Exception:
             logger.exception('Échec WebSocket, fallback FCM user=%s', user_id)
 
-    result = _send_fcm(user_id, title, body, {**data, 'notification_id': str(notification.id)})
+    result = _send_fcm(user_id, title, body, fcm_data)
     return {'channel': 'fcm', 'notification_id': str(notification.id), **result}
