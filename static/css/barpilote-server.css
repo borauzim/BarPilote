@@ -1,0 +1,752 @@
+/* BarPilote Server workspace — premium hospitality operations UI. */
+.bp-server-app {
+    --role-canvas: #f4f5f2;
+    --role-surface: #fff;
+    --role-subtle: #f7f8f5;
+    --role-muted-surface: #edf0eb;
+    --role-ink: #18201b;
+    --role-muted: #59645d;
+    --role-line: rgba(24, 32, 27, .12);
+    --role-line-strong: rgba(24, 32, 27, .22);
+    --role-rail: #13251d;
+    --role-rail-hover: #1c3428;
+    --role-orange: #e85d16;
+    --role-orange-strong: #bd4309;
+    --role-orange-soft: #fff1e8;
+    --role-radius-control: 10px;
+    --role-radius-surface: 14px;
+    --role-shadow-float: 0 16px 40px rgba(19, 37, 29, .12);
+    background: var(--role-canvas) !important;
+    color: var(--role-ink) !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.bp-server-app :where(h1, h2, h3, h4) {
+    color: var(--role-ink);
+    letter-spacing: -.025em !important;
+    text-wrap: balance;
+}
+
+.bp-server-app :where(p, li, dd) { text-wrap: pretty; }
+
+.bp-server-app :where(a, button, input, select, textarea, summary):focus-visible {
+    outline: 3px solid rgba(232, 93, 22, .28) !important;
+    outline-offset: 3px !important;
+}
+
+.bp-server-app :where(button, [role="button"], summary, a) {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.bp-server-app button:not(:disabled):active,
+.bp-server-app [role="button"]:not([aria-disabled="true"]):active { scale: .96; }
+
+.bp-server-app .bp-icon-button,
+.bp-server-app #notificationToggle {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+}
+
+@media (min-width: 1024px) {
+    .bp-server-app { padding-bottom: 0 !important; }
+
+    .bp-server-app #main-header {
+        inset: 0 auto 0 0;
+        width: 15.5rem;
+        height: 100dvh;
+        background: var(--role-rail) !important;
+        border-right: 1px solid rgba(255, 255, 255, .08);
+        box-shadow: 16px 0 48px rgba(19, 37, 29, .1) !important;
+    }
+
+    .bp-server-app .bp-main-header-inner {
+        height: 100%;
+        padding: 1.25rem 1rem !important;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 1.5rem;
+        overflow: visible;
+    }
+
+    .bp-server-app .bp-header-brand {
+        flex: 0 0 auto;
+        padding: .25rem .25rem 1.25rem;
+        border-bottom: 1px solid rgba(255, 255, 255, .1);
+        overflow: visible;
+    }
+
+    .bp-server-app .bp-header-avatar {
+        width: 2.25rem !important;
+        height: 2.25rem !important;
+        border-color: rgba(255, 255, 255, .16) !important;
+        outline: 1px solid oklch(1 0 0 / .1);
+    }
+
+    .bp-server-app .bp-header-title-group {
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .45rem !important;
+    }
+
+    .bp-server-app .bp-brand-name {
+        color: #fffaf5 !important;
+        font-size: 1.12rem !important;
+        letter-spacing: -.025em !important;
+    }
+
+    .bp-server-app .bp-establishment-switcher,
+    .bp-server-app .bp-establishment-switcher summary { width: 100%; }
+
+    .bp-server-app .bp-establishment-switcher summary {
+        overflow: hidden;
+        border-color: rgba(255, 255, 255, .12) !important;
+        background: rgba(255, 255, 255, .07) !important;
+        color: rgba(255, 255, 255, .72) !important;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border-radius: 8px !important;
+    }
+
+    .bp-server-app .bp-establishment-switcher > div { left: 0; width: 18rem; }
+
+    .bp-server-app .bp-server-primary-nav {
+        display: flex !important;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .25rem !important;
+    }
+
+    .bp-server-app .bp-server-primary-nav a {
+        min-height: 2.75rem;
+        display: flex;
+        align-items: center;
+        padding: .7rem .85rem;
+        border-radius: var(--role-radius-control);
+        color: rgba(255, 255, 255, .66) !important;
+        font-size: .75rem !important;
+        font-weight: 650 !important;
+        letter-spacing: .025em !important;
+        text-transform: none !important;
+        transition: color 150ms ease-out, background-color 150ms ease-out;
+    }
+
+    .bp-server-app .bp-server-primary-nav a:hover {
+        background: rgba(255, 255, 255, .07);
+        color: #fff !important;
+    }
+
+    .bp-server-app .bp-server-primary-nav a:is(.text-orange-600, .is-active) {
+        background: var(--role-rail-hover);
+        color: #fff !important;
+        box-shadow: inset 3px 0 0 var(--role-orange);
+    }
+
+    .bp-server-app .bp-header-actions {
+        width: 100%;
+        margin-top: auto;
+        padding-top: 1rem;
+        justify-content: space-between;
+        border-top: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .bp-server-app .bp-header-actions > a,
+    .bp-server-app .bp-header-actions #notificationToggle {
+        color: rgba(255, 255, 255, .68) !important;
+        background: rgba(255, 255, 255, .06);
+    }
+
+    .bp-server-app .bp-header-actions > a:hover,
+    .bp-server-app .bp-header-actions #notificationToggle:hover {
+        color: #fff !important;
+        background: rgba(255, 255, 255, .12) !important;
+    }
+
+    .bp-server-app .bp-currency-control button {
+        min-height: 2.5rem;
+        background: rgba(255, 255, 255, .08) !important;
+        color: #fff;
+    }
+
+    .bp-server-app main {
+        width: auto !important;
+        max-width: 1600px !important;
+        margin-left: 15.5rem !important;
+        padding: 2rem clamp(1.5rem, 3vw, 3rem) 4rem !important;
+    }
+}
+
+.bp-server-app main > :first-child:not(script):not(style) { margin-top: 0 !important; }
+
+/* Finance starts closer to the workspace edge; its own header already provides rhythm. */
+@media (min-width: 1024px) {
+    .bp-server-app main:has(#finance-filter-results) {
+        padding-top: 1rem !important;
+    }
+}
+
+.bp-server-app main :where(h1.text-4xl, h1.text-5xl, h1.text-6xl, h1.text-7xl) {
+    font-size: clamp(1.75rem, 3vw, 2.35rem) !important;
+    line-height: 1.12 !important;
+}
+
+.bp-server-app main :where(.rounded-\[40px\], .rounded-\[32px\], .rounded-3xl, .rounded-2xl, .rounded-xl) {
+    border-radius: var(--role-radius-surface) !important;
+}
+
+.bp-server-app main :where(button, a, input, select, textarea).rounded-full,
+.bp-server-app main :where(button, a, input, select, textarea).rounded-2xl,
+.bp-server-app main :where(button, a, input, select, textarea).rounded-xl {
+    border-radius: var(--role-radius-control) !important;
+}
+
+.bp-server-app main :where(.executive-shadow, .shadow-sm, .shadow-lg, .shadow-xl, .shadow-2xl) {
+    box-shadow: none !important;
+}
+
+.bp-server-app main :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    min-height: 44px;
+    border: 1px solid var(--role-line-strong) !important;
+    border-radius: var(--role-radius-control) !important;
+    background: var(--role-surface) !important;
+    color: var(--role-ink) !important;
+    box-shadow: none !important;
+    font-size: .875rem;
+    font-weight: 500 !important;
+    transition: border-color 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms ease-out !important;
+}
+
+.bp-server-app main :where(input, select, textarea):focus {
+    border-color: var(--role-orange) !important;
+    box-shadow: 0 0 0 3px rgba(232, 93, 22, .14) !important;
+    outline: none !important;
+}
+
+.bp-server-app main :where(input, textarea)::placeholder { color: #737d76 !important; font-weight: 400; }
+
+.bp-server-app main :where(button, a[class*="py-"]) {
+    transition-property: color, background-color, border-color, opacity, transform !important;
+    transition-duration: 150ms !important;
+}
+
+.bp-server-app main :where(.citrus-gradient, [class*="bg-gradient-to"]) {
+    background: var(--role-orange) !important;
+    box-shadow: none !important;
+}
+
+.bp-server-app main :where(.citrus-gradient, [class*="bg-gradient-to"]):hover { background: var(--role-orange-strong) !important; }
+
+.bp-server-app main table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+.bp-server-app main thead { background: var(--role-rail) !important; color: #fff; }
+.bp-server-app main thead th {
+    padding: .75rem 1rem !important;
+    color: rgba(255, 255, 255, .72) !important;
+    font-size: .67rem !important;
+    font-weight: 700 !important;
+    letter-spacing: .045em !important;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.bp-server-app main tbody td { padding: .8rem 1rem !important; border-bottom: 1px solid var(--role-line) !important; vertical-align: middle; }
+.bp-server-app main tbody tr { background: var(--role-surface); transition: background-color 120ms ease-out; }
+.bp-server-app main tbody tr:hover { background: var(--role-subtle); }
+
+.bp-server-app main :where([class*="fixed inset-0"], [id$="Modal"], [id$="ModalOverlay"]) > :where(.bg-white, [id$="Content"]) {
+    border: 1px solid var(--role-line);
+    border-radius: var(--role-radius-surface) !important;
+    box-shadow: var(--role-shadow-float) !important;
+}
+
+.bp-server-app #mobile-nav a {
+    min-width: 48px;
+    min-height: 48px;
+    justify-content: center;
+    border-radius: 10px;
+    transition: color 150ms ease-out, background-color 150ms ease-out;
+}
+
+@media (max-width: 1023px) {
+    .bp-server-app #main-header {
+        border-bottom: 1px solid var(--role-line);
+        background: rgba(255, 255, 255, .96) !important;
+        box-shadow: 0 8px 24px rgba(19, 37, 29, .06) !important;
+    }
+    .bp-server-app main { padding-top: 5.25rem !important; }
+}
+
+@media (max-width: 767px) {
+    .bp-server-app { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important; }
+    .bp-server-app main { padding: 4.75rem .75rem 2rem !important; }
+    .bp-server-app main :where(.p-10, .p-8) { padding: 1rem !important; }
+    .bp-server-app main .gap-8 { gap: 1rem !important; }
+    .bp-server-app #mobile-nav {
+        min-height: 4.75rem;
+        padding: .55rem .5rem calc(.55rem + env(safe-area-inset-bottom)) !important;
+        border-top: 1px solid rgba(255, 255, 255, .1);
+        border-radius: 0 !important;
+        background: var(--role-rail) !important;
+        box-shadow: 0 -16px 40px rgba(19, 37, 29, .18) !important;
+    }
+
+    .bp-server-app #mobile-nav a { color: rgba(255, 255, 255, .62) !important; }
+    .bp-server-app #mobile-nav a.text-orange-600 { color: #fff !important; background: rgba(255, 255, 255, .08); }
+    .bp-server-app #mobile-nav .material-symbols-outlined { font-size: 1.25rem; }
+    .bp-server-app #mobile-nav span:last-child { font-size: .58rem !important; letter-spacing: .01em !important; text-transform: none !important; }
+    .bp-server-app .bp-fab { right: .75rem; bottom: calc(5.75rem + env(safe-area-inset-bottom)); }
+    .bp-server-app .bp-order-card > div:first-child { align-items: flex-start; gap: .75rem; flex-direction: column; }
+    .bp-server-app .bp-order-card > div:first-child > div:last-child,
+    .bp-server-app .bp-order-actions { width: 100%; }
+    .bp-server-app .bp-order-actions { justify-content: flex-start; }
+    .bp-server-app .bp-order-actions button { min-height: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bp-server-app *, .bp-server-app *::before, .bp-server-app *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+
+/* Server component hardening */
+.bp-server-app main img:not(.bp-header-avatar) { outline: 1px solid oklch(0 0 0 / .1); outline-offset: -1px; }
+.bp-server-app main :where(button.w-8, button.h-8, button.w-10, button.h-10) { min-width: 40px; min-height: 40px; }
+.bp-server-app main :where(.hover\:scale-\[1\.02\], .hover\:scale-105):hover { scale: 1 !important; transform: none !important; }
+.bp-server-app #notificationPanel { border-radius: var(--role-radius-surface) !important; border-color: var(--role-line) !important; box-shadow: var(--role-shadow-float) !important; }
+.bp-server-app #notificationToast { border-radius: var(--role-radius-surface) !important; transition-property: opacity, transform !important; }
+.bp-server-app #notificationFilters { border-radius: var(--role-radius-control) !important; }
+.bp-server-app .notification-filter-btn { min-height: 40px; border-radius: 8px !important; }
+.bp-server-app .bp-global-order-alert-bubble { border-radius: var(--role-radius-surface); }
+.bp-server-app .bp-global-order-alert-bubble button,
+.bp-server-app .bp-global-order-alert-bubble a { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+
+@media (max-width: 640px) {
+    .bp-server-app main .overflow-x-auto { margin-inline: -.75rem; padding-inline: .75rem; }
+    .bp-server-app main table { min-width: 42rem; }
+    .bp-server-app #notificationPanel { position: fixed; inset: 4.5rem .75rem auto; width: auto !important; max-height: calc(100dvh - 10rem); }
+}
+
+
+/* Server operational adaptations */
+.bp-server-app main { font-size: .925rem; }
+.bp-server-app main :where(button, a[class*="py-"]) { min-height: 44px; }
+.bp-server-app main img:not(.bp-header-avatar) { outline: 1px solid oklch(0 0 0 / .1); outline-offset: -1px; }
+.bp-server-app main :where(.hover\:scale-\[1\.02\], .hover\:scale-105):hover { scale: 1 !important; transform: none !important; }
+.bp-server-app #notificationPanel { border-radius: var(--role-radius-surface) !important; border-color: var(--role-line) !important; box-shadow: var(--role-shadow-float) !important; }
+.bp-server-app #notificationToast { border-radius: var(--role-radius-surface) !important; transition-property: opacity, transform !important; }
+.bp-server-app .notification-filter-btn { min-height: 40px; border-radius: 8px !important; }
+.bp-server-app .service-cat-btn { min-height: 44px; }
+.bp-server-app .service-product-card { border-color: var(--role-line) !important; }
+
+@media (max-width: 767px) {
+    .bp-server-app main { padding-top: 4.75rem !important; }
+    .bp-server-app main > section:first-of-type { padding: 1rem !important; }
+    .bp-server-app main > section:first-of-type .text-6xl,
+    .bp-server-app main > section:first-of-type .text-7xl { font-size: 1.85rem !important; }
+    .bp-server-app main .grid { gap: .75rem !important; }
+    .bp-server-app main .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem !important; }
+    .bp-server-app main article button { min-height: 44px; }
+    .bp-server-app #mobile-nav span:last-child { font-size: .6rem !important; }
+}
+
+
+/* Dashboard parity with the owner console. */
+@media (min-width: 1024px) {
+    .bp-server-app #main-header {
+        width: 16rem !important;
+        background: #06382b !important;
+        box-shadow: none !important;
+    }
+    .bp-server-app .bp-main-header-inner { padding: 1rem !important; }
+    .bp-server-app .bp-header-avatar { display: none !important; }
+    .bp-server-app .bp-brand-name { font-size: 1.15rem !important; }
+    .bp-server-app .bp-brand-name img { width: 2.75rem !important; height: 2.75rem !important; }
+    .bp-server-app .bp-server-primary-nav { padding-block: 1rem !important; }
+    .bp-server-app .bp-server-primary-nav a {
+        min-height: 2.75rem !important;
+        gap: .75rem !important;
+        padding: .7rem .8rem !important;
+        color: #d1fae5 !important;
+        font-size: .78rem !important;
+        font-weight: 600 !important;
+        letter-spacing: 0 !important;
+    }
+    .bp-server-app .bp-server-primary-nav a:is(.text-orange-600, .is-active) {
+        background: #064e3b !important;
+        box-shadow: inset 3px 0 0 #f97316 !important;
+    }
+    .bp-server-app .bp-header-actions { margin-top: auto !important; }
+    .bp-server-app main {
+        margin-left: 16rem !important;
+        padding: 2rem clamp(1.5rem, 3vw, 3rem) 4rem !important;
+    }
+    .bp-server-app .bp-server-dashboard-grid { align-items: stretch; }
+    .bp-server-app .bp-server-primary { display: contents; }
+    .bp-server-app .bp-server-kpis {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    .bp-server-app .bp-server-kpis > :nth-child(3) { display: none; }
+    .bp-server-app .bp-server-journal { grid-column: span 2 / span 2; }
+    .bp-server-app .bp-server-sidebar { grid-column: 3; }
+}
+
+/* Desktop server sidebar: exact owner-shell parity. */
+@media (min-width: 1024px) {
+    .bp-server-app #main-header { width: 16rem !important; padding: 1rem !important; background: #06382b !important; border-right: 1px solid rgba(255,255,255,.08) !important; box-shadow: none !important; }
+    .bp-server-app .bp-main-header-inner { height: 100% !important; padding: 0 !important; gap: 0 !important; }
+    .bp-server-app .bp-header-brand { display: block !important; padding: .35rem .55rem 1.15rem !important; border-bottom: 1px solid rgba(255,255,255,.1) !important; }
+    .bp-server-app .bp-header-avatar { display: none !important; }
+    .bp-server-app .bp-brand-name { gap: .75rem !important; color: #fff !important; font-size: 1.15rem !important; font-weight: 800 !important; letter-spacing: -.03em !important; }
+    .bp-server-app .bp-brand-name img { width: 2.75rem !important; height: 2.75rem !important; padding: .25rem !important; border-radius: 12px !important; }
+    .bp-server-app .bp-server-establishment { margin-top: .45rem !important; overflow: hidden; color: #a7f3d0 !important; font-size: .7rem !important; font-weight: 600 !important; text-overflow: ellipsis; white-space: nowrap; }
+    .bp-server-app .bp-server-primary-nav { flex: 1 1 auto !important; min-height: 0 !important; padding: 1rem 0 !important; overflow-y: auto !important; }
+    .bp-server-app .bp-server-primary-nav a { min-height: 2.75rem !important; gap: .75rem !important; padding: .7rem .8rem !important; border-radius: 10px !important; color: #d1fae5 !important; font-size: .78rem !important; font-weight: 600 !important; letter-spacing: 0 !important; }
+    .bp-server-app .bp-server-primary-nav a::before { color: #6ee7b7 !important; }
+    .bp-server-app .bp-server-primary-nav a:hover { color: #fff !important; background: rgba(6,78,59,.76) !important; }
+    .bp-server-app .bp-server-primary-nav a:is(.text-orange-600, .is-active) { color: #fff !important; background: #064e3b !important; box-shadow: inset 3px 0 0 #f97316 !important; }
+    .bp-server-app .bp-server-primary-nav a:is(.text-orange-600, .is-active)::before { color: #fb923c !important; }
+    .bp-server-app .bp-header-actions { display: grid !important; grid-template-columns: repeat(3, 44px) !important; justify-content: space-between !important; gap: .4rem !important; margin-top: auto !important; padding-top: 1rem !important; border-top: 1px solid rgba(6,95,70,.6) !important; }
+    .bp-server-app .bp-currency-control { grid-column: 1 / -1; margin: 0 0 .25rem !important; }
+    .bp-server-app #currencyToggleBtn { width: 100% !important; min-height: 40px !important; justify-content: center !important; border: 1px solid rgba(255,255,255,.1) !important; border-radius: 9px !important; background: rgba(255,255,255,.06) !important; }
+    .bp-server-app .bp-header-actions > a, .bp-server-app .bp-header-actions #notif-btn { width: 44px !important; min-width: 44px !important; height: 44px !important; border-radius: 9px !important; color: #d1fae5 !important; background: rgba(255,255,255,.06) !important; }
+    .bp-server-app #notificationCenter { position: relative !important; overflow: visible !important; }
+    .bp-server-app #notif-menu { left: 100% !important; right: auto !important; bottom: 0 !important; margin-left: .75rem !important; }
+}
+@media (max-width: 1023px) { .bp-server-app .bp-server-establishment, .bp-server-app .bp-server-profile-link { display: none !important; } }
+
+/* Server sidebar component details. */
+@media (min-width: 1024px) {
+    .bp-server-app .bp-brand-dot { color: #f97316 !important; }
+    .bp-server-app .bp-server-primary-nav::before {
+        content: "ESPACE DE TRAVAIL";
+        display: block;
+        padding: 0 .8rem .45rem;
+        color: rgba(5,150,105,.8);
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+    }
+    .bp-server-app .bp-server-primary-nav a::before,
+    .bp-server-app .bp-server-primary-nav a::after { display: none !important; content: none !important; }
+    .bp-server-app .bp-server-primary-nav a .material-symbols-outlined {
+        flex: 0 0 1.25rem;
+        color: #34d399 !important;
+        font-size: 1.25rem !important;
+    }
+    .bp-server-app .bp-server-primary-nav a:is(.text-orange-600, .is-active) .material-symbols-outlined { color: #f97316 !important; }
+    .bp-server-app .bp-server-orders-link { justify-content: space-between !important; }
+    .bp-server-app .bp-live-orders-badge {
+        min-width: 1.25rem;
+        height: 1.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: .125rem .375rem;
+        border-radius: 9999px;
+        background: #ef4444 !important;
+        color: #fff !important;
+        font-size: .625rem !important;
+        font-weight: 700 !important;
+        line-height: 1;
+        box-shadow: 0 4px 10px rgba(127,29,29,.3) !important;
+    }
+    .bp-server-app #currencyToggleBtn #labelUSD,
+    .bp-server-app #currencyToggleBtn #labelCDF { padding-inline: .5rem; font-size: .65rem !important; }
+    .bp-server-app #currencyToggleBtn > div { background: #022c22 !important; border: 1px solid #065f46 !important; }
+    .bp-server-app #currencyToggleBtn #toggleCircle { background: #f97316 !important; }
+    .bp-server-app .bp-header-actions #notificationCenter { width: 44px !important; height: 44px !important; }
+}
+
+/* Remove the legacy white header wrapper from the desktop sidebar. */
+@media (min-width: 1024px) {
+    .bp-server-app .bp-server-sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
+        background: #022c22 !important;
+    }
+    .bp-server-app .bp-server-sidebar > .bp-main-header-inner {
+        display: contents !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    .bp-server-app .bp-sidebar-brand,
+    .bp-server-app .bp-server-primary-nav,
+    .bp-server-app .bp-sidebar-footer { background: transparent !important; }
+    .bp-server-app .bp-server-primary-nav {
+        display: flex !important;
+        flex: 1 1 auto !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        min-height: 0 !important;
+    }
+    .bp-server-app .bp-server-primary-nav a { color: #d1fae5 !important; }
+    .bp-server-app .bp-server-primary-nav a:hover { color: #fff !important; background: rgba(6,78,59,.72) !important; }
+    .bp-server-app .bp-server-primary-nav a.is-active { color: #fff !important; background: #064e3b !important; box-shadow: inset 3px 0 0 #f97316 !important; }
+}
+
+/* Stable, synchronized USD/CDF switch. */
+.bp-server-app #currencyToggleBtn {
+    width: 100% !important;
+    min-height: 42px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 2.5rem 1fr !important;
+    align-items: center !important;
+    gap: .5rem !important;
+    padding: .35rem .5rem !important;
+    border: 1px solid rgba(167,243,208,.18) !important;
+    border-radius: 10px !important;
+    background: #04281e !important;
+    color: #d1fae5 !important;
+}
+.bp-server-app .bp-server-currency-track {
+    position: relative;
+    width: 2.5rem;
+    height: 1.25rem;
+    display: block;
+    border: 1px solid #065f46;
+    border-radius: 9999px;
+    background: #022c22;
+}
+.bp-server-app .bp-server-currency-track #switch-dot {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: .875rem;
+    height: .875rem;
+    display: block;
+    border-radius: 9999px;
+    background: #f97316;
+    box-shadow: 0 2px 6px rgba(0,0,0,.28);
+    transition: transform 200ms ease-out;
+}
+.bp-server-app .bp-server-currency-track #switch-dot.translate-x-5 { transform: translateX(1.125rem) !important; }
+.bp-server-app .bp-server-currency-track #switch-dot.translate-x-0 { transform: translateX(0) !important; }
+.bp-server-app #label-usd, .bp-server-app #label-cdf { min-width: 2.25rem; text-align: center; }
+
+/* Unambiguous active-currency state. */
+.bp-server-app #currencyToggleBtn #label-usd,
+.bp-server-app #currencyToggleBtn #label-cdf {
+    padding: .35rem .45rem !important;
+    border-radius: 7px;
+    color: rgba(209,250,229,.55) !important;
+    transition: color 160ms ease-out, background-color 160ms ease-out !important;
+}
+.bp-server-app #currencyToggleBtn[aria-pressed="false"] #label-usd,
+.bp-server-app #currencyToggleBtn[aria-pressed="true"] #label-cdf {
+    background: #f97316 !important;
+    color: #fff !important;
+}
+.bp-server-app .bp-server-currency-status {
+    margin-top: .4rem;
+    color: #a7f3d0;
+    font-size: .625rem;
+    font-weight: 700;
+    letter-spacing: .035em;
+    text-align: center;
+}
+
+/* Currency state rendered from a single DOM attribute. */
+.bp-server-app #currencySwitchRoot #switch-dot { transform: translateX(0) !important; }
+.bp-server-app #currencySwitchRoot[data-currency="CDF"] #switch-dot { transform: translateX(1.25rem) !important; }
+.bp-server-app #currencySwitchRoot #label-usd { color: #fff !important; }
+.bp-server-app #currencySwitchRoot #label-cdf { color: rgba(52,211,153,.6) !important; }
+.bp-server-app #currencySwitchRoot[data-currency="CDF"] #label-usd { color: rgba(52,211,153,.6) !important; }
+.bp-server-app #currencySwitchRoot[data-currency="CDF"] #label-cdf { color: #f97316 !important; }
+
+/* Server dashboard visual system. */
+.bp-server-app main:has(#liveOrdersContainer) {
+    min-height: 100vh;
+    background: #f8f6f0 !important;
+}
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-performance,
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-kpis > div,
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-journal,
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-dashboard-aside > div {
+    border-radius: 1.5rem !important;
+}
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-kpis > :nth-child(3) { display: none !important; }
+.bp-server-app main:has(#liveOrdersContainer) :where(h3.text-\[10px\], .bp-server-dashboard-aside h3) {
+    color: #78716c !important;
+    font-size: .6875rem !important;
+    font-weight: 700 !important;
+    letter-spacing: .05em !important;
+    text-transform: uppercase;
+}
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-journal > div:first-child button {
+    background: #f97316 !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(194,65,12,.18) !important;
+}
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-journal > div:first-child button:hover { background: #e0630d !important; }
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-dashboard-aside > div:first-child a { background: #06382b !important; color: #fff !important; }
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-dashboard-aside > div:last-child { background: #f97316 !important; color: #fff !important; }
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-dashboard-aside > div:last-child :where(h5,p,.material-symbols-outlined) { color: #fff !important; }
+.bp-server-app .bp-fab { right: 1.5rem !important; bottom: 1.5rem !important; z-index: 50 !important; }
+.bp-server-app .bp-fab-main { box-shadow: 0 18px 36px rgba(15,23,42,.22) !important; }
+@media (min-width: 1024px) {
+    .bp-server-app main:has(#liveOrdersContainer) .bp-server-primary { display: flex !important; flex-direction: column; grid-column: span 2 / span 2; }
+    .bp-server-app main:has(#liveOrdersContainer) .bp-server-dashboard-aside { grid-column: span 1 / span 1; }
+    .bp-server-app main:has(#liveOrdersContainer) {
+        margin-left: 16rem !important;
+        padding: 2rem !important;
+    }
+}
+@media (max-width: 767px) {
+    .bp-server-app main:has(#liveOrdersContainer) .bp-server-kpis > :nth-child(3) { display: none !important; }
+    .bp-server-app .bp-fab { right: .75rem !important; bottom: calc(5.75rem + env(safe-area-inset-bottom)) !important; }
+}
+
+/* Mission-first dashboard order: sales, then live journal, then KPIs. */
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-primary {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+}
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-primary > * { margin-top: 0 !important; }
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-journal { order: 1; }
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-kpis { order: 2; }
+
+/* Prevent the sidebar offset from being applied twice. */
+@media (min-width: 1024px) {
+    body.bp-server-app,
+    body.bp-server-app:has(#bpServerGlobalOrderAlertStack) {
+        padding-left: 0 !important;
+    }
+    .bp-server-app > main {
+        margin-left: 16rem !important;
+        width: calc(100% - 16rem) !important;
+        max-width: none !important;
+    }
+}
+
+/* Finish-review corrections */
+.bp-server-app :where(.citrus-gradient,.bg-orange-600){background:#bd4309!important}
+.bp-server-app main :where(input,textarea)::placeholder{color:#68736b!important}
+.bp-server-app main :where(button.w-8,button.h-8,button.w-10,button.h-10),.bp-server-app .notification-filter-btn,.bp-server-app .bp-global-order-alert-bubble button,.bp-server-app .bp-global-order-alert-bubble a{min-width:44px;min-height:44px}
+.bp-server-app main { transition: opacity 140ms ease-out; }
+.bp-server-navigating .bp-server-app main { opacity: .45; pointer-events: none; }
+
+/* Mobile density parity with the owner workspace. */
+@media (max-width: 767px) {
+    .bp-server-app .bp-server-performance { margin-top: .75rem !important; padding: .75rem !important; }
+    .bp-server-app .bp-server-performance .space-y-4 { gap: .375rem; }
+    .bp-server-app .bp-server-performance .pt-2 { padding-top: .25rem; }
+    .bp-server-app .bp-server-dashboard-grid { margin-top: .75rem !important; gap: .75rem !important; }
+    .bp-server-app .bp-server-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem !important; }
+    .bp-server-app .bp-server-kpis > div { min-width: 0; padding: .75rem !important; border-radius: 14px !important; }
+    .bp-server-app .bp-server-kpis > div:first-child { grid-column: span 2; }
+    .bp-server-app .bp-server-kpis > div .mb-8 { margin-bottom: .5rem !important; }
+    .bp-server-app .bp-server-kpis > div .mt-8 { margin-top: .5rem !important; }
+    .bp-server-app .bp-server-kpis .text-5xl { font-size: 1.5rem !important; }
+    .bp-server-app main:has(#liveOrdersContainer) #liveOrdersContainer article > div { padding: .75rem !important; gap: .75rem !important; }
+    .bp-server-app main:has(#liveOrdersContainer) #liveOrdersContainer article button > div { gap: .625rem !important; }
+    .bp-server-app .server-take-order { row-gap: .75rem; }
+    .bp-server-app .server-take-order > section,
+    .bp-server-app .server-take-order form > section { padding: .75rem !important; }
+    .bp-server-app .server-take-order > section:first-child p:last-child { display: none; }
+    .bp-server-app #serviceProductsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem !important; padding: .5rem !important; }
+    .bp-server-app #serviceProductsGrid .service-product-card { min-width: 0; padding: .625rem !important; border-radius: 12px !important; }
+    .bp-server-app #serviceProductsGrid .service-product-card > div:first-child { flex-direction: column; gap: .25rem; margin-bottom: .5rem; }
+    .bp-server-app #serviceProductsGrid .service-product-card > div:first-child > div:last-child { width: 100%; text-align: left; }
+    .bp-server-app #serviceProductsGrid .service-product-card > div:last-child { flex-direction: column; }
+    .bp-server-app #serviceProductsGrid .service-product-card button { width: 100%; min-height: 44px; padding: .5rem .25rem; letter-spacing: .02em; }
+    .bp-server-app #serviceProductsGrid > div:not(.service-product-card) { grid-column: 1 / -1; }
+    .bp-server-app .server-order-detail { padding: 0 !important; row-gap: .75rem; }
+    .bp-server-app .server-order-detail > div { padding: .75rem !important; }
+    .bp-server-app .server-order-detail .py-4 { padding-block: .625rem !important; }
+    .bp-server-app .server-scan-page { padding-inline: 0; padding-bottom: 1rem; }
+    .bp-server-app .server-scan-page > div:first-child { margin-bottom: .5rem; }
+    .bp-server-app .server-scan-page #scannerSection { gap: .75rem; }
+    .bp-server-app .server-scan-page #scannerSection > div:first-child { width: 12rem; height: 12rem; border-radius: 16px !important; }
+    .bp-server-app .server-scan-page #scannerSection > p { display: none; }
+    .bp-server-app .server-scan-page > .max-w-sm { gap: .75rem; }
+    .bp-server-app .server-mission-page { min-height: calc(100dvh - 6rem); padding: .75rem 0; }
+    .bp-server-app .server-mission-page > div:first-child { justify-content: flex-start; gap: 1rem; }
+    .bp-server-app .server-mission-page > div:first-child > div:first-child { width: 7rem; height: 7rem; border-radius: 16px !important; }
+    .bp-server-app .server-mission-page .pt-6 { padding-top: .75rem !important; }
+}
+
+
+/* Mobile dashboard shell */
+@media (max-width:767px){
+.bp-server-app #main-header{inset:0 0 auto 0!important;width:100%!important;height:4.25rem!important;min-height:4.25rem!important;padding:0!important;display:block!important;overflow:visible!important;border:0!important;border-bottom:1px solid var(--role-line)!important;background:rgba(255,255,255,.98)!important;color:var(--role-ink)!important}
+.bp-server-app #main-header .bp-main-header-inner{width:100%!important;height:4.25rem!important;padding:.5rem .75rem!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:.5rem!important;overflow:visible!important}
+.bp-server-app #main-header .bp-header-brand{min-width:0!important;padding:0!important;display:flex!important;align-items:center!important;gap:.5rem!important;border:0!important;overflow:hidden!important}
+.bp-server-app #main-header .bp-header-avatar,.bp-server-app #main-header .bp-server-primary-nav,.bp-server-app #main-header .bp-currency-control,.bp-server-app #main-header .bp-server-establishment,.bp-server-app #main-header .bp-server-profile-link{display:none!important}
+.bp-server-app #main-header .bp-brand-name{min-width:0!important;gap:.5rem!important;color:#06382b!important;font-size:1rem!important;transform:none!important}
+.bp-server-app #main-header .bp-brand-name img{width:2.5rem!important;height:2.5rem!important;border-radius:10px!important}
+.bp-server-app #main-header .bp-header-actions{width:auto!important;margin:0!important;padding:0!important;display:flex!important;flex:0 0 auto!important;align-items:center!important;gap:.25rem!important;border:0!important}
+.bp-server-app #main-header .bp-header-actions>a,.bp-server-app #main-header .bp-header-actions button{width:2.75rem!important;min-width:2.75rem!important;height:2.75rem!important;color:#47534c!important;background:#f1f3ef!important}
+.bp-server-app>main,.bp-server-app main:has(#liveOrdersContainer){width:100%!important;margin:0!important;padding:5rem .75rem calc(6.75rem + env(safe-area-inset-bottom))!important}
+.bp-server-app .bp-server-performance{margin-top:0!important;padding:1rem!important;border-radius:16px!important}
+.bp-server-app .bp-server-performance .flex.items-end{min-width:0;flex-wrap:wrap;gap:.75rem!important}
+.bp-server-app .bp-server-performance h1{max-width:100%;font-size:clamp(1.7rem,9vw,2.25rem)!important;overflow-wrap:anywhere}
+.bp-server-app .bp-server-dashboard-grid{margin-top:.75rem!important;gap:.75rem!important}
+.bp-server-app main:has(#liveOrdersContainer) .bp-server-primary{gap:.75rem!important}
+.bp-server-app .bp-server-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.75rem!important}
+.bp-server-app .bp-server-kpis>div:first-child{grid-column:auto!important}
+.bp-server-app .bp-server-kpis>div{padding:.875rem!important}
+.bp-server-app .bp-server-kpis>div .mb-8,.bp-server-app .bp-server-kpis>div .mt-8{margin-top:.75rem!important;margin-bottom:.75rem!important}
+.bp-server-app .bp-server-journal{padding:.875rem!important;border-radius:16px!important}
+.bp-server-app .bp-server-journal>div:first-child{margin-bottom:1rem!important;gap:.75rem!important}
+.bp-server-app .bp-server-journal>div:first-child button{width:100%;min-height:48px}
+.bp-server-app #liveOrdersContainer{max-height:none!important;overflow:visible!important;padding-right:0!important}
+.bp-server-app #liveOrdersContainer article{border-radius:14px!important}
+.bp-server-app #liveOrdersContainer article>div{padding:.75rem!important}
+.bp-server-app #liveOrdersContainer article .grid.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.bp-server-app #liveOrdersContainer article .grid.grid-cols-2 button{min-width:0;min-height:44px;white-space:normal}
+.bp-server-app .bp-server-dashboard-aside{display:grid;gap:.75rem!important}
+.bp-server-app .bp-server-dashboard-aside>div{padding:1rem!important;border-radius:16px!important}
+.bp-server-app .bp-server-dashboard-aside .mb-8{margin-bottom:1rem!important}
+.bp-server-app .bp-server-dashboard-aside a{margin-top:1rem!important;min-height:48px;display:flex!important;align-items:center;justify-content:center}
+.bp-server-app #mobile-nav{min-height:calc(4.75rem + env(safe-area-inset-bottom));padding-inline:.25rem!important}
+.bp-server-app #mobile-nav a{min-width:0!important;flex:1 1 0;padding-inline:.125rem}
+.bp-server-app #mobile-nav span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media (max-width:360px){.bp-server-app .bp-server-kpis{grid-template-columns:1fr!important}.bp-server-app .bp-server-kpis>div:first-child{grid-column:auto!important}}
+
+/* Notification center: anchored outside the sidebar without covering navigation. */
+.bp-server-app #notif-menu {
+    border: 1px solid var(--role-line) !important;
+    border-radius: 14px !important;
+    background: var(--role-surface) !important;
+    box-shadow: 0 18px 48px rgba(19, 37, 29, .18) !important;
+    color: var(--role-ink) !important;
+}
+.bp-server-app #notificationList { scrollbar-width: thin; scrollbar-color: #c8cec9 transparent; }
+.bp-server-app #notif-menu :where(button, a) { min-height: 44px; }
+
+@media (min-width: 1024px) {
+    .bp-server-app #notif-menu {
+        position: fixed !important;
+        inset: auto auto 1rem 17rem !important;
+        width: 20rem !important;
+        max-height: min(30rem, calc(100dvh - 2rem));
+        margin: 0 !important;
+        z-index: 60 !important;
+    }
+    .bp-server-app #notificationList { max-height: min(22rem, calc(100dvh - 10rem)) !important; }
+}
+
+@media (max-width: 1023px) {
+    .bp-server-app #notif-menu {
+        position: fixed !important;
+        inset: 4.75rem .75rem auto !important;
+        width: auto !important;
+        max-height: calc(100dvh - 10rem);
+        margin: 0 !important;
+        z-index: 60 !important;
+    }
+    .bp-server-app #notificationList { max-height: calc(100dvh - 18rem) !important; }
+}

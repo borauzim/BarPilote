@@ -1,0 +1,42 @@
+{
+  "title": "Composition BarPilote",
+  "question": "Quelle structure doit guider la refonte des espaces Propriétaire, Serveur et Client ?",
+  "options": [
+    {
+      "id": "control-center",
+      "label": "Centre de contrôle",
+      "kicker": "OPTION A",
+      "thesis": "Une vue d'exploitation équilibrée : indicateurs, commandes et alertes restent visibles ensemble.",
+      "palette": ["#17211B", "#F4F1E8", "#F36B21", "#8DBA6D"],
+      "materials": ["panneaux mats", "rail de commande", "statuts précis"],
+      "viewport": "Le propriétaire voit l'ensemble du bar; le serveur reçoit ses missions; le client commande sans friction.",
+      "risk": "La vue propriétaire peut devenir dense si chaque module réclame la même importance.",
+      "hero": ".impeccable/mocks/control-center.png"
+    },
+    {
+      "id": "mission-stream",
+      "label": "Flux par missions",
+      "kicker": "OPTION B",
+      "thesis": "Le cycle commande → service → paiement devient la colonne vertébrale de chaque rôle.",
+      "palette": ["#17211B", "#F4F1E8", "#F36B21", "#8DBA6D"],
+      "materials": ["timeline opérationnelle", "tickets sobres", "états séquencés"],
+      "viewport": "L'activité en direct domine, avec finances et tables comme instruments secondaires.",
+      "risk": "Les fonctions sans temporalité demandent une navigation secondaire particulièrement soignée.",
+      "hero": ".impeccable/mocks/mission-stream.png"
+    },
+    {
+      "id": "live-floor",
+      "label": "Salle vivante",
+      "kicker": "OPTION C",
+      "thesis": "Les tables physiques deviennent le centre du pilotage et relient naturellement les trois interfaces.",
+      "palette": ["#17211B", "#F4F1E8", "#F36B21", "#8DBA6D"],
+      "materials": ["plan de salle", "signalisation", "registre opérationnel"],
+      "viewport": "Le propriétaire lit la salle, le serveur lit ses zones et le client lit immédiatement le menu.",
+      "risk": "Les établissements sans plan de salle détaillé doivent bénéficier d'une excellente vue liste.",
+      "hero": ".impeccable/mocks/live-floor.png"
+    }
+  ],
+  "reroll": false,
+  "canon": false,
+  "steer": true
+}

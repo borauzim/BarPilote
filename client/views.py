@@ -4,10 +4,11 @@ import uuid
 from types import SimpleNamespace
 
 from django.contrib import messages
-from django.db import transaction
+from django.core.cache import cache
+from django.db import IntegrityError, transaction
 from decimal import Decimal, ROUND_HALF_UP
 from django.db.models import Count, Q
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -23,7 +24,7 @@ from proprietaire.order_services import inventory_price_for_unit
 from services.order_realtime import broadcast_order_changed
 from proprietaire.html_views import draw_facture_page
 from serveur.models import ServeurProfile, Shift
-from .models import ClientOrderMeta, ClientServiceRating
+from .models import ClientOrderMeta, ClientServiceRating, TableParticipant, TableSession
 
 ACTIVE_STATUSES = ['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']
 
@@ -111,11 +112,44 @@ def _unique_invoice_number(order):
     return f"{base}-{uuid.uuid4().hex[:4].upper()}"
 
 
+def _sync_table_session_facture(table_session):
+    orders = list(Order.objects.filter(client_meta__table_session=table_session).exclude(statut='CANCELLED').distinct())
+    if not orders:
+        return table_session.facture
+    total_usd = sum((order.total_usd for order in orders), Decimal('0'))
+    total_cdf = sum((order.total_cdf for order in orders), Decimal('0'))
+    facture = table_session.facture
+    status = 'PAYEE' if table_session.statut == 'PAID' else 'IMPAYEE'
+    if facture is None:
+        facture = Facture.objects.create(
+            bar=table_session.table.bar,
+            numero=_unique_invoice_number(orders[0]),
+            client_fournisseur=f"Addition partagée - {table_session.table.nom}",
+            montant_usd=total_usd, montant_cdf=total_cdf,
+            type_facture='CLIENT', statut=status,
+            date_paiement=table_session.paid_at if status == 'PAYEE' else None,
+        )
+        table_session.facture = facture
+        table_session.save(update_fields=['facture'])
+    else:
+        facture.montant_usd = total_usd
+        facture.montant_cdf = total_cdf
+        facture.statut = status
+        facture.date_paiement = table_session.paid_at if status == 'PAYEE' else None
+        facture.save(update_fields=['montant_usd', 'montant_cdf', 'statut', 'date_paiement'])
+    facture.orders.set(orders)
+    return facture
+
+
 def _facture_for_order(order):
     try:
         meta = order.client_meta
     except ClientOrderMeta.DoesNotExist:
         meta = None
+    if meta and meta.table_session_id:
+        if not meta.table_session.order_sent_at:
+            return None
+        return _sync_table_session_facture(meta.table_session)
     facture = order.factures.filter(type_facture='CLIENT').order_by('-date_emission').first()
     client_name = _client_display_name(order, meta)
     if order.statut == 'CANCELLED':
@@ -229,6 +263,83 @@ def _request_invoice_payment(factures, currency='CDF'):
     return orders
 
 
+def _join_table_session(request, table, start_new_round=False):
+    if not request.session.session_key:
+        request.session.save()
+    session_key = request.session.session_key
+    table_session = (TableSession.objects
+                     .filter(table=table, statut__in=['OPEN', 'PAID'])
+                     .order_by('-opened_at').first())
+    if table_session is None:
+        try:
+            with transaction.atomic():
+                table_session = TableSession.objects.create(table=table)
+        except IntegrityError:
+            table_session = (TableSession.objects.filter(table=table, statut__in=['OPEN', 'PAID'])
+                             .order_by('-opened_at').first())
+    if start_new_round and table_session.statut == 'PAID':
+        with transaction.atomic():
+            paid_session = TableSession.objects.select_for_update().get(pk=table_session.pk)
+            if paid_session.statut == 'PAID':
+                paid_session.statut = 'CLOSED'
+                paid_session.closed_at = timezone.now()
+                paid_session.save(update_fields=['statut', 'closed_at'])
+            table_session = (TableSession.objects.filter(table=table, statut='OPEN').first()
+                             or TableSession.objects.create(table=table))
+    participant, _ = TableParticipant.objects.get_or_create(
+        table_session=table_session, session_key=session_key,
+    )
+    request.session[f'client_table_session_{table.id}'] = table_session.id
+    request.session.modified = True
+    return table_session, participant
+
+
+def _shared_orders(table_session):
+    return (Order.objects.filter(client_meta__table_session=table_session)
+            .exclude(statut='CANCELLED')
+            .select_related('bar', 'table', 'serveur')
+            .prefetch_related('items__product_item__produit', 'factures')
+            .distinct().order_by('date_creation'))
+
+
+def _finalize_group_order(table_session):
+    table_session = TableSession.objects.select_for_update().get(pk=table_session.pk)
+    participants = list(table_session.participants.order_by('joined_at'))
+    total_phones = len(participants)
+    ready_phones = sum(1 for participant in participants if participant.ready_at)
+    if table_session.order_sent_at:
+        sent_order = _shared_orders(table_session).exclude(statut='DRAFT').first()
+        return sent_order, total_phones, ready_phones, False
+    if not participants or ready_phones != total_phones:
+        return None, total_phones, ready_phones, False
+
+    drafts = list(_shared_orders(table_session).filter(statut='DRAFT').order_by('date_creation'))
+    participant_ids = {draft.client_meta.participant_id for draft in drafts if hasattr(draft, 'client_meta') and draft.items.exists()}
+    if participant_ids != {participant.id for participant in participants}:
+        return None, total_phones, ready_phones, False
+
+    master = drafts[0]
+    combined = {}
+    for draft in drafts:
+        for item in draft.items.select_related('product_item'):
+            key = (item.product_item_id, item.unite_vente, item.prix_unitaire, item.devise)
+            if key not in combined:
+                combined[key] = [item.product_item, 0, item.unite_vente, item.prix_unitaire]
+            combined[key][1] += item.quantite
+    _sync_order_items(master, [tuple(line) for line in combined.values()])
+    for draft in drafts[1:]:
+        _sync_order_items(draft, [])
+        draft.recalculate_totals()
+    master.statut = 'PENDING'
+    master.save(update_fields=['statut', 'date_maj'])
+    master.recalculate_totals()
+    table_session.order_sent_at = timezone.now()
+    table_session.save(update_fields=['order_sent_at'])
+    _sync_table_session_facture(table_session)
+    transaction.on_commit(lambda: _notify_assignment(master, f'Commande groupée ({total_phones} téléphones)'))
+    return master, total_phones, ready_phones, True
+
+
 def _remember_client_order(request, table, order):
     key = f'client_orders_{table.id}'
     order_ids = [value for value in request.session.get(key, []) if value]
@@ -243,6 +354,8 @@ def _client_order_queryset(request, table):
     order_ids = request.session.get(f'client_orders_{table.id}', [])
     session_key = request.session.session_key
     query = Q(id__in=order_ids) if order_ids else Q(pk__isnull=True)
+    if session_key:
+        query |= Q(client_meta__table_session__participants__session_key=session_key)
     if session_key:
         query |= Q(client_meta__session_key=session_key)
     active_order_id = request.session.get(f'client_order_{table.id}')
@@ -520,9 +633,11 @@ class ClientStatusLandingView(View):
         table, blocked_response = _get_active_table_or_response(request, table_id)
         if blocked_response:
             return blocked_response
+        table_session, participant = _join_table_session(request, table)
         active_order = _active_order_for_table(request, table)
-        if active_order:
-            return redirect('client_track_order', order_id=active_order.id)
+        status_order = active_order or _shared_orders(table_session).order_by('-date_creation').first()
+        if status_order:
+            return redirect('client_track_order', order_id=status_order.id)
         context = _table_access_context(table)
         context.update({
             'message': _status_empty_message(),
@@ -542,6 +657,7 @@ class ClientMenuView(View):
         if blocked_response:
             return blocked_response
         menu_bar = self.get_menu_bar(table)
+        table_session, participant = _join_table_session(request, table, start_new_round=True)
         items = (
             StockItem.objects.filter(bar=menu_bar)
             .select_related('produit', 'produit__categorie')
@@ -560,6 +676,8 @@ class ClientMenuView(View):
             'status_order': active_order,
             'active_quantities': _active_order_quantities(active_order) if active_order else {},
             'item_count': len(visible_items),
+            'phones_count': table_session.participants.count(),
+            'ready_phones_count': table_session.participants.filter(ready_at__isnull=False).count(),
             'establishment_owner': _owner_for_bar(menu_bar),
         })
 
@@ -569,6 +687,13 @@ class ClientMenuView(View):
         if blocked_response:
             return blocked_response
         menu_bar = self.get_menu_bar(table)
+        table_session, participant = _join_table_session(request, table, start_new_round=True)
+        if table_session.statut != 'OPEN' or table_session.order_sent_at:
+            message = 'La commande groupée a déjà été envoyée. Attendez la prochaine tournée ou libérez la table après paiement.'
+            if _expects_json(request):
+                return JsonResponse({'error': message}, status=409)
+            messages.error(request, message)
+            return redirect('client_invoices', table_id=table.id)
         lines = _cart_lines(menu_bar, request.POST)
         client_name = ''
         client_postnom = ''
@@ -595,7 +720,7 @@ class ClientMenuView(View):
                 bar=menu_bar,
                 table=table,
                 serveur=server,
-                statut='PENDING',
+                statut='DRAFT',
                 client_name=client_name,
                 client_phone=client_phone,
             )
@@ -607,24 +732,33 @@ class ClientMenuView(View):
 
         meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
         meta.session_key = request.session.session_key or meta.session_key
+        meta.table_session = table_session
+        meta.participant = participant
         meta.payment_currency = _payment_currency(request.POST.get('payment_currency') or meta.payment_currency)
-        meta.save(update_fields=['session_key', 'payment_currency', 'updated_at'])
+        meta.save(update_fields=['session_key', 'table_session', 'participant', 'payment_currency', 'updated_at'])
         order.recalculate_totals()
-        _remember_client_order(request, table, order)
-        _notify_assignment(order, 'Client QR')
-        order_url = reverse('client_track_order', args=[order.id])
+        participant.ready_at = timezone.now()
+        participant.save(update_fields=['ready_at'])
+        grouped_order, total_phones, ready_phones, was_sent = _finalize_group_order(table_session)
+        visible_order = grouped_order or order
+        request.session[f'client_order_{table.id}'] = str(visible_order.id)
+        _remember_client_order(request, table, visible_order)
+        order_url = reverse('client_track_order', args=[visible_order.id])
         if _expects_json(request):
             return JsonResponse({
                 'success': True,
-                'order_id': str(order.id),
+                'order_id': str(visible_order.id),
                 'order_url': order_url,
-                'status': order.statut,
-                'status_label': order.get_statut_display(),
-                'table_nom': order.table.nom,
+                'status': visible_order.statut,
+                'status_label': visible_order.get_statut_display(),
+                'table_nom': visible_order.table.nom,
+                'phones_count': total_phones,
+                'ready_phones_count': ready_phones,
+                'group_order_sent': was_sent or bool(grouped_order),
                 'items_count': sum(qty for _stock_item, qty, _unit, _price in lines),
-                'message': 'Commande envoyée au serveur.',
+                'message': ('Commande groupée envoyée une seule fois.' if grouped_order else f'Panier enregistré. En attente de {total_phones - ready_phones} téléphone(s).'),
             })
-        return redirect('client_track_order', order_id=order.id)
+        return redirect('client_track_order', order_id=visible_order.id)
 
 
 class ClientTrackOrderView(View):
@@ -639,6 +773,27 @@ class ClientTrackOrderView(View):
             }, status=200)
 
         meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
+        shared_orders = list(_shared_orders(meta.table_session)) if meta.table_session_id else [order]
+        shared_items = [item for shared_order in shared_orders for item in shared_order.items.all()]
+        shared_total_usd = sum((shared_order.total_usd for shared_order in shared_orders), Decimal('0'))
+        shared_total_cdf = sum((shared_order.total_cdf for shared_order in shared_orders), Decimal('0'))
+        if meta.table_session_id:
+            current_participant = meta.table_session.participants.filter(session_key=request.session.session_key).first() if request.session.session_key else None
+            if current_participant:
+                meta.table_released_at = current_participant.released_at
+            if meta.table_session.order_sent_at:
+                _sync_table_session_facture(meta.table_session)
+            if meta.table_session.statut == 'PAID':
+                order.statut = 'PAID'
+            elif meta.table_session.order_sent_at and order.statut == 'DRAFT':
+                sent_order = _shared_orders(meta.table_session).exclude(statut='DRAFT').first()
+                if sent_order:
+                    order.statut = sent_order.statut
+        order.total_usd = shared_total_usd
+        order.total_cdf = shared_total_cdf
+        phones_count = meta.table_session.participants.count() if meta.table_session_id else 1
+        ready_phones_count = meta.table_session.participants.filter(ready_at__isnull=False).count() if meta.table_session_id else 1
+        group_order_sent = bool(meta.table_session_id and meta.table_session.order_sent_at)
         rating = getattr(order, 'client_rating', None)
         client_display_name = _client_display_name(order, meta)
         payment_amount, payment_currency, payment_rate = _converted_payment_amount(order, meta.payment_currency)
@@ -646,8 +801,12 @@ class ClientTrackOrderView(View):
             'order': order,
             'meta': meta,
             'rating': rating,
-            'items': order.items.select_related('product_item__produit'),
-            'total_label': _money(order.total_usd, order.total_cdf),
+            'items': shared_items,
+            'shared_orders_count': len(shared_orders),
+            'phones_count': phones_count,
+            'ready_phones_count': ready_phones_count,
+            'group_order_sent': group_order_sent,
+            'total_label': _money(shared_total_usd, shared_total_cdf),
             'payment_label': _payment_label(order, payment_currency),
             'payment_currency': payment_currency,
             'payment_amount': payment_amount,
@@ -753,6 +912,18 @@ class ClientOrderStatusAPIView(View):
     def get(self, request, order_id):
         order = get_object_or_404(Order.objects.select_related('table', 'serveur', 'serveur__user__serveur_profile'), id=order_id)
         meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
+        shared_orders = list(_shared_orders(meta.table_session)) if meta.table_session_id else [order]
+        shared_total_usd = sum((item.total_usd for item in shared_orders), Decimal('0'))
+        shared_total_cdf = sum((item.total_cdf for item in shared_orders), Decimal('0'))
+        if meta.table_session_id and meta.table_session.statut == 'PAID':
+            order.statut = 'PAID'
+        elif meta.table_session_id and meta.table_session.order_sent_at and order.statut == 'DRAFT':
+            sent_order = _shared_orders(meta.table_session).exclude(statut='DRAFT').first()
+            if sent_order:
+                order.statut = sent_order.statut
+        order.total_usd = shared_total_usd
+        order.total_cdf = shared_total_cdf
+        current_participant = meta.table_session.participants.filter(session_key=request.session.session_key).first() if meta.table_session_id and request.session.session_key else None
         payment_amount, payment_currency, payment_rate = _converted_payment_amount(order, meta.payment_currency)
         cash_seconds_left = None
         if meta.has_payment_request and meta.payment_requested_at:
@@ -777,7 +948,16 @@ class ClientOrderStatusAPIView(View):
             'debt_handled_at': meta.debt_handled_at.isoformat() if meta.debt_handled_at else None,
             'debt_handled_by': f'{meta.debt_handled_by.prenom} {meta.debt_handled_by.nom}'.strip() if meta.debt_handled_by else '',
             'debt_response_reason': meta.debt_response_reason,
-            'table_released': bool(meta.table_released_at),
+            'table_released': bool(current_participant.released_at) if current_participant else bool(meta.table_released_at),
+            'table_fully_released': bool(meta.table_session_id and meta.table_session.statut == 'CLOSED'),
+'shared_orders_count': len(shared_orders),
+            'phones_count': meta.table_session.participants.count() if meta.table_session_id else 1,
+            'ready_phones_count': meta.table_session.participants.filter(ready_at__isnull=False).count() if meta.table_session_id else 1,
+            'group_order_sent': bool(meta.table_session_id and meta.table_session.order_sent_at),
+            'items': [
+                {'name': item.product_item.produit.nom, 'unit': item.get_unite_vente_display(), 'quantity': item.quantite, 'unit_price': float(item.prix_unitaire), 'currency': item.devise}
+                for shared_order in shared_orders for item in shared_order.items.all()
+            ],
             'repeat_after_minutes': meta.repeat_after_minutes,
             'total_usd': float(order.total_usd),
             'total_cdf': float(order.total_cdf),
@@ -796,6 +976,42 @@ class ClientOrderActionView(View):
         meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
         action = request.POST.get('action')
 
+        if action == 'call_server':
+            if not _client_order_queryset(request, order.table).filter(id=order.id).exists():
+                return JsonResponse({'error': 'Cette commande n’est pas liée à votre téléphone.'}, status=403)
+            if order.statut in {'PAID', 'CANCELLED'}:
+                return JsonResponse({'error': 'Cette commande est déjà clôturée.'}, status=400)
+            if meta.table_session_id and not meta.table_session.order_sent_at:
+                return JsonResponse({'error': 'La commande n’a pas encore été envoyée au serveur.'}, status=409)
+            if not order.serveur_id:
+                return JsonResponse({'error': 'Aucun serveur n’est encore assigné à cette commande.'}, status=409)
+
+            cooldown_seconds = 120
+            cache_key = f'client-server-call:{order.id}'
+            if not cache.add(cache_key, True, timeout=cooldown_seconds):
+                return JsonResponse({'error': 'Le serveur a déjà été appelé. Réessayez dans quelques instants.', 'cooldown_seconds': cooldown_seconds}, status=429)
+
+            server_name = order.serveur.prenom or 'Le serveur'
+            notify_user(
+                order.serveur.user,
+                bar=order.bar,
+                category='ORDER',
+                title=f'Appel client — {order.table.nom}',
+                message=f'Le client de {order.table.nom} vous appelle. Merci de rejoindre la table rapidement.',
+                url=reverse('serveur_dashboard') + '#journal-commandes',
+                extra_data={
+                    'kind': 'CLIENT_CALL',
+                    'urgent': 'true',
+                    'order_id': str(order.id),
+                    'table_id': str(order.table_id),
+                    'table_nom': order.table.nom,
+                },
+            )
+            return JsonResponse({'success': True, 'message': f'{server_name} a été appelé. Son téléphone va sonner.', 'cooldown_seconds': cooldown_seconds})
+
+        if meta.table_session_id and not meta.table_session.order_sent_at and action in {'debt', 'pay_later', 'pay_cash', 'served_received', 'repeat', 'reminder'}:
+            return JsonResponse({'error': 'La commande attend encore la confirmation des autres téléphones.'}, status=409)
+
         if action == 'cancel':
             if order.statut == 'PAID':
                 return JsonResponse({'error': 'Commande déjà payée.'}, status=400)
@@ -806,6 +1022,9 @@ class ClientOrderActionView(View):
             meta.cancellation_reason = reason[:500]
             meta.cancelled_by = 'CLIENT'
             meta.save(update_fields=['cancellation_reason', 'cancelled_by', 'updated_at'])
+            if meta.participant_id:
+                meta.participant.ready_at = None
+                meta.participant.save(update_fields=['ready_at'])
             notify_order_status(order, status_label='Annulée par le client')
             return JsonResponse({'success': True, 'status': order.statut})
 
@@ -826,8 +1045,10 @@ class ClientOrderActionView(View):
         if action == 'repeat' and order.statut == 'CANCELLED':
             return JsonResponse({'error': 'Impossible de relancer une commande annulée.'}, status=400)
 
-        if action == 'release_table' and meta.table_released_at:
-            return JsonResponse({'success': True})
+        if action == 'release_table' and meta.table_session_id and request.session.session_key:
+            current_participant = meta.table_session.participants.filter(session_key=request.session.session_key).first()
+            if current_participant and current_participant.released_at:
+                return JsonResponse({'success': True, 'table_released': True})
 
         if action in {'debt', 'pay_later'}:
             client_name = request.POST.get('client_name', order.client_name or '').strip()[:255]
@@ -966,13 +1187,28 @@ class ClientOrderActionView(View):
         if action == 'release_table':
             if order.statut != 'PAID':
                 return JsonResponse({'error': 'La table pourra être libérée après confirmation du paiement.'}, status=400)
-            meta.table_released_at = timezone.now()
-            meta.save(update_fields=['table_released_at', 'updated_at'])
+            now = timezone.now()
+            table_session = meta.table_session
+            participant = table_session.participants.filter(session_key=request.session.session_key).first() if table_session and request.session.session_key else None
+            if participant is None and meta.session_key == request.session.session_key:
+                participant = meta.participant
+            if participant and participant.released_at is None:
+                participant.released_at = now
+                participant.save(update_fields=['released_at'])
+            if table_session is None or (participant and meta.participant_id == participant.id):
+                meta.table_released_at = now
+                meta.save(update_fields=['table_released_at', 'updated_at'])
+            remaining = table_session.participants.filter(released_at__isnull=True).count() if table_session else 0
+            if table_session and remaining == 0:
+                table_session.statut = 'CLOSED'
+                table_session.closed_at = now
+                table_session.save(update_fields=['statut', 'closed_at'])
             if request.session.get(f'client_order_{order.table.id}') == str(order.id):
                 request.session.pop(f'client_order_{order.table.id}', None)
-            notify_bar_owners(order.bar, category='TABLE', title=f'Table libérée - {order.table.nom}', message='Le client a signalé la libération de la table.', url=reverse('dashboard_html'))
+            message = ('Merci. Tous les participants ont libéré la table.' if remaining == 0 else f'Merci. La table attend encore {remaining} participant(s).')
+            notify_bar_owners(order.bar, category='TABLE', title=f'Table libérée - {order.table.nom}', message=message, url=reverse('dashboard_html'))
             broadcast_order_changed(order)
-            return JsonResponse({'success': True, 'table_released': True, 'message': 'Merci. La table est signalée comme libérée.'})
+            return JsonResponse({'success': True, 'table_released': True, 'table_fully_released': remaining == 0, 'remaining_participants': remaining, 'message': message})
 
         if action == 'rate':
             def _score(name):
@@ -1012,6 +1248,8 @@ class ClientInvoiceDownloadView(View):
         )
         order.recalculate_totals()
         facture = _facture_for_order(order)
+        if facture is None:
+            return HttpResponse('La facture sera disponible lorsque tous les téléphones auront confirmé.', status=409, content_type='text/plain; charset=utf-8')
         profile = _invoice_profile_for_bar(order.bar)
 
         buffer = io.BytesIO()

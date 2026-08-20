@@ -33,9 +33,9 @@ class Bar(models.Model):
     ]
     # Code unique pour le QR — les serveurs scannent ce code pour rejoindre le bar
     code_invitation = models.UUIDField(
-        default=uuid.uuid4, 
-        unique=True, 
-        editable=False, 
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
         verbose_name="Code d'invitation QR"
     )
     logo = models.ImageField(upload_to='bar_logos/', blank=True, null=True, verbose_name="Logo de l'établissement")
@@ -46,7 +46,7 @@ class Bar(models.Model):
     mobile_money_orange = models.CharField(max_length=32, blank=True, verbose_name="Orange Money")
     mobile_money_mpesa = models.CharField(max_length=32, blank=True, verbose_name="M-Pesa")
     mobile_money_airtel = models.CharField(max_length=32, blank=True, verbose_name="Airtel Money")
-    
+
     # Abonnement & Période d'essai
     abonnement_expire_le = models.DateTimeField(null=True, blank=True, verbose_name="Date d'expiration de l'abonnement")
     date_creation = models.DateTimeField(auto_now_add=True)
@@ -98,6 +98,74 @@ class Bar(models.Model):
         return self.nom
 
 
+class SubscriptionPayment(models.Model):
+    STATUS_CHOICES = [
+        ("PENDING", "En attente"),
+        ("PAID", "Payé"),
+        ("CANCELLED", "Annulé"),
+    ]
+
+    bar = models.ForeignKey("Bar", on_delete=models.CASCADE, related_name="subscription_payments")
+    table_count = models.PositiveIntegerField(default=0, verbose_name="Nombre de tables")
+    amount_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="Montant USD")
+    period_days = models.PositiveIntegerField(default=30, verbose_name="Durée (jours)")
+    period_started_at = models.DateTimeField(default=timezone.now)
+    period_ends_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="PENDING")
+    reference = models.CharField(max_length=120, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    recorded_by = models.ForeignKey("PilotProfile", on_delete=models.SET_NULL, null=True, blank=True, related_name="recorded_subscription_payments")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.status == "PAID" and self.paid_at is None:
+            self.paid_at = timezone.now()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.bar.nom} · {self.table_count} table(s) · {self.amount_usd} USD"
+
+
+class AdministrationExpense(models.Model):
+    CATEGORY_CHOICES = [("API", "API et services en ligne"), ("VPS", "VPS / hébergement"), ("MARKETING", "Marketing"), ("OTHER", "Autre")]
+
+    title = models.CharField(max_length=180, verbose_name="Titre de la dépense")
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="OTHER", verbose_name="Catégorie")
+    amount_usd = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Montant USD")
+    spent_at = models.DateField(default=timezone.localdate, verbose_name="Date de la dépense")
+    notes = models.TextField(blank=True, verbose_name="Notes")
+    created_by = models.ForeignKey("auth.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="administration_expenses")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-spent_at", "-created_at"]
+        verbose_name = "Dépense d’administration"
+        verbose_name_plural = "Dépenses d’administration"
+
+    def __str__(self):
+        return f"{self.title} · {self.amount_usd} USD"
+
+
+class AdsenseRevenue(models.Model):
+    period = models.DateField(verbose_name="Période")
+    amount_usd = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Gains USD")
+    notes = models.TextField(blank=True, verbose_name="Notes")
+    created_by = models.ForeignKey("auth.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="adsense_revenues")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-period", "-created_at"]
+        verbose_name = "Gain Google AdSense"
+        verbose_name_plural = "Gains Google AdSense"
+        constraints = [models.UniqueConstraint(fields=["period"], name="unique_adsense_revenue_period")]
+
+    def __str__(self):
+        return f"AdSense {self.period.isoformat()} · {self.amount_usd} USD"
+
+
 class BarAdvisorSettings(models.Model):
     PROVIDER_CHOICES = [
         ('local', 'Local'),
@@ -126,7 +194,7 @@ def upload_pilot_photo(instance, filename):
 
 class PilotProfile(models.Model):
     """
-    Modèle étendant l'utilisateur Django par défaut pour y ajouter 
+    Modèle étendant l'utilisateur Django par défaut pour y ajouter
     les spécificités du "Pilote" (Propriétaire/Admin).
     """
     SEXE_CHOICES = [
@@ -142,28 +210,28 @@ class PilotProfile(models.Model):
 
     # Le lien OneToOne vers l'utilisateur classique (qui gère l'email, password)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='pilot_profile')
-    
+
     # Rôle exécutif choisi lors de l'onboarding
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, null=True, verbose_name="Rôle Exécutif")
-    
+
     # Bar actif utilisé par les vues et l'interface courante
     bar = models.ForeignKey(Bar, on_delete=models.SET_NULL, null=True, blank=True, related_name='proprietaires')
     # Liste de tous les établissements possédés par ce profil
     owned_bars = models.ManyToManyField(Bar, blank=True, related_name='owners', verbose_name='Etablissements possedes')
     # Date à laquelle cet utilisateur a consommé son essai gratuit BarPilote
     trial_consumed_at = models.DateTimeField(null=True, blank=True, verbose_name='Essai gratuit consommé le')
-    
+
     # Champs d'identité (On sépare Nom, Postnom, Prénom pour plus de précision)
     nom = models.CharField(max_length=150, blank=True, verbose_name="Nom")
     postnom = models.CharField(max_length=150, blank=True, verbose_name="Postnom")
     prenom = models.CharField(max_length=150, blank=True, verbose_name="Prénom")
-    
+
     sexe = models.CharField(max_length=1, choices=SEXE_CHOICES, blank=True, verbose_name="Sexe")
     telephone = models.CharField(max_length=20, blank=True, verbose_name="Numéro de téléphone")
     photo_profil = models.ImageField(upload_to=upload_pilot_photo, blank=True, null=True, verbose_name="Photo de Profil")
     preferred_currency = models.CharField(max_length=3, choices=[('USD', 'USD ($)'), ('CDF', 'CDF (FC)')], default='USD')
     last_seen = models.DateTimeField(null=True, blank=True, verbose_name="Dernière activité")
-    
+
     @property
     def is_online(self):
         if not self.last_seen:
@@ -201,7 +269,7 @@ class Table(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='tables')
     nom = models.CharField(max_length=50, verbose_name="Nom de la Table (ex: Table 12, VIP Lounge)")
-    
+
     # Le QR code généré sera stocké ici ou construit dynamiquement
     code_qr_image = models.ImageField(upload_to='qr_codes/', blank=True, null=True, verbose_name="Flyer QR Code")
     est_active = models.BooleanField(default=True, verbose_name="Table active")
@@ -243,7 +311,7 @@ class Perte(models.Model):
         ('OFFERT', 'Offert / Promo'),
         ('ERREUR', 'Erreur Inventaire'),
     ]
-    
+
     bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='pertes')
     item = models.ForeignKey('StockItem', on_delete=models.CASCADE, related_name='details_pertes')
     reported_by = models.ForeignKey(
@@ -304,7 +372,7 @@ class StockItem(models.Model):
         ('USD', '$ (Dollar)'),
         ('CDF', 'FC (Franc Congolais)'),
     ]
-    
+
     STRATEGY_CHOICES = [
         ('UNITE', 'À l\'unité (Bouteille)'),
         ('CASIER', 'Par casier'),
@@ -312,12 +380,12 @@ class StockItem(models.Model):
 
     bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='inventaire')
     produit = models.ForeignKey(MasterProduct, on_delete=models.CASCADE)
-    
+
     # Stratégie de gestion
     strategie_gestion = models.CharField(max_length=10, choices=STRATEGY_CHOICES, default='UNITE')
     quantite_actuelle = models.DecimalField(max_digits=12, decimal_places=3, default=0, verbose_name="Bouteilles en stock")
     seuil_alerte = models.IntegerField(default=12, verbose_name="Alerte stock faible")
-    
+
     # --- VENTE AU VERRE (Whisky, Vin, etc.) ---
     vente_au_verre = models.BooleanField(default=False, verbose_name="Activer la vente au verre")
     volume_verre_cl = models.IntegerField(default=5, help_text="Taille standard du verre en cl (ex: 5, 12, 15)")
@@ -327,11 +395,11 @@ class StockItem(models.Model):
 
     # Prix & Monnaie
     devise = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='USD')
-    
+
     # Champs pour stratégie CASIER
     prix_achat_casier = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Prix d'un casier complet")
     bouteilles_par_casier = models.IntegerField(default=24, blank=True, null=True, help_text="Nombre de bouteilles dans un casier")
-    
+
     # Champs pour stratégie UNITE (ou calculé automatiquement)
     prix_achat_unitaire = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Prix de revient par bouteille")
     prix_vente_unitaire = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -365,14 +433,27 @@ class StockItem(models.Model):
             'apéritif', 'apéritifs',
         )
         return any(token in searchable_name for token in glass_categories)
-    
+
+
+    def volume_stock_restant_cl(self):
+        """Volume vendable restant, arrondi au cl pour l’affichage."""
+        if not self.produit.volume_cl:
+            return 0
+        return max(0, round(float(self.quantite_actuelle) * self.produit.volume_cl))
+
+
+    def verres_restants(self):
+        if not self.volume_verre_cl:
+            return 0
+        return self.volume_stock_restant_cl // self.volume_verre_cl
+
     def save(self, *args, **kwargs):
         # Calcul automatique du prix de revient unitaire si on achète par casier
         if self.strategie_gestion == 'CASIER' and self.bouteilles_par_casier and self.bouteilles_par_casier > 0:
             from decimal import Decimal
             self.prix_achat_unitaire = self.prix_achat_casier / Decimal(self.bouteilles_par_casier)
         super().save(*args, **kwargs)
-    
+
     @property
     def marge_pourcentage(self):
         """Calcule la marge estimée selon votre modèle visuel."""
@@ -392,28 +473,28 @@ class StockSupply(models.Model):
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     item = models.ForeignKey(StockItem, on_delete=models.CASCADE, related_name='approvisionnements')
-    
+
     # Détails de l'achat
     casiers_achetes = models.DecimalField(max_digits=10, decimal_places=2, default=1)
     bouteilles_par_casier = models.IntegerField(default=24)
-    
+
     # Prix d'achat à cet instant T
     prix_achat_casier = models.DecimalField(max_digits=12, decimal_places=2)
     devise = models.CharField(max_length=3, choices=StockItem.CURRENCY_CHOICES, default='USD')
-    
+
     date_achat = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         from decimal import Decimal
         # Calcul du nombre total de bouteilles ajoutées
         total_bouteilles = Decimal(self.casiers_achetes) * Decimal(self.bouteilles_par_casier)
-        
+
         # Mise à jour du stock global sur l'item
         self.item.quantite_actuelle += total_bouteilles
         # Mise à jour des infos de prix de revient sur l'item pour le calcul de marge
         self.item.prix_achat_unitaire = self.prix_achat_casier / Decimal(self.bouteilles_par_casier)
         self.item.save()
-        
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -433,18 +514,19 @@ class Sale(models.Model):
     bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='ventes')
     table = models.ForeignKey(Table, on_delete=models.SET_NULL, null=True, blank=True)
     item = models.ForeignKey(StockItem, on_delete=models.PROTECT)
-    
+
     unite_vente = models.CharField(max_length=20, choices=UNIT_CHOICES, default='BOUTEILLE')
     quantite = models.IntegerField(default=1) # Nb de verres ou Nb de bouteilles
     prix_unitaire_applique = models.DecimalField(max_digits=12, decimal_places=2)
     devise = models.CharField(max_length=3, default='USD')
-    
+    deduire_stock = models.BooleanField(default=True, verbose_name="Déduire du stock")
+
     date_vente = models.DateTimeField(auto_now_add=True)
-    
+
     def save(self, *args, **kwargs):
         from decimal import Decimal
         # Si c'est une nouvelle vente, on déduit du stock
-        if not self.pk:
+        if not self.pk and self.deduire_stock:
             reduction = Decimal(0)
             if self.unite_vente == 'BOUTEILLE':
                 reduction = Decimal(self.quantite)
@@ -453,10 +535,10 @@ class Sale(models.Model):
                 vol_verre = Decimal(self.item.volume_verre_cl or 5)
                 vol_total = Decimal(self.item.produit.volume_cl or 100)
                 reduction = (Decimal(self.quantite) * vol_verre) / vol_total
-            
+
             self.item.quantite_actuelle = max(Decimal(0), self.item.quantite_actuelle - reduction)
             self.item.save()
-            
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -468,6 +550,7 @@ class Order(models.Model):
     Permet de suivre le statut du service et du paiement.
     """
     STATUS_CHOICES = [
+        ('DRAFT', 'En attente du groupe'),
         ('PENDING', 'En attente'),
         ('ACCEPTEE', 'Acceptée'),
         ('PREPARING', 'En préparation'),
@@ -480,34 +563,35 @@ class Order(models.Model):
     bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='orders')
     table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name='orders')
     serveur = models.ForeignKey(PilotProfile, on_delete=models.SET_NULL, null=True, blank=True)
-    
+
     statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-    
+
     client_name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Nom du Client")
     client_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Téléphone du Client")
-    
+
     # Totaux (calculés)
     total_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_cdf = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    
+
     date_creation = models.DateTimeField(auto_now_add=True)
     date_maj = models.DateTimeField(auto_now=True)
+    stock_deducted_at = models.DateTimeField(null=True, blank=True, verbose_name="Stock déduit le")
     date_service = models.DateTimeField(null=True, blank=True) # Quand le dernier item est servi
 
     def recalculate_totals(self):
         """Calcule les sommes totales par devise."""
         from django.db.models import Sum
         sums = self.items.values('devise').annotate(total=Sum(models.F('quantite') * models.F('prix_unitaire')))
-        
+
         self.total_usd = 0
         self.total_cdf = 0
-        
+
         for entry in sums:
             if entry['devise'] == 'USD':
                 self.total_usd = entry['total']
             elif entry['devise'] == 'CDF':
                 self.total_cdf = entry['total']
-        
+
         self.save(update_fields=['total_usd', 'total_cdf'])
 
     def __str__(self):
@@ -529,7 +613,7 @@ class OrderItem(models.Model):
     prix_unitaire = models.DecimalField(max_digits=12, decimal_places=2)
     devise = models.CharField(max_length=3, default='USD')
     statut = models.CharField(max_length=20, choices=ITEM_STATUS, default='ORDERED')
-    
+
     date_creation = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -547,7 +631,7 @@ class StaffShift(models.Model):
 
     worker = models.ForeignKey(PilotProfile, on_delete=models.CASCADE, related_name='shifts')
     bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='staff_shifts')
-    
+
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ACTIVE')
@@ -568,22 +652,22 @@ class Facture(models.Model):
         ('IMPAYEE', 'Impayée'),
         ('ANNULEE', 'Annulée'),
     ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bar = models.ForeignKey(Bar, on_delete=models.CASCADE, related_name='factures')
     numero = models.CharField(max_length=50, unique=True, verbose_name="Numéro de Facture")
     client_fournisseur = models.CharField(max_length=255, verbose_name="Nom du Client / Fournisseur")
-    
+
     montant_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     montant_cdf = models.DecimalField(max_digits=15, decimal_places=0, default=0)
-    
+
     type_facture = models.CharField(max_length=20, choices=TYPE_CHOICES, default='CLIENT')
     statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IMPAYEE')
-    
+
     date_emission = models.DateTimeField(auto_now_add=True)
     date_echeance = models.DateTimeField(null=True, blank=True)
     date_paiement = models.DateTimeField(null=True, blank=True)
-    
+
     orders = models.ManyToManyField(Order, related_name='factures', blank=True)
     guaranteed_by = models.ForeignKey(
         PilotProfile,
@@ -772,3 +856,9 @@ def update_order_totals(sender, instance, **kwargs):
     """Met à jour le ticket parent dès qu'une ligne change."""
     if instance.order:
         instance.order.recalculate_totals()
+
+@receiver(post_save, sender=Order)
+def deduct_paid_order_inventory(sender, instance, **kwargs):
+    if instance.statut == 'PAID' and not instance.stock_deducted_at:
+        from .inventory_services import deduct_inventory_for_paid_order
+        deduct_inventory_for_paid_order(instance)

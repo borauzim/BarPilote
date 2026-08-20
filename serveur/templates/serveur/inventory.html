@@ -22,7 +22,7 @@
                 <div class="text-right shrink-0">
                     <p class="text-sm font-black text-primary">{% if item.devise == 'CDF' %}{{ item.prix_vente_unitaire|floatformat:0 }} FC{% else %}{{ item.prix_vente_unitaire|floatformat:2 }}${% endif %}</p>
                     {% if item.can_sell_glass %}
-                    <p class="text-[10px] text-on-surface-variant uppercase">Glass: {% if item.devise == 'CDF' %}{{ item.prix_vente_verre|floatformat:0 }} FC{% else %}{{ item.prix_vente_verre|floatformat:2 }}${% endif %}</p>
+                    <p class="text-[10px] text-on-surface-variant uppercase">Verre : {% if item.devise == 'CDF' %}{{ item.prix_vente_verre|floatformat:0 }} FC{% else %}{{ item.prix_vente_verre|floatformat:2 }}${% endif %}</p>
                     {% endif %}
                 </div>
             </div>

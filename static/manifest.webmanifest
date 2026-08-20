@@ -7,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f9f9fb",
-  "theme_color": "#ff5e00",
+  "background_color": "#f4f1e8",
+  "theme_color": "#102b21",
   "icons": [
     {
       "src": "/static/barpilote_icon_transparent_192.png?v=5",

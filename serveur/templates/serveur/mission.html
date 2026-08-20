@@ -20,7 +20,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-[80vh] flex flex-col justify-between px-4 py-6 text-center">
+<div class="server-mission-page min-h-[80vh] flex flex-col justify-between px-4 py-6 text-center">
     
     <!-- Central Icon/Mission Container -->
     <div class="flex-grow flex flex-col items-center justify-center space-y-8">
@@ -62,7 +62,7 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="deliver">
             <input type="hidden" name="order_id" value="{{ order.id }}">
-            <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white py-4.5 rounded-full font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl transition-all active:scale-95 text-sm">
+            <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white py-4.5 rounded-full font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.96] text-sm">
                 <span class="material-symbols-outlined font-black">check_circle</span>
                 Confirmer la Livraison
             </button>

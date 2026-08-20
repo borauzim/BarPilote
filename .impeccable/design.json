@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-11T00:00:00+01:00",
+  "title": "Design System: BarPilote",
+  "extensions": {
+    "colorMeta": {
+      "command-forest": { "role": "primary", "displayName": "Vert forêt de commande", "canonical": "#102b21", "tonalRamp": ["#07140f", "#102b21", "#1b3b2f", "#315447", "#587568", "#82988e", "#b5c2bc", "#edf1ef"] },
+      "command-forest-soft": { "role": "primary", "displayName": "Forêt active", "canonical": "#1b3b2f", "tonalRamp": ["#091711", "#102b21", "#1b3b2f", "#35574a", "#5b786b", "#859b91", "#b7c5bf", "#eef2f0"] },
+      "operational-ivory": { "role": "neutral", "displayName": "Ivoire opérationnel", "canonical": "#f8f6ef", "tonalRamp": ["#25241f", "#45433d", "#69665e", "#8e8a80", "#b2aea4", "#d2cec5", "#e8e5dd", "#f8f6ef"] },
+      "canvas-sand": { "role": "neutral", "displayName": "Sable de canevas", "canonical": "#ece9df", "tonalRamp": ["#24231f", "#44423c", "#66645c", "#89867d", "#ada99f", "#ccc8be", "#dedbd1", "#f5f2e9"] },
+      "surface-soft": { "role": "neutral", "displayName": "Ivoire doux", "canonical": "#f0ede4", "tonalRamp": ["#24231f", "#44423c", "#67645d", "#8b887f", "#afaba2", "#cfcbc2", "#e4e1d8", "#f7f4ec"] },
+      "surface-muted": { "role": "neutral", "displayName": "Ivoire sourd", "canonical": "#dfdbcf", "tonalRamp": ["#23221e", "#424039", "#636159", "#858279", "#a7a399", "#c5c1b7", "#ddd9cf", "#f4f1e9"] },
+      "ink": { "role": "neutral", "displayName": "Encre forestière", "canonical": "#17211b", "tonalRamp": ["#0b100d", "#17211b", "#2d3932", "#4b574f", "#6d786f", "#949d96", "#c0c6c2", "#eff2f0"] },
+      "muted-ink": { "role": "neutral", "displayName": "Encre atténuée", "canonical": "#59635c", "tonalRamp": ["#111713", "#29322c", "#424c45", "#59635c", "#778079", "#9aa19c", "#c2c7c3", "#f0f2f1"] },
+      "signal-orange": { "role": "primary", "displayName": "Orange signal", "canonical": "#f36b21", "tonalRamp": ["#351305", "#642407", "#97380a", "#c94b0c", "#f36b21", "#fa965d", "#ffc39f", "#fff0e5"] },
+      "signal-orange-strong": { "role": "primary", "displayName": "Orange signal renforcé", "canonical": "#c94b0c", "tonalRamp": ["#301004", "#5b1e05", "#862d07", "#a93c0a", "#c94b0c", "#e67b3e", "#f5ae82", "#ffe9dc"] },
+      "signal-orange-soft": { "role": "primary", "displayName": "Orange signal doux", "canonical": "#fff0e5", "tonalRamp": ["#341308", "#64280f", "#964219", "#c85e28", "#ee824d", "#f7aa7d", "#fcd1b3", "#fff0e5"] },
+      "confirmation-green": { "role": "secondary", "displayName": "Vert de confirmation", "canonical": "#6f994f", "tonalRamp": ["#14200d", "#294019", "#416129", "#59803c", "#6f994f", "#98b67e", "#c2d5b1", "#edf5e8"] },
+      "error-red": { "role": "tertiary", "displayName": "Rouge incident", "canonical": "#a33128", "tonalRamp": ["#260906", "#4e120e", "#771d17", "#a33128", "#ca594f", "#e68d85", "#f5c1bc", "#fff0ee"] },
+      "warning-amber": { "role": "tertiary", "displayName": "Ambre attente", "canonical": "#805b00", "tonalRamp": ["#1d1400", "#3d2b00", "#5f4300", "#805b00", "#a77d13", "#cba64a", "#e9d48f", "#fff6d9"] },
+      "information-teal": { "role": "tertiary", "displayName": "Bleu-vert information", "canonical": "#275f68", "tonalRamp": ["#071719", "#103136", "#1b4a51", "#275f68", "#4b7f86", "#78a2a7", "#b3c9cc", "#eaf3f5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Mission Display", "purpose": "Messages de mission et titres majeurs du premier viewport." },
+      "headline": { "displayName": "Operational Headline", "purpose": "Titres de page et regroupements opérationnels." },
+      "title": { "displayName": "Panel Title", "purpose": "Titres de cartes, panneaux et objets métier." },
+      "body": { "displayName": "Working Body", "purpose": "Contenu courant, instructions et données explicatives." },
+      "label": { "displayName": "Dispatch Label", "purpose": "Navigation, métadonnées, statuts et commandes compactes." }
+    },
+    "shadows": [
+      { "name": "ambient-soft", "value": "0 8px 24px rgba(23, 33, 27, 0.06)", "purpose": "Cartes interactives au survol et panneaux légers." },
+      { "name": "ambient-raised", "value": "0 18px 50px rgba(23, 33, 27, 0.09)", "purpose": "Alertes globales et surfaces prioritaires." },
+      { "name": "command-rail", "value": "16px 0 48px rgba(16, 43, 33, 0.12)", "purpose": "Séparation latérale du rail desktop." },
+      { "name": "service-dock", "value": "0 -16px 40px rgba(16, 43, 33, 0.20)", "purpose": "Séparation du dock mobile sombre." }
+    ],
+    "motion": [
+      { "name": "ease-dispatch", "value": "cubic-bezier(.22, 1, .36, 1)", "purpose": "Transitions d'état et révélation du poste de travail." },
+      { "name": "workspace-reveal", "value": "420ms cubic-bezier(.22, 1, .36, 1)", "purpose": "Entrée brève du contenu opérationnel." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "Durée de repli sous prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "360px" },
+      { "name": "phone", "value": "430px" },
+      { "name": "mobile", "value": "767px" },
+      { "name": "command-rail", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Signal Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Action prioritaire qui demande une réponse immédiate.",
+      "html": "<button class=\"ds-btn-primary\">VALIDER LA COMMANDE</button>",
+      "css": ".ds-btn-primary{min-height:44px;border:0;border-radius:10px;padding:12px 20px;background:var(--bp-accent,#f36b21);color:#fff;font:800 .78rem/1.2 'Public Sans',sans-serif;letter-spacing:.035em;transition:background .2s cubic-bezier(.22,1,.36,1),transform .2s cubic-bezier(.22,1,.36,1)}.ds-btn-primary:hover{background:var(--bp-accent-strong,#c94b0c);transform:translateY(-1px)}.ds-btn-primary:active{transform:translateY(0)}.ds-btn-primary:focus-visible{outline:3px solid rgba(243,107,33,.34);outline-offset:3px}"
+    },
+    {
+      "name": "Command Button",
+      "kind": "button",
+      "refersTo": "button-command",
+      "description": "Action structurelle sombre utilisée dans le poste de contrôle.",
+      "html": "<button class=\"ds-btn-command\">OUVRIR LE SERVICE</button>",
+      "css": ".ds-btn-command{min-height:44px;border:1px solid rgba(248,246,239,.12);border-radius:10px;padding:12px 20px;background:var(--bp-command,#102b21);color:var(--bp-surface,#f8f6ef);font:800 .78rem/1.2 'Public Sans',sans-serif;letter-spacing:.025em;transition:background .2s cubic-bezier(.22,1,.36,1)}.ds-btn-command:hover{background:var(--bp-command-soft,#1b3b2f)}.ds-btn-command:active{filter:brightness(.94)}.ds-btn-command:focus-visible{outline:3px solid rgba(243,107,33,.34);outline-offset:3px}"
+    },
+    {
+      "name": "Operational Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Champ lisible à bordure forestière et focus orange.",
+      "html": "<label class=\"ds-field-label\">NOM DE LA TABLE<input class=\"ds-field\" value=\"Terrasse 04\"></label>",
+      "css": ".ds-field-label{display:grid;gap:7px;color:var(--bp-muted,#59635c);font:800 .68rem/1.2 'Public Sans',sans-serif;letter-spacing:.055em}.ds-field{box-sizing:border-box;width:100%;min-height:44px;border:1px solid rgba(23,33,27,.28);border-radius:10px;padding:12px 16px;background:#fffdf8;color:var(--bp-text,#17211b);font:600 1rem/1.4 'Public Sans',sans-serif;outline:0;transition:border-color .2s,box-shadow .2s}.ds-field:hover{border-color:rgba(23,33,27,.42)}.ds-field:focus{border-color:var(--bp-accent,#f36b21);box-shadow:0 0 0 3px rgba(243,107,33,.13)}.ds-field:focus-visible{outline:3px solid rgba(243,107,33,.34);outline-offset:3px}"
+    },
+    {
+      "name": "Category Chip",
+      "kind": "chip",
+      "description": "Filtre de catégorie dont la sélection change le fond et le contraste.",
+      "html": "<div class=\"ds-chip-row\"><button class=\"ds-chip ds-chip-active\">Tout</button><button class=\"ds-chip\">Bières</button></div>",
+      "css": ".ds-chip-row{display:flex;gap:8px}.ds-chip{min-height:42px;border:1px solid rgba(23,33,27,.14);border-radius:9999px;padding:10px 18px;background:#fffdf8;color:var(--bp-text,#17211b);font:800 .82rem/1 'Public Sans',sans-serif;transition:background .2s,border-color .2s}.ds-chip:hover{border-color:rgba(243,107,33,.38);background:var(--bp-accent-soft,#fff0e5)}.ds-chip-active{border-color:var(--bp-command,#102b21);background:var(--bp-command,#102b21);color:#fff}.ds-chip:active{transform:scale(.98)}.ds-chip:focus-visible{outline:3px solid rgba(243,107,33,.34);outline-offset:3px}"
+    },
+    {
+      "name": "Operational Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Surface ivoire structurée par une ligne fine et élevée seulement au survol.",
+      "html": "<article class=\"ds-card\"><p class=\"ds-card-label\">TABLE 04</p><h3 class=\"ds-card-title\">Commande en préparation</h3><p class=\"ds-card-copy\">3 articles · 24,00 USD</p></article>",
+      "css": ".ds-card{border:1px solid rgba(23,33,27,.14);border-radius:14px;padding:16px;background:#fffdf8;color:var(--bp-text,#17211b);font-family:'Public Sans',sans-serif;transition:border-color .2s,box-shadow .2s,transform .2s cubic-bezier(.22,1,.36,1)}.ds-card:hover{border-color:rgba(243,107,33,.38);box-shadow:0 8px 24px rgba(23,33,27,.06);transform:translateY(-2px)}.ds-card:focus-within{outline:3px solid rgba(243,107,33,.34);outline-offset:3px}.ds-card-label{margin:0 0 8px;color:var(--bp-accent-strong,#c94b0c);font-size:.68rem;font-weight:900;letter-spacing:.12em}.ds-card-title{margin:0;font-size:1.125rem;line-height:1.15}.ds-card-copy{margin:8px 0 0;color:var(--bp-muted,#59635c);font-size:.86rem;font-weight:600}"
+    },
+    {
+      "name": "Command Navigation",
+      "kind": "nav",
+      "description": "Rail forêt avec état actif tonal pour les espaces propriétaire et serveur.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Navigation principale\"><strong class=\"ds-nav-brand\">BarPilote</strong><a class=\"ds-nav-link ds-nav-active\" href=\"#\">Vue d'ensemble</a><a class=\"ds-nav-link\" href=\"#\">Commandes</a><a class=\"ds-nav-link\" href=\"#\">Stock</a></nav>",
+      "css": ".ds-nav{box-sizing:border-box;width:248px;display:grid;gap:6px;padding:22px 16px;background:var(--bp-command,#102b21);color:var(--bp-surface,#f8f6ef);font-family:'Public Sans',sans-serif;box-shadow:16px 0 48px rgba(16,43,33,.12)}.ds-nav-brand{margin:0 6px 18px;padding-bottom:20px;border-bottom:1px solid rgba(248,246,239,.12);font-size:1.25rem;font-weight:900;letter-spacing:-.03em}.ds-nav-link{min-height:44px;display:flex;align-items:center;border-radius:10px;padding:0 14px;color:rgba(248,246,239,.68);font-size:.82rem;font-weight:700;text-decoration:none;transition:background .2s,color .2s}.ds-nav-link:hover{background:rgba(248,246,239,.08);color:#fff}.ds-nav-active{background:var(--bp-command-soft,#1b3b2f);color:#fff}.ds-nav-link:active{filter:brightness(1.1)}.ds-nav-link:focus-visible{outline:3px solid rgba(243,107,33,.5);outline-offset:2px}"
+    },
+    {
+      "name": "Semantic Status Set",
+      "kind": "custom",
+      "description": "États métier distincts pour incident, attente, information et confirmation.",
+      "html": "<div class=\"ds-status-row\"><span class=\"ds-status ds-status-error\">Incident</span><span class=\"ds-status ds-status-warning\">En attente</span><span class=\"ds-status ds-status-info\">Information</span><span class=\"ds-status ds-status-success\">Confirmé</span></div>",
+      "css": ".ds-status-row{display:flex;flex-wrap:wrap;gap:8px}.ds-status{border:1px solid;border-radius:9999px;padding:7px 10px;font:800 .7rem/1 'Public Sans',sans-serif}.ds-status-error{border-color:rgba(163,49,40,.24);background:#fff0ee;color:#a33128}.ds-status-warning{border-color:rgba(128,91,0,.24);background:#fff6d9;color:#805b00}.ds-status-info{border-color:rgba(39,95,104,.24);background:#eaf3f5;color:#275f68}.ds-status-success{border-color:rgba(69,108,46,.24);background:#edf5e8;color:#456c2e}.ds-status:hover{filter:brightness(.98)}.ds-status:focus-visible{outline:3px solid rgba(243,107,33,.34);outline-offset:3px}"
+    },
+    {
+      "name": "Global Order Alert",
+      "kind": "custom",
+      "description": "Alerte persistante élevée qui rend une nouvelle commande immédiatement actionnable.",
+      "html": "<aside class=\"ds-alert\"><span class=\"ds-alert-dot\"></span><div><strong>Nouvelle commande · Table 04</strong><p>3 articles attendent une prise en charge.</p></div><button class=\"ds-alert-action\">Voir</button></aside>",
+      "css": ".ds-alert{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;border:1px solid rgba(243,107,33,.28);border-radius:14px;padding:14px 16px;background:#fffdf8;color:var(--bp-text,#17211b);font-family:'Public Sans',sans-serif;box-shadow:0 18px 50px rgba(23,33,27,.09)}.ds-alert-dot{width:10px;height:10px;border-radius:50%;background:var(--bp-accent,#f36b21)}.ds-alert strong{font-size:.9rem}.ds-alert p{margin:3px 0 0;color:var(--bp-muted,#59635c);font-size:.78rem}.ds-alert-action{min-height:40px;border:0;border-radius:10px;padding:0 14px;background:var(--bp-command,#102b21);color:#fff;font-weight:800}.ds-alert-action:hover{background:var(--bp-command-soft,#1b3b2f)}.ds-alert-action:active{transform:scale(.98)}.ds-alert-action:focus-visible{outline:3px solid rgba(243,107,33,.34);outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le poste de dispatch",
+    "overview": "BarPilote présente l'exploitation du bar comme un centre de contrôle continu : le propriétaire supervise, le serveur exécute et le client commande dans une même chaîne lisible. Le monde visuel est mat, précis et opérationnel. Un rail vert forêt cadre des surfaces ivoire, tandis que l'orange intervient comme signal d'action plutôt que comme décoration.\n\nLa densité varie avec le rôle sans rompre le système. Les vues propriétaire acceptent une lecture plus compacte et transversale; les vues serveur et client placent la mission ou l'action prioritaire au centre, avec de grandes cibles tactiles. Le langage refuse le tableau de bord SaaS générique fait de cartes uniformes : la hiérarchie vient des rails, des panneaux spécialisés, des tableaux et des docks d'action.",
+    "keyCharacteristics": [
+      "Centre de contrôle transversal pour les trois rôles et l'authentification.",
+      "Vert forêt mat, ivoire opérationnel et orange signal rare mais net.",
+      "Surfaces précises, lignes fines, coins mesurés et profondeur ambiante.",
+      "Densité adaptée au rôle, avec une priorité mobile pour le service et la commande.",
+      "États métier sémantiques préservés au-delà de la palette de marque."
+    ],
+    "rules": [
+      { "name": "The Signal, Not Decoration Rule", "body": "L'orange indique une action, une alerte ou un état actif; il ne remplit pas de grandes zones sans fonction.", "section": "colors" },
+      { "name": "The Semantic State Rule", "body": "Rouge, ambre, bleu-vert et vert gardent leur signification métier; aucun état critique ne repose sur l'orange de marque seul.", "section": "colors" },
+      { "name": "The Operational Voice Rule", "body": "Utiliser les fortes graisses pour orienter et décider, puis revenir à une graisse régulière pour expliquer; ne pas transformer chaque ligne en cri visuel.", "section": "typography" },
+      { "name": "The Mission-First Rule", "body": "Sur mobile, la mission ou l'action principale doit être visible avant les informations secondaires et rester accessible au pouce.", "section": "layout" },
+      { "name": "The Flat-by-Default Rule", "body": "Une surface au repos se définit d'abord par son ton et sa bordure; l'ombre est réservée à la persistance, au survol ou à la priorité.", "section": "elevation" },
+      { "name": "The Measured Corners Rule", "body": "Employer 10px pour les contrôles et 14px pour les surfaces; réserver les pilules aux catégories, bascules et actions intrinsèquement compactes.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do cadrer les vues propriétaire et serveur par le rail forêt desktop et le dock sombre mobile.",
+      "Do faire varier la densité selon le rôle tout en conservant les mêmes tokens, formes et états.",
+      "Do réserver l'orange aux actions, alertes, focus et sélections qui demandent une réponse.",
+      "Do associer couleur, texte ou icône pour communiquer chaque état opérationnel.",
+      "Do respecter `prefers-reduced-motion` et maintenir un focus clavier visible."
+    ],
+    "donts": [
+      "Don't revenir à un tableau de bord SaaS générique composé de cartes uniformes et interchangeables.",
+      "Don't étendre l'orange en grand aplat décoratif ou l'utiliser pour tous les statuts.",
+      "Don't accumuler ombres lourdes, verre et gradients; la matière reste mate et précise.",
+      "Don't arrondir chaque élément en pilule ou multiplier les rayons sans rôle.",
+      "Don't masquer l'action prioritaire mobile sous de la donnée secondaire."
+    ]
+  }
+}

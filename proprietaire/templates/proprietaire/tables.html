@@ -5,11 +5,11 @@
 
 {% block content %}
 {% load currency_tags %}
-<div class="space-y-8">
+<div class="tables-page space-y-4 md:space-y-8">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div class="tables-header flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
         <div>
-            <h1 class="text-3xl font-black tracking-tight text-on-surface">Plan de Salle</h1>
+            <h1 class="text-2xl font-black tracking-tight text-on-surface md:text-3xl">Plan de Salle</h1>
             <p class="text-on-surface-variant/60 font-medium text-sm mt-1">{% if is_server_interface %}Suivez vos tables, les tables libres et celles prises par l'équipe.{% else %}Gérez l'occupation de vos tables en temps réel.{% endif %}</p>
         </div>
         {% if not read_only_interface %}<div class="flex flex-wrap gap-3">
@@ -21,7 +21,7 @@
                 <span class="material-symbols-outlined">add_circle</span>
                 <span class="hidden sm:inline">Ajouter des Tables</span>
             </button>
-            <button onclick="downloadAllQRs()" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
+            <button onclick="downloadAllQRs()" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-[0.96] transition-all">
                 <span class="material-symbols-outlined">download_for_offline</span>
                 <span class="hidden sm:inline">Tout Télécharger</span>
             </button>
@@ -29,52 +29,58 @@
     </div>
 
     {% if not read_only_interface %}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white border border-surface-container-high rounded-2xl p-5 executive-shadow">
+    <div class="tables-summary grid grid-cols-3 gap-2 md:gap-4">
+        <div class="bg-white border border-surface-container-high rounded-2xl p-3 md:p-5 executive-shadow">
             <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50">Tables abonnées</p>
-            <p class="text-3xl font-black text-on-surface mt-2">{{ subscription_selected_count|default:0 }}</p>
+            <p class="mt-1 text-lg font-black text-on-surface md:mt-2 md:text-3xl">{{ subscription_selected_count|default:0 }}</p>
         </div>
-        <div class="bg-white border border-surface-container-high rounded-2xl p-5 executive-shadow">
+        <div class="bg-white border border-surface-container-high rounded-2xl p-3 md:p-5 executive-shadow">
             <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50">Prix par table</p>
-            <p class="text-3xl font-black text-on-surface mt-2">{{ subscription_price_per_table|floatformat:2 }}$</p>
+            <p class="mt-1 text-lg font-black text-on-surface md:mt-2 md:text-3xl">{{ subscription_price_per_table|floatformat:2 }}$</p>
         </div>
-        <div class="bg-orange-50 border border-orange-100 rounded-2xl p-5 executive-shadow">
+        <div class="bg-orange-50 border border-orange-100 rounded-2xl p-3 md:p-5 executive-shadow">
             <p class="text-[10px] font-black uppercase tracking-widest text-orange-600/70">Total mensuel calculé</p>
-            <p class="text-3xl font-black text-orange-600 mt-2">{{ subscription_monthly_total|floatformat:2 }}$</p>
+            <p class="mt-1 text-lg font-black text-orange-600 md:mt-2 md:text-3xl">{{ subscription_monthly_total|floatformat:2 }}$</p>
         </div>
     </div>
 
-    <div class="bg-white border border-surface-container-high rounded-2xl p-5 executive-shadow space-y-4">
+    <div class="tables-assignment space-y-2 rounded-2xl border border-surface-container-high bg-white p-3 executive-shadow md:space-y-4 md:p-5">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
                 <p class="text-[10px] font-black uppercase tracking-widest text-orange-600">Attribution des commandes</p>
-                <h2 class="text-xl font-black text-on-surface mt-1">Choisissez comment les commandes arrivent aux serveurs</h2>
+                <h2 class="mt-1 text-base font-black leading-tight text-on-surface md:text-xl">Choisissez comment les commandes arrivent aux serveurs</h2>
             </div>
-            <form method="post" action="{% url 'table_action' %}" data-live-action="true" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <form method="post" action="{% url 'table_action' %}" data-live-action="true" class="grid grid-cols-2 gap-2">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="set_assignment_mode">
                 <button type="submit" name="mode" value="AUTO" class="rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest border transition-all {% if order_assignment_mode == 'AUTO' %}bg-orange-600 text-white border-orange-600{% else %}bg-white text-on-surface border-surface-container-high hover:bg-orange-50{% endif %}">Automatique</button>
                 <button type="submit" name="mode" value="TABLE" class="rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest border transition-all {% if order_assignment_mode == 'TABLE' %}bg-orange-600 text-white border-orange-600{% else %}bg-white text-on-surface border-surface-container-high hover:bg-orange-50{% endif %}">Par table</button>
             </form>
         </div>
-        <p class="text-xs font-bold text-on-surface-variant/60">En automatique, BarPilote assigne un serveur disponible. En mode par table, chaque QR envoie la commande au serveur choisi sur la carte de la table.</p>
+        <p class="hidden text-xs font-bold text-on-surface-variant/60 md:block">En automatique, BarPilote assigne un serveur disponible. En mode par table, chaque QR envoie la commande au serveur choisi sur la carte de la table.</p>
     </div>
     {% endif %}
 
     <!-- Status Filters -->
-    <div class="flex flex-wrap items-center gap-3 bg-surface-container-low p-2 rounded-2xl w-fit">
-        <button onclick="filterTables('all')" class="filter-btn active px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all" id="btn-all">
+    <div class="table-filters flex w-full items-center gap-1.5 overflow-x-auto rounded-xl bg-surface-container-low p-1.5 md:w-fit md:flex-wrap md:gap-3 md:rounded-2xl md:p-2">
+        <button onclick="filterTables('all')" class="filter-btn active shrink-0 px-3 py-2 md:px-6 rounded-xl text-xs font-black uppercase tracking-widest transition-all" id="btn-all">
             Toutes ({{ tables.count }})
         </button>
-        <button onclick="filterTables('occupied')" class="filter-btn px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-orange-600 hover:bg-orange-50" id="btn-occupied">
+        <button onclick="filterTables('occupied')" class="filter-btn shrink-0 px-3 py-2 md:px-6 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-orange-600 hover:bg-orange-50" id="btn-occupied">
             Occupées ({{ occupied_count }})
         </button>
         {% if is_server_interface %}
         <span class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-orange-50 text-orange-600">Mes tables {{ server_occupied_count|default:0 }}</span>
         <span class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-surface-container text-on-surface-variant">Équipe {{ other_occupied_count|default:0 }}</span>
         {% endif %}
-        <button onclick="filterTables('free')" class="filter-btn px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-emerald-600 hover:bg-emerald-50" id="btn-free">
+        <button onclick="filterTables('free')" class="filter-btn shrink-0 px-3 py-2 md:px-6 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-emerald-600 hover:bg-emerald-50" id="btn-free">
             Libres ({{ free_count }})
+        </button>
+        <button onclick="filterTables('subscribed')" class="filter-btn shrink-0 px-3 py-2 md:px-6 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-emerald-700 hover:bg-emerald-50" id="btn-subscribed">
+            Avec abonnement ({{ subscribed_count|default:0 }})
+        </button>
+        <button onclick="filterTables('unsubscribed')" class="filter-btn shrink-0 px-3 py-2 md:px-6 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-red-600 hover:bg-red-50" id="btn-unsubscribed">
+            Sans abonnement ({{ unsubscribed_count|default:0 }})
         </button>
     </div>
 
@@ -87,14 +93,41 @@
         .table-card.hidden {
             display: none;
         }
+        @media (max-width: 639px) {
+            .tables-header > div:last-child { gap: .5rem; }
+            .tables-header > div:last-child button { width: 2.75rem; height: 2.75rem; justify-content: center; padding: 0; }
+            .tables-summary > div { border-radius: .75rem; padding: .625rem; }
+            .tables-summary > div > p:first-child { font-size: .5rem; line-height: 1.2; letter-spacing: .04em; }
+            .tables-assignment button { min-height: 2.5rem; padding: .5rem; }
+            .table-filters { scrollbar-width: none; }
+            .table-filters::-webkit-scrollbar { display: none; }
+            #tablesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+            #tablesGrid .table-card { min-width: 0; border-radius: 1rem; padding: .75rem; }
+            #tablesGrid .table-card > .flex:first-of-type { margin-bottom: .75rem; gap: .25rem; }
+            #tablesGrid .table-card > .flex:first-of-type > div:first-child { width: 2.5rem; height: 2.5rem; border-radius: .75rem; flex: 0 0 auto; }
+            #tablesGrid .table-card-actions { display: grid; grid-template-columns: repeat(2, 2.25rem); gap: .125rem; }
+            #tablesGrid .table-card-actions button,
+            #tablesGrid .table-card-actions a { width: 2.25rem; height: 2.25rem; }
+            #tablesGrid h3 { font-size: 1rem; line-height: 1.2; }
+            #tablesGrid select { width: 100%; padding-left: .5rem; padding-right: .5rem; }
+            #tablesGrid .table-card form .flex { flex-direction: column; }
+            #tablesGrid .table-card form .flex button { min-height: 2.5rem; }
+            #tablesGrid .table-card .mt-4.p-4 { margin-top: .75rem; padding: .625rem; border-radius: .75rem; }
+            #tablesGrid .table-card .mt-4.p-4 .text-2xl { font-size: .875rem; }
+            #tablesGrid .table-card > .mt-8 { margin-top: .75rem; padding-top: .75rem; }
+            #tablesGrid .table-card > .mt-8 .flex-1 { min-width: 0; }
+            #tablesGrid .table-card > .mt-8 a,
+            #tablesGrid .table-card > .mt-8 button { gap: .25rem; padding: .625rem .375rem; letter-spacing: .02em; }
+        }
     </style>
     
     <!-- Table Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="tablesGrid">
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-6 lg:grid-cols-4" id="tablesGrid">
         {% for table in tables %}
         <div id="table-card-{{ table.id }}" class="table-card bg-white rounded-[32px] p-8 executive-shadow border transition-all duration-500 relative overflow-hidden group 
                     {% if table.is_occupied %}{% if is_server_interface and table.is_mine %}border-orange-500/40 ring-4 ring-orange-500/10 status-occupied{% elif is_server_interface %}border-blue-300/50 ring-4 ring-blue-500/5 status-occupied{% elif not read_only_interface %}border-orange-500/30 ring-4 ring-orange-500/5 status-occupied{% else %}border-surface-container-high status-occupied{% endif %}{% else %}border-surface-container-high status-free{% endif %}"
-             data-status="{% if table.is_occupied %}occupied{% else %}free{% endif %}">
+             data-status="{% if table.is_occupied %}occupied{% else %}free{% endif %}"
+             data-subscription="{% if table.subscription_is_active %}subscribed{% else %}unsubscribed{% endif %}">
             
             {% if table.is_occupied %}
             <div class="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full -mr-12 -mt-12"></div>
@@ -105,7 +138,7 @@
                             {% if table.is_occupied %}{% if is_server_interface and not table.is_mine %}bg-blue-100 text-blue-600{% else %}bg-orange-600 text-white shadow-lg shadow-orange-500/30{% endif %}{% else %}bg-surface-container text-on-surface-variant{% endif %}">
                     <span class="material-symbols-outlined text-2xl">{% if table.is_occupied %}person_pin_circle{% else %}table_restaurant{% endif %}</span>
                 </div>
-                {% if not read_only_interface %}<div class="flex gap-1">
+                {% if not read_only_interface %}<div class="table-card-actions flex gap-1 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                     <button onclick="openRenameModal('{{ table.id }}', '{{ table.nom }}')" class="w-10 h-10 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors" title="Renommer">
                         <span class="material-symbols-outlined text-lg">edit</span>
                     </button>
@@ -203,7 +236,7 @@
 
 {% if not read_only_interface %}
 <!-- Modal Rename -->
-<div id="renameModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+<div id="renameModal" role="dialog" aria-modal="true" aria-label="Fenêtre de dialogue" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="renameModalContent">
         <h3 class="text-2xl font-black text-on-surface mb-2">Renommer la Table</h3>
         <p class="text-on-surface-variant text-sm mb-8">Donnez un nom unique à cet emplacement.</p>
@@ -219,7 +252,7 @@
                        placeholder="Ex: Terrasse 1">
                 
                 <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeRenameModal()" class="flex-1 py-4 font-bold text-on-surface-variant hover:bg-surface-container rounded-2xl transition-all">Annuler</button>
+                    <button type="button" onclick="closeRenameModal()" class="flex-1 min-h-11 rounded-xl px-4 py-3 font-bold text-on-surface-variant hover:bg-surface-container">Annuler</button>
                     <button type="submit" class="flex-1 citrus-gradient text-white py-4 font-bold rounded-2xl executive-shadow transition-all">Enregistrer</button>
                 </div>
             </div>
@@ -228,7 +261,7 @@
 </div>
 
 <!-- Modal Subscription Selection -->
-<div id="subscriptionModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+<div id="subscriptionModal" role="dialog" aria-modal="true" aria-label="Fenêtre de dialogue" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-[32px] w-full max-w-3xl p-8 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform max-h-[90vh] overflow-hidden flex flex-col" id="subscriptionModalContent">
         <div class="flex items-start justify-between gap-4 mb-6">
             <div>
@@ -277,7 +310,7 @@
                     <p class="text-3xl font-black text-orange-600"><span id="subscriptionFinalPrice">0.00</span> USD</p>
                     <p class="text-[10px] font-bold text-orange-900/60 mt-1"><span id="subscriptionFormula">0 table × {{ subscription_price_per_table|floatformat:2 }} USD</span></p>
                 </div>
-                <button type="submit" class="citrus-gradient text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-95 transition-all">
+                <button type="submit" class="citrus-gradient text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest executive-shadow active:scale-[0.96] transition-all">
                     Valider la sélection
                 </button>
             </div>
@@ -286,30 +319,31 @@
 </div>
 
 <!-- Modal Add Tables -->
-<div id="addTablesModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="addTablesModalContent">
-        <h3 class="text-2xl font-black text-on-surface mb-2">Ajouter des Tables</h3>
-        <p class="text-on-surface-variant text-sm mb-8">Combien de nouvelles tables souhaitez-vous créer ?</p>
+<div id="addTablesModal" role="dialog" aria-modal="true" aria-labelledby="addTablesTitle" aria-describedby="addTablesDescription" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4">
+    <div class="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-2xl opacity-0 translate-y-4 transition-[opacity,transform] duration-200 sm:rounded-2xl sm:p-7" id="addTablesModalContent">
+        <div class="flex items-start justify-between gap-4">
+            <div><h3 id="addTablesTitle" class="text-xl font-black text-on-surface">Ajouter des tables</h3><p id="addTablesDescription" class="mt-1 text-sm text-on-surface-variant">Choisissez le nombre de tables à créer.</p></div>
+            <button type="button" onclick="closeAddTablesModal()" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container focus:outline-none focus:ring-2 focus:ring-orange-500" aria-label="Fermer"><span class="material-symbols-outlined">close</span></button>
+        </div>
         
         <form method="post" action="{% url 'table_action' %}" data-live-action="true">
             {% csrf_token %}
             <input type="hidden" name="action" value="add">
             
             <div class="space-y-6">
-                <div class="relative pt-8 px-4">
-                    <input type="range" name="count" min="1" max="50" value="1" id="add_count_range"
-                           class="w-full accent-orange-600 h-2 bg-surface-container rounded-lg appearance-none cursor-pointer"
-                           oninput="document.getElementById('add_count_display').innerText = this.value">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-black text-xl shadow-lg" id="add_count_display">1</div>
+                <div class="rounded-2xl bg-surface-container-low p-4">
+                    <label for="add_count_number" class="block text-sm font-bold text-on-surface">Nombre de tables</label>
+                    <div class="mt-3 flex items-center justify-center gap-3"><button type="button" onclick="changeAddTablesCount(-1)" class="flex h-11 w-11 items-center justify-center rounded-xl bg-white hover:text-orange-700" aria-label="Retirer une table"><span class="material-symbols-outlined">remove</span></button><input type="number" name="count" min="1" max="50" value="1" id="add_count_number" inputmode="numeric" class="h-14 w-24 rounded-xl border border-surface-container-high bg-white px-3 text-center text-xl font-black focus:border-orange-500 focus:ring-orange-500" oninput="syncAddTablesCount(this.value)"><button type="button" onclick="changeAddTablesCount(1)" class="flex h-11 w-11 items-center justify-center rounded-xl bg-white hover:text-orange-700" aria-label="Ajouter une table"><span class="material-symbols-outlined">add</span></button></div>
+
+                    <div class="mt-4 grid grid-cols-4 gap-2" aria-label="Choix rapides"><button type="button" onclick="syncAddTablesCount(5)" class="h-10 rounded-xl bg-white text-xs font-bold hover:text-orange-700">5</button><button type="button" onclick="syncAddTablesCount(10)" class="h-10 rounded-xl bg-white text-xs font-bold hover:text-orange-700">10</button><button type="button" onclick="syncAddTablesCount(20)" class="h-10 rounded-xl bg-white text-xs font-bold hover:text-orange-700">20</button><button type="button" onclick="syncAddTablesCount(50)" class="h-10 rounded-xl bg-white text-xs font-bold hover:text-orange-700">50</button></div>
                     <div class="flex justify-between mt-4 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">
-                        <span>1 Table</span>
-                        <span>50 Tables</span>
+                        <span>1 table</span><span id="add_count_display" class="text-orange-700">1 sélectionnée</span><span>50 tables</span>
                     </div>
                 </div>
                 
                 <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeAddTablesModal()" class="flex-1 py-4 font-bold text-on-surface-variant hover:bg-surface-container rounded-2xl transition-all">Annuler</button>
-                    <button type="submit" class="flex-1 citrus-gradient text-white py-4 font-bold rounded-2xl executive-shadow transition-all">Ajouter maintenant</button>
+                    <button type="button" onclick="closeAddTablesModal()" class="flex-1 min-h-11 rounded-xl px-4 py-3 font-bold text-on-surface-variant hover:bg-surface-container">Annuler</button>
+                    <button type="submit" class="flex-1 min-h-11 rounded-xl bg-orange-600 px-4 py-3 font-bold text-white active:scale-[0.96] transition-transform">Ajouter les tables</button>
                 </div>
             </div>
         </form>
@@ -334,7 +368,7 @@
             if (status === 'all') {
                 card.classList.remove('hidden');
             } else {
-                if (card.dataset.status === status) {
+                if (card.dataset.status === status || card.dataset.subscription === status) {
                     card.classList.remove('hidden');
                 } else {
                     card.classList.add('hidden');
@@ -412,27 +446,39 @@
         updateSubscriptionSummary();
     }
 
+    function syncAddTablesCount(value) {
+        const count = Math.min(50, Math.max(1, Number.parseInt(value, 10) || 1));
+        document.getElementById('add_count_number').value = count;
+        document.getElementById('add_count_display').innerText = count + (count > 1 ? ' sélectionnées' : ' sélectionnée');
+    }
+
+    function changeAddTablesCount(step) {
+        const input = document.getElementById('add_count_number');
+        syncAddTablesCount((Number.parseInt(input.value, 10) || 1) + step);
+    }
+
     function openAddTablesModal() {
         const modal = document.getElementById('addTablesModal');
         const content = document.getElementById('addTablesModalContent');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         setTimeout(() => {
-            content.classList.remove('scale-95', 'opacity-0');
-            content.classList.add('scale-100', 'opacity-100');
+            content.classList.remove('translate-y-4', 'opacity-0');
+            content.classList.add('translate-y-0', 'opacity-100');
+            document.getElementById('add_count_number').focus();
         }, 10);
     }
 
     function closeAddTablesModal() {
         const modal = document.getElementById('addTablesModal');
         const content = document.getElementById('addTablesModalContent');
-        content.classList.add('scale-95', 'opacity-0');
-        content.classList.remove('scale-100', 'opacity-100');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }, 300);
+        content.classList.add('translate-y-4', 'opacity-0');
+        content.classList.remove('translate-y-0', 'opacity-100');
+        setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
     }
+
+    document.getElementById('addTablesModal')?.addEventListener('click', (event) => { if (event.target.id === 'addTablesModal') closeAddTablesModal(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !document.getElementById('addTablesModal')?.classList.contains('hidden')) closeAddTablesModal(); });
 
     function downloadAllQRs() {
         const tableLinks = Array.from(document.querySelectorAll('a[href*="download-qr"]'));

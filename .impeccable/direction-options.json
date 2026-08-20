@@ -1,0 +1,30 @@
+{
+  "title": "Choisir le nouveau monde visuel de BarPilote",
+  "question": "Cette direction remplace l'interface générique actuelle dans les espaces Propriétaire, Serveur et Client. Validez-la, demandez un nouveau tirage ou choisissez la voie SaaS conventionnelle.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Poste de dispatch",
+      "kicker": "DIRECTION PROPOSÉE",
+      "lineage": "Consoles de coordination radio et tableaux d'exploitation",
+      "thesis": "Chaque table, commande et alerte devient une mission visible, assignable et traçable.",
+      "palette": ["#17211B", "#F4F1E8", "#F36B21", "#8DBA6D", "#D8D4C8"],
+      "materials": ["panneaux mats", "repères de statut", "typographie de signalisation"],
+      "viewport": "Un rail de navigation sombre encadre un plan d'activité clair où priorités, flux et actions sont immédiatement identifiables.",
+      "risk": "Peut sembler trop technique si les parcours client ne sont pas suffisamment simplifiés.",
+      "sketch": ".impeccable/sketches/dispatch.png"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "canonCard": {
+    "label": "SaaS professionnel conventionnel",
+    "thesis": "Navigation latérale, cartes de KPI et tableaux familiers, exécutés avec une grande rigueur.",
+    "palette": ["#F7F8FA", "#FFFFFF", "#1D2633", "#F36B21"],
+    "materials": ["surfaces blanches", "bordures fines", "grille régulière"],
+    "viewport": "Une barre latérale, un en-tête d'espace et une grille de cartes adaptative.",
+    "risk": "Très facile à comprendre, mais moins distinctif et moins mémorable pour BarPilote.",
+    "sketch": ".impeccable/sketches/canon.png"
+  },
+  "steer": true
+}

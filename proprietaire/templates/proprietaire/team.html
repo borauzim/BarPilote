@@ -14,6 +14,24 @@
         .gap-4 { gap: 0.5rem !important; }
         .w-20 { width: 3rem !important; }
         .h-20 { height: 3rem !important; }
+        .team-header > div:last-child { gap: .5rem; }
+        .team-header > div:last-child > a,
+        .team-header > div:last-child > button { width: 2.75rem; height: 2.75rem; justify-content: center; padding: 0; }
+        .team-advisor > div { gap: .75rem; }
+        .team-advisor > div > div:first-child > div:first-child { width: 2.5rem; height: 2.5rem; border-radius: .75rem; }
+        .team-advisor form label { min-width: 0; padding: .5rem; border-radius: .75rem; }
+        .team-advisor form label span span:last-child { display: none; }
+        .team-advisor form label span span:first-child { font-size: .625rem; }
+        .team-advisor form button { min-width: 0; padding: .5rem .25rem; border-radius: .75rem; letter-spacing: .03em; }
+        .team-pending article > div:first-child { align-items: flex-start; gap: .5rem; }
+        .team-pending article img,
+        .team-pending article > div:first-child > div:first-child { width: 2.5rem !important; height: 2.5rem !important; }
+        .team-pending article h3 { font-size: .75rem; }
+        .team-pending article p { font-size: .5rem; letter-spacing: .03em; }
+        .team-pending article button { min-height: 2.5rem; padding: .5rem .25rem; letter-spacing: .03em; }
+        .team-hierarchy > div:last-child { gap: .5rem; }
+        .team-hierarchy > div:last-child > article { padding: .75rem; }
+        .team-hierarchy > div:last-child > .lg\:col-span-2 { display: none; }
     }
 </style>
 {% endblock %}
@@ -21,28 +39,28 @@
 {% block title %}Mon Équipe - BarPilote{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="team-page space-y-4 md:space-y-8">
+    <div class="team-header flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
         <div>
             <h1 class="text-3xl font-black tracking-tight text-on-surface">Mon Équipe</h1>
             <p class="text-on-surface-variant/60 font-medium text-sm mt-1">{% if read_only_interface %}Hiérarchie et classement selon la performance moyenne des serveurs.{% else %}Gérez vos serveurs, protocoles et suivez leurs performances.{% endif %}</p>
         </div>
         {% if not read_only_interface %}
         <div class="flex items-center gap-3">
-            <a href="{% url 'staff_download_invite' %}" class="bg-surface-container-high text-on-surface-variant px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all hover:bg-surface-container-highest">
+            <a href="{% url 'staff_download_invite' %}" class="bg-surface-container-high text-on-surface-variant px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-[0.96] transition-all hover:bg-surface-container-highest">
                 <span class="material-symbols-outlined">badge</span>
-                <span>Badge d'Invitation (PDF)</span>
+                <span class="hidden sm:inline">Badge d’Invitation (PDF)</span>
             </a>
-            <button class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
-                <span class="material-symbols-outlined">person_add</span>
-                <span>Inviter un membre</span>
+            <button type="button" data-invitation-code="{{ bar.code_invitation|default:'---' }}" onclick="copyInvitationCode(this)" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-[0.96] transition-all" title="Copier le code {{ bar.code_invitation }}">
+                <span class="material-symbols-outlined">content_copy</span>
+                <span id="copyInvitationLabel" class="hidden sm:inline">Copier le code</span>
             </button>
         </div>
         {% endif %}
     </div>
 
     {% if not read_only_interface and advisor_settings %}
-    <section class="bg-surface-container-lowest rounded-2xl executive-shadow border border-surface-container p-6">
+    <section class="team-advisor bg-surface-container-lowest rounded-2xl executive-shadow border border-surface-container p-3 md:p-6">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div class="flex items-start gap-4">
                 <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
@@ -51,10 +69,10 @@
                 <div>
                     <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Conseiller local</p>
                     <h2 class="text-xl font-black text-on-surface mt-1">Bots de conseils personnalisés</h2>
-                    <p class="text-sm font-medium text-on-surface-variant/60 mt-1 max-w-2xl">Les réponses restent locales et utilisent vos données BarPilote: ventes, stocks, dettes, pertes, tables et performances de l'équipe.</p>
+                    <p class="mt-1 hidden max-w-2xl text-sm font-medium text-on-surface-variant/60 md:block">Les réponses restent locales et utilisent vos données BarPilote: ventes, stocks, dettes, pertes, tables et performances de l'équipe.</p>
                 </div>
             </div>
-            <form method="post" action="{% url 'advisor_settings' %}" class="grid grid-cols-1 md:grid-cols-3 gap-3 lg:min-w-[520px]">
+            <form method="post" action="{% url 'advisor_settings' %}" class="grid grid-cols-3 gap-2 md:gap-3 lg:min-w-[520px]">
                 {% csrf_token %}
                 <label class="bg-white border border-surface-container rounded-2xl p-4 flex items-center justify-between gap-3">
                     <span>
@@ -70,7 +88,7 @@
                     </span>
                     <input type="checkbox" name="server_enabled" value="1" class="h-5 w-5 rounded border-orange-200 text-orange-600 focus:ring-orange-500" {% if advisor_settings.server_enabled %}checked{% endif %}>
                 </label>
-                <button type="submit" class="citrus-gradient text-white rounded-2xl px-5 py-4 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">Enregistrer</button>
+                <button type="submit" class="citrus-gradient text-white rounded-2xl px-5 py-4 font-black text-[10px] uppercase tracking-widest active:scale-[0.96] transition-all">Enregistrer</button>
             </form>
         </div>
     </section>
@@ -78,7 +96,7 @@
 
     {% if pending_requests and not read_only_interface %}
     <!-- Pending Join Requests -->
-    <section class="bg-surface-container-lowest rounded-2xl executive-shadow border border-orange-200/40 p-6 space-y-5">
+    <section class="team-pending space-y-3 rounded-2xl border border-orange-200/40 bg-surface-container-lowest p-3 executive-shadow md:space-y-5 md:p-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
                 <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Demandes d'adhesion</p>
@@ -89,9 +107,9 @@
             </span>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-2 lg:grid-cols-2 lg:gap-4">
             {% for request_profile in pending_requests %}
-            <article class="bg-white border border-orange-100 rounded-2xl p-4 flex flex-col gap-4">
+            <article class="flex min-w-0 flex-col gap-2 rounded-xl border border-orange-100 bg-white p-2 md:gap-4 md:rounded-2xl md:p-4">
                 <div class="flex items-center gap-4">
                     {% if request_profile.photo %}
                     <img src="{{ request_profile.photo.url }}" class="w-14 h-14 rounded-full object-cover border-2 border-orange-100" alt="{{ request_profile.nom }}">
@@ -116,7 +134,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="server_profile_id" value="{{ request_profile.id }}">
                         <input type="hidden" name="action" value="approve">
-                        <button type="submit" class="w-full py-3 bg-emerald-600 text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95">
+                        <button type="submit" class="w-full py-3 bg-emerald-600 text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-[0.96]">
                             Approve
                         </button>
                     </form>
@@ -124,7 +142,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="server_profile_id" value="{{ request_profile.id }}">
                         <input type="hidden" name="action" value="reject">
-                        <button type="submit" class="w-full py-3 bg-white border border-red-200 text-error text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-red-50 transition-all active:scale-95">
+                        <button type="submit" class="w-full py-3 bg-white border border-red-200 text-error text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-red-50 transition-all active:scale-[0.96]">
                             Reject
                         </button>
                     </form>
@@ -136,7 +154,7 @@
     {% endif %}
 
     {% if read_only_interface and owner_profile %}
-    <section class="bg-surface-container-lowest rounded-2xl executive-shadow border border-surface-container p-6 space-y-5">
+    <section class="team-hierarchy space-y-3 rounded-2xl border border-surface-container bg-surface-container-lowest p-3 executive-shadow md:space-y-5 md:p-6">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
             <div>
                 <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Hiérarchie</p>
@@ -153,7 +171,12 @@
                     {% if owner_profile.photo_profil %}<img src="{{ owner_profile.photo_profil.url }}" class="w-14 h-14 rounded-full object-cover border-2 border-orange-100" alt="{{ owner_profile.nom }}">{% else %}<div class="w-14 h-14 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center"><span class="material-symbols-outlined">workspace_premium</span></div>{% endif %}
                     <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white {% if owner_profile.is_online %}bg-emerald-500{% else %}bg-zinc-400{% endif %}" title="{% if owner_profile.is_online %}En ligne{% else %}Hors ligne{% endif %}"></span>
                 </div>
-                <div><h3 class="font-black text-on-surface">{{ owner_profile.prenom }} {{ owner_profile.nom }}</h3><p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Propriétaire · {% if owner_profile.is_online %}En ligne{% else %}Hors ligne{% endif %}</p></div>
+                <div class="min-w-0 flex-1"><h3 class="truncate font-black text-on-surface">{{ owner_profile.prenom }} {{ owner_profile.nom }}</h3><p class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Propriétaire · {% if owner_profile.is_online %}En ligne{% else %}Hors ligne{% endif %}</p></div>
+                {% if owner_profile.whatsapp_url %}
+                <a href="{{ owner_profile.whatsapp_url }}" target="_blank" rel="noopener noreferrer" data-no-pjax class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2" aria-label="Contacter le propriétaire sur WhatsApp" title="Contacter sur WhatsApp"><span class="material-symbols-outlined text-lg">chat</span></a>
+                {% else %}
+                <button type="button" disabled class="flex h-11 w-11 shrink-0 cursor-not-allowed items-center justify-center rounded-xl bg-surface-container text-on-surface-variant/35" aria-label="Numéro WhatsApp du propriétaire non renseigné" title="Numéro WhatsApp non renseigné"><span class="material-symbols-outlined text-lg">chat</span></button>
+                {% endif %}
             </article>
             <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
                 {% for member in serveur_staff %}
@@ -171,25 +194,41 @@
     {% endif %}
 
     <!-- Staff Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="team-staff-grid grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
         {% for member in serveur_staff %}
-        <div class="bg-surface-container-lowest p-6 rounded-2xl executive-shadow border-t-4 border-surface-container group hover:translate-y-[-4px] transition-all">
+        <div class="team-member-card min-w-0 bg-surface-container-lowest p-3 md:p-6 rounded-2xl executive-shadow border-t-4 border-surface-container group hover:translate-y-[-4px] transition-all">
             <div class="flex flex-col items-center text-center">
                 <!-- Avatar -->
-                <div class="relative mb-4">
+                <div class="relative mb-3 md:mb-4">
                     {% if member.photo %}
-                    <img src="{{ member.photo.url }}" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg" alt="{{ member.nom }}">
+                    <img src="{{ member.photo.url }}" class="h-14 w-14 rounded-full object-cover border-2 md:h-20 md:w-20 md:border-4 border-white shadow-lg" alt="{{ member.nom }}">
                     {% else %}
-                    <div class="w-20 h-20 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center border-4 border-white shadow-lg">
+                    <div class="h-14 w-14 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center border-2 border-white shadow-lg md:h-20 md:w-20 md:border-4">
                         <span class="material-symbols-outlined text-3xl">person</span>
                     </div>
                     {% endif %}
                     <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center {% if member.is_online %}bg-emerald-500{% else %}bg-zinc-400{% endif %}" title="{% if member.is_online %}En ligne{% else %}Hors ligne{% endif %}"></div>
                 </div>
 
-                <h3 class="text-lg font-black text-on-surface">{{ member.prenom }} {{ member.nom }}</h3>
-                <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest mt-1">Serveur confirmé{% if member.performance_rank %} · Rang #{{ member.performance_rank }}{% endif %} · {% if member.is_online %}En ligne{% else %}Hors ligne{% endif %}</p>
-                <div class="mt-3 flex flex-wrap justify-center gap-2">
+                <h3 class="max-w-full break-words text-sm font-black leading-tight text-on-surface md:text-lg">{{ member.prenom }} {{ member.nom }}</h3>
+                <p class="mt-1 text-[8px] font-black uppercase leading-tight tracking-wide text-orange-600 md:text-[10px] md:tracking-widest">Serveur confirmé{% if member.performance_rank %} · Rang #{{ member.performance_rank }}{% endif %} · {% if member.is_online %}En ligne{% else %}Hors ligne{% endif %}</p>
+                <div class="mt-3 flex items-center justify-center gap-2">
+                    {% if member.whatsapp_url %}
+                    <a href="{{ member.whatsapp_url }}" target="_blank" rel="noopener noreferrer" data-no-pjax class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2" aria-label="Écrire à {{ member.prenom }} {{ member.nom }} sur WhatsApp" title="Contacter sur WhatsApp">
+                        <span class="material-symbols-outlined text-lg">chat</span>
+                    </a>
+                    {% else %}
+                    <button type="button" disabled class="inline-flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-lg bg-surface-container text-on-surface-variant/35" title="Numéro WhatsApp non renseigné" aria-label="Numéro WhatsApp non renseigné">
+                        <span class="material-symbols-outlined text-lg">chat</span>
+                    </button>
+                    {% endif %}
+                    <button type="button" onclick="openTeamMemberPopover(this)" class="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg bg-surface-container px-3 text-xs font-black text-on-surface md:hidden" aria-haspopup="dialog">
+                        <span class="material-symbols-outlined text-base">more_horiz</span>
+                        Plus
+                    </button>
+                </div>
+                <div data-team-member-details data-member-name="{{ member.prenom }} {{ member.nom }}" class="hidden w-full md:block">
+                <div class="mt-2 flex flex-wrap justify-center gap-1 md:mt-3 md:gap-2">
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-surface-container text-on-surface-variant border border-surface-container-high">
                         <span class="material-symbols-outlined text-xs">stairs</span>
                         {{ member.hierarchy_label|default:'Opérationnel' }}
@@ -200,7 +239,7 @@
                     </span>
                 </div>
                 
-                <div class="mt-6 w-full grid grid-cols-2 gap-4 pt-6 border-t border-surface-container">
+                <div class="mt-4 grid w-full grid-cols-2 gap-2 border-t pt-4 md:mt-6 md:gap-4 md:pt-6 border-surface-container">
                     <div>
                         <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Tables Gérées</p>
                         <p class="text-lg font-black text-on-surface">{{ member.tables_managed|default:0 }}</p>
@@ -212,11 +251,11 @@
                 </div>
 
                 {% if not read_only_interface %}
-                <form method="post" action="{% url 'team_salary_action' %}" class="mt-4 w-full p-4 rounded-xl bg-orange-50 border border-orange-100 text-left">
+                <form method="post" action="{% url 'team_salary_action' %}" class="mt-3 w-full rounded-xl bg-orange-50 p-2 md:mt-4 md:p-4 border border-orange-100 text-left">
                     {% csrf_token %}
                     <input type="hidden" name="server_profile_id" value="{{ member.id }}">
                     <label class="block text-[9px] font-black text-orange-700 uppercase tracking-widest mb-2">Salaire mensuel</label>
-                    <div class="flex gap-2">
+                    <div class="flex flex-col gap-2 md:flex-row">
                         <input type="number" name="salaire_mensuel" min="0" step="0.01" required value="{{ member.salaire_mensuel|default_if_none:'' }}" placeholder="Montant" class="min-w-0 flex-1 rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm font-bold">
                         <select name="salaire_devise" class="rounded-lg border border-orange-200 bg-white px-2 py-2 text-sm font-black"><option value="CDF" {% if member.salaire_devise == 'CDF' %}selected{% endif %}>CDF</option><option value="USD" {% if member.salaire_devise == 'USD' %}selected{% endif %}>USD</option></select>
                         <button type="submit" class="rounded-lg bg-orange-600 px-3 py-2 text-white" title="Enregistrer"><span class="material-symbols-outlined text-base">save</span></button>
@@ -242,31 +281,33 @@
                 </div>
                 {% endif %}
 
-                {% if not read_only_interface %}<div class="w-full grid grid-cols-1 gap-3 pt-6 border-t border-surface-container">
-                    <div class="grid grid-cols-3 gap-2">
+                {% if not read_only_interface %}<div class="grid w-full grid-cols-1 gap-3 border-t pt-4 md:pt-6 border-surface-container">
+                    <div class="flex flex-col gap-1 text-left md:flex-row md:items-center md:justify-between md:gap-3"><p class="text-[10px] font-black uppercase tracking-widest text-on-surface">Accès aux postes</p><p class="text-[9px] font-bold text-on-surface-variant/50">Vert : autorisé · Rouge : refusé</p></div>
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <form method="post" action="{% url 'team_access_action' %}" data-live-action="true">
                             {% csrf_token %}
                             <input type="hidden" name="server_profile_id" value="{{ member.id }}">
                             <input type="hidden" name="permission" value="inventory">
                             <input type="hidden" name="enabled" value="{% if member and member.inventory_access_granted %}0{% else %}1{% endif %}">
-                            <button type="submit" class="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if member and member.inventory_access_granted %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-white border border-surface-container text-on-surface-variant{% endif %}">Inventaire</button>
+                            <button type="submit" class="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if member and member.inventory_access_granted %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}"><span class="material-symbols-outlined text-sm align-middle mr-1">{% if member and member.inventory_access_granted %}check_circle{% else %}block{% endif %}</span>Inventaire</button>
                         </form>
                         <form method="post" action="{% url 'team_access_action' %}" data-live-action="true">
                             {% csrf_token %}
                             <input type="hidden" name="server_profile_id" value="{{ member.id }}">
                             <input type="hidden" name="permission" value="tables">
                             <input type="hidden" name="enabled" value="{% if member and member.tables_access_granted %}0{% else %}1{% endif %}">
-                            <button type="submit" class="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if member and member.tables_access_granted %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-white border border-surface-container text-on-surface-variant{% endif %}">Tables</button>
+                            <button type="submit" class="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if member and member.tables_access_granted %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}"><span class="material-symbols-outlined text-sm align-middle mr-1">{% if member and member.tables_access_granted %}check_circle{% else %}block{% endif %}</span>Tables</button>
                         </form>
                         <form method="post" action="{% url 'team_access_action' %}" data-live-action="true">
                             {% csrf_token %}
                             <input type="hidden" name="server_profile_id" value="{{ member.id }}">
                             <input type="hidden" name="permission" value="reports">
                             <input type="hidden" name="enabled" value="{% if member and member.reports_access_granted %}0{% else %}1{% endif %}">
-                            <button type="submit" class="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if member and member.reports_access_granted %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-white border border-surface-container text-on-surface-variant{% endif %}">Rapports</button>
+                            <button type="submit" class="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if member and member.reports_access_granted %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}"><span class="material-symbols-outlined text-sm align-middle mr-1">{% if member and member.reports_access_granted %}check_circle{% else %}block{% endif %}</span>Finances</button>
                         </form>
                     </div>
                 </div>{% endif %}
+                </div>
             </div>
         </div>
         {% empty %}
@@ -292,4 +333,81 @@
         {% endfor %}
     </div>
 </div>
+<div id="teamMemberPopover" class="fixed inset-0 z-[80] hidden items-end justify-center bg-black/45 p-3 md:hidden" role="dialog" aria-modal="true" aria-labelledby="teamMemberPopoverTitle" onclick="if (event.target === this) closeTeamMemberPopover()">
+    <div class="max-h-[82vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl">
+        <div class="sticky top-0 z-10 mb-3 flex items-center justify-between border-b border-surface-container bg-white pb-3">
+            <h2 id="teamMemberPopoverTitle" class="text-base font-black text-on-surface">Détails du membre</h2>
+            <button type="button" onclick="closeTeamMemberPopover()" class="flex h-11 w-11 items-center justify-center rounded-lg bg-surface-container text-on-surface" aria-label="Fermer"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="teamMemberPopoverContent"></div>
+    </div>
+</div>
+<script>
+function openTeamMemberPopover(button) {
+    const card = button.closest('.team-member-card');
+    const source = card && card.querySelector('[data-team-member-details]');
+    const popover = document.getElementById('teamMemberPopover');
+    const content = document.getElementById('teamMemberPopoverContent');
+    const title = document.getElementById('teamMemberPopoverTitle');
+    if (!source || !popover || !content) return;
+    content.innerHTML = source.innerHTML;
+    if (title) title.textContent = source.dataset.memberName || 'Détails du membre';
+    popover.classList.remove('hidden');
+    popover.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+    popover.querySelector('button')?.focus();
+}
+
+function closeTeamMemberPopover() {
+    const popover = document.getElementById('teamMemberPopover');
+    if (!popover) return;
+    popover.classList.remove('flex');
+    popover.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+}
+
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') closeTeamMemberPopover();
+});
+
+async function copyInvitationCode(button) {
+    const code = button.dataset.invitationCode;
+    const label = document.getElementById('copyInvitationLabel');
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(code);
+        } else {
+            const field = document.createElement('textarea');
+            field.value = code;
+            field.style.position = 'fixed';
+            field.style.opacity = '0';
+            document.body.appendChild(field);
+            field.select();
+            document.execCommand('copy');
+            field.remove();
+        }
+        label.textContent = 'Code copié';
+        setTimeout(function () { label.textContent = 'Copier le code'; }, 1800);
+    } catch (error) {
+        window.prompt('Copiez ce code d’invitation :', code);
+    }
+}
+
+window.addEventListener("barpilote:team-permission-changed", function (event) {
+    const d = event.detail || {};
+    const form = Array.from(document.querySelectorAll("form[data-live-action]")).find(function (f) {
+        return f.querySelector("[name=server_profile_id]")?.value === String(d.server_profile_id) && f.querySelector("[name=permission]")?.value === d.permission;
+    });
+    if (!form) return;
+    const enabled = Boolean(d.enabled);
+    const next = form.querySelector("[name=enabled]");
+    const button = form.querySelector("button[type=submit]");
+    const labels = {inventory: "Inventaire", tables: "Tables", reports: "Finances"};
+    if (next) next.value = enabled ? "0" : "1";
+    if (!button) return;
+    button.classList.remove("bg-emerald-50", "text-emerald-700", "border-emerald-200", "bg-red-50", "text-red-700", "border-red-200");
+    button.classList.add(enabled ? "bg-emerald-50" : "bg-red-50", enabled ? "text-emerald-700" : "text-red-700", enabled ? "border-emerald-200" : "border-red-200");
+    button.innerHTML = '<span class="material-symbols-outlined text-sm align-middle mr-1">' + (enabled ? 'check_circle' : 'block') + '</span>' + labels[d.permission];
+});
+</script>
 {% endblock %}

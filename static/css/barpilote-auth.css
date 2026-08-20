@@ -1,0 +1,22 @@
+
+
+.bp-auth-app{--auth-canvas:#f4f5f2;--auth-surface:#fff;--auth-ink:#18201b;--auth-muted:#5d6760;--auth-line:rgba(24,32,27,.13);--auth-forest:#13251d;--auth-orange:#e85d16;--auth-orange-strong:#bd4309;background:var(--auth-canvas)!important;color:var(--auth-ink)!important;-webkit-font-smoothing:antialiased}
+.bp-auth-app :where(h1,h2,h3){letter-spacing:-.025em!important;text-wrap:balance}
+.bp-auth-app p{text-wrap:pretty}
+.bp-auth-app :where(a,button,input,select,textarea):focus-visible{outline:3px solid rgba(232,93,22,.3)!important;outline-offset:3px!important}
+.bp-auth-app :where(button,a){-webkit-tap-highlight-color:transparent}
+.bp-auth-app button:not(:disabled):active,.bp-auth-app a:active{scale:.96}
+.bp-auth-app :where(input,select,textarea,button,a[class*="py-"]){min-height:44px}
+.bp-auth-app :where(.rounded-\[40px\],.rounded-\[32px\],.rounded-3xl,.rounded-2xl){border-radius:14px!important}
+.bp-auth-app :where(button,input,select,textarea,a).rounded-xl,.bp-auth-app :where(button,input,select,textarea,a).rounded-2xl{border-radius:10px!important}
+.bp-auth-app :where(.executive-shadow,.shadow-xl,.shadow-2xl){box-shadow:none!important}
+.bp-auth-app :where(input,select,textarea){border:1px solid rgba(24,32,27,.22)!important;background:#fff!important;transition:border-color 150ms ease-out,box-shadow 150ms ease-out!important}
+.bp-auth-app :where(input,select,textarea):focus{border-color:var(--auth-orange)!important;box-shadow:0 0 0 3px rgba(232,93,22,.14)!important}
+.bp-auth-app .citrus-gradient{background:var(--auth-orange)!important;box-shadow:none!important}
+.bp-auth-app .citrus-gradient:hover{background:var(--auth-orange-strong)!important}
+.bp-auth-app img{outline:1px solid oklch(0 0 0/.1);outline-offset:-1px}
+.bp-auth-app img[src*="logo"]{outline:0}
+@media(prefers-reduced-motion:reduce){.bp-auth-app *,.bp-auth-app *::before,.bp-auth-app *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+.bp-auth-app :where(.citrus-gradient,.bg-orange-600){background:#bd4309!important}
+.bp-auth-app :where(input,textarea)::placeholder{color:#68736b!important}

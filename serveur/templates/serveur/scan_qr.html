@@ -37,7 +37,7 @@
     </div>
 </div>
 
-<div class="relative z-10 min-h-[calc(100vh-5rem)] flex flex-col items-center text-center px-4 pt-2 pb-8 overflow-y-auto">
+<div class="server-scan-page relative z-10 min-h-[calc(100vh-5rem)] flex flex-col items-center text-center px-4 pt-2 pb-8 overflow-y-auto">
     <!-- Connection Status -->
     <div class="mb-5 text-center relative z-20 shrink-0">
         <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-orange-200 mb-3 shadow-sm">
@@ -63,7 +63,7 @@
                     <div class="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl"></div>
                 </div>
 
-                <div class="absolute top-0 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-80 shadow-[0_0_15px_rgba(255,94,0,0.8)] animate-bounce z-10" style="animation-duration: 2.5s;"></div>
+                <div class="absolute top-0 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-80 shadow-[0_0_15px_rgba(255,94,0,0.8)]  z-10" style="animation-duration: 2.5s;"></div>
 
                 <div id="cameraPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center rounded-[28px] z-20 overflow-hidden bg-gradient-to-br from-[#1a1c1d] via-[#2f3132] to-[#a63b00] text-white">
                     <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.45), transparent 28%), linear-gradient(135deg, rgba(255,94,0,0.28), transparent 55%);"></div>
@@ -107,7 +107,7 @@
                 <label for="invitationCodeInput" class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Coller un code d'invitation</label>
                 <div class="flex gap-2">
                     <input id="invitationCodeInput" type="text" name="invitation_code" placeholder="Code ou lien d'invitation" required class="min-w-0 flex-1 bg-surface-container border border-orange-100 rounded-2xl py-3.5 px-4 font-bold text-on-surface placeholder-on-surface-variant/40 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm">
-                    <button type="submit" class="h-[50px] w-[54px] shrink-0 bg-primary hover:bg-primary-hover text-white rounded-2xl flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-primary/20" aria-label="Lier le compte">
+                    <button type="submit" class="h-[50px] w-[54px] shrink-0 bg-primary hover:bg-primary-hover text-white rounded-2xl flex items-center justify-center transition-all active:scale-[0.96] shadow-lg shadow-primary/20" aria-label="Lier le compte">
                         <span class="material-symbols-outlined text-xl">arrow_forward</span>
                     </button>
                 </div>
@@ -120,7 +120,7 @@
     </div>
 
     <div class="mt-5 relative z-20 shrink-0">
-        <a href="https://barpilote.com/help/" target="_blank" class="inline-flex items-center gap-2 bg-white/90 hover:bg-orange-50 border border-orange-100 px-5 py-3 rounded-full shadow-xl text-on-surface transition-all active:scale-95">
+        <a href="https://barpilote.com/help/" target="_blank" class="inline-flex items-center gap-2 bg-white/90 hover:bg-orange-50 border border-orange-100 px-5 py-3 rounded-full shadow-xl text-on-surface transition-all active:scale-[0.96]">
             <span class="material-symbols-outlined text-primary text-sm">help</span>
             <span class="text-xs font-bold tracking-tight">Besoin d'aide ?</span>
         </a>
@@ -351,6 +351,8 @@
     }
 
     // Démarrer la caméra au chargement initial
-    window.addEventListener('DOMContentLoaded', startCamera);
+    if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', startCamera, {once: true});
+    else startCamera();
+    document.addEventListener('barpilote:page-loaded', startCamera, {once: true});
 </script>
 {% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'serveur/base_serveur.html' %}
+{% load currency_tags %}
+
+{% block title %}Commandes du jour - BarPilote{% endblock %}
+
+{% block content %}
+<div class="space-y-4 md:space-y-6">
+    <header class="flex items-start gap-3">
+        <a href="{% url 'serveur_dashboard' %}" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-on-surface-variant" aria-label="Retour au dashboard"><span class="material-symbols-outlined">arrow_back</span></a>
+        <div class="min-w-0"><h1 class="text-2xl font-black tracking-tight text-on-surface">Commandes du jour</h1><p class="mt-1 text-xs font-bold text-on-surface-variant/60">Votre activité du {{ today|date:'d/m/Y' }}</p></div>
+    </header>
+
+    <section class="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
+        <div class="rounded-xl bg-white p-3"><p class="text-[9px] font-black uppercase tracking-wide text-on-surface-variant/50">Total</p><p class="mt-1 text-xl font-black text-on-surface">{{ today_orders_count }}</p></div>
+        <div class="rounded-xl bg-orange-50 p-3"><p class="text-[9px] font-black uppercase tracking-wide text-orange-700/60">En direct</p><p class="mt-1 text-xl font-black text-orange-700">{{ today_active_count }}</p></div>
+        <div class="rounded-xl bg-emerald-50 p-3"><p class="text-[9px] font-black uppercase tracking-wide text-emerald-700/60">Payées</p><p class="mt-1 text-xl font-black text-emerald-700">{{ today_completed_count }}</p></div>
+        <div class="rounded-xl bg-white p-3"><p class="text-[9px] font-black uppercase tracking-wide text-on-surface-variant/50">Montant</p><p class="mt-1 text-sm font-black text-on-surface">{% display_price today_total_usd today_total_cdf %}</p></div>
+    </section>
+
+    <section class="overflow-hidden rounded-2xl border border-surface-container bg-white">
+        <div class="flex items-center justify-between border-b border-surface-container p-4"><h2 class="text-base font-black text-on-surface">Toutes les commandes</h2><span class="rounded-lg bg-surface-container px-2.5 py-1 text-[10px] font-black text-on-surface-variant">{{ today_orders_count }}</span></div>
+        <div class="divide-y divide-surface-container">
+            {% for order in today_orders %}
+            <a href="{% url 'serveur_commande_detail' order.id %}" class="flex min-h-16 items-center justify-between gap-3 p-3 transition hover:bg-surface-container-lowest md:p-4">
+                <span class="flex min-w-0 items-center gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {% if order.statut == 'PAID' %}bg-emerald-50 text-emerald-700{% elif order.statut == 'CANCELLED' %}bg-red-50 text-red-600{% else %}bg-orange-50 text-orange-700{% endif %}"><span class="material-symbols-outlined text-lg">receipt_long</span></span><span class="min-w-0"><strong class="block truncate text-sm text-on-surface">{{ order.table.nom|default:'Comptoir' }}</strong><span class="mt-1 block text-[9px] font-bold uppercase tracking-wide text-on-surface-variant/50">{{ order.date_creation|date:'H:i' }} · {{ order.get_statut_display }} · {{ order.items.count }} article{{ order.items.count|pluralize }}</span></span></span>
+                <span class="shrink-0 text-right"><strong class="block text-xs text-on-surface">{% display_price order.total_usd order.total_cdf %}</strong><span class="material-symbols-outlined mt-1 text-base text-on-surface-variant/40">chevron_right</span></span>
+            </a>
+            {% empty %}<div class="py-16 text-center"><span class="material-symbols-outlined text-4xl text-on-surface-variant/20">inbox</span><p class="mt-2 text-xs font-bold text-on-surface-variant/50">Aucune commande enregistrée aujourd’hui.</p></div>{% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

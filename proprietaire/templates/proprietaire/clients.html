@@ -4,41 +4,41 @@
 {% block title %}Gestion des Clients & Dettes - BarPilote{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
+<div class="clients-page space-y-4 md:space-y-8">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div class="clients-header flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
         <div>
-            <h1 class="text-3xl font-black tracking-tight text-on-surface">{% if read_only_interface %}Mes Clients & Dettes{% else %}Gestion des Clients & Dettes{% endif %}</h1>
-            <p class="text-on-surface-variant/60 font-medium text-sm mt-1">{% if read_only_interface %}Clients que vous avez servis, historique personnel et dettes ouvertes liées à vos commandes.{% else %}Gérez la liste de confiance, vérifiez l'historique d'achat et whitelistez manuellement vos clients éligibles aux dettes.{% endif %}</p>
+            <h1 class="text-lg font-black md:text-2xl tracking-tight text-on-surface md:text-3xl">{% if read_only_interface %}Mes Clients & Dettes{% else %}Gestion des Clients & Dettes{% endif %}</h1>
+            <p class="mt-1 hidden text-sm font-medium text-on-surface-variant/60 md:block">{% if read_only_interface %}Clients que vous avez servis, historique personnel et dettes ouvertes liées à vos commandes.{% else %}Gérez la liste de confiance, vérifiez l'historique d'achat et whitelistez manuellement vos clients éligibles aux dettes.{% endif %}</p>
         </div>
         {% if not read_only_interface %}
         <div>
-            <button onclick="openAddClientModal()" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
+            <button onclick="openAddClientModal()" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-[0.96] transition-all">
                 <span class="material-symbols-outlined">person_add</span>
-                <span>Nouveau Client de Confiance</span>
+                <span class="hidden sm:inline">Nouveau Client de Confiance</span>
             </button>
         </div>
         {% endif %}
     </div>
 
     <!-- Stats summary -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex items-center gap-5">
-            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
+    <div class="clients-summary grid grid-cols-3 gap-2 md:gap-6">
+        <div class="client-stat-card bg-surface-container-lowest p-2 md:p-6 rounded-xl md:rounded-2xl border border-surface-container/50 executive-shadow flex items-center gap-5">
+            <div class="client-stat-icon hidden w-12 md:flex h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
                 <span class="material-symbols-outlined">group</span>
             </div>
             <div>
-                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">{% if read_only_interface %}Clients Servis{% else %}Total Clients Listés{% endif %}</p>
-                <p id="clientsTotalCount" class="text-2xl font-black text-on-surface">{{ clients|length }}</p>
+                <p class="text-[8px] font-bold leading-tight text-on-surface-variant/40 uppercase tracking-wide md:text-[9px] md:tracking-widest">{% if read_only_interface %}Clients Servis{% else %}Total Clients Listés{% endif %}</p>
+                <p id="clientsTotalCount" class="text-lg font-black md:text-2xl text-on-surface">{{ clients|length }}</p>
             </div>
         </div>
-        <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex items-center gap-5">
-            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
+        <div class="client-stat-card bg-surface-container-lowest p-2 md:p-6 rounded-xl md:rounded-2xl border border-surface-container/50 executive-shadow flex items-center gap-5">
+            <div class="client-stat-icon hidden w-12 md:flex h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
                 <span class="material-symbols-outlined">verified_user</span>
             </div>
             <div>
-                <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">{% if read_only_interface %}Clients en Dette{% else %}Whitelistés Manuels{% endif %}</p>
-                <p class="text-2xl font-black text-emerald-600" id="statWhitelistedCount">
+                <p class="text-[8px] font-bold leading-tight text-on-surface-variant/40 uppercase tracking-wide md:text-[9px] md:tracking-widest">{% if read_only_interface %}Clients en Dette{% else %}Whitelistés Manuels{% endif %}</p>
+                <p class="text-lg font-black md:text-2xl text-emerald-600" id="statWhitelistedCount">
                     {% if read_only_interface %}
                         {{ personal_debt_clients_count|default:0 }}
                     {% else %}
@@ -53,33 +53,44 @@
                 {% if read_only_interface %}<p class="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest mt-2">{{ personal_paid_clients_count|default:0 }} clients payés</p>{% endif %}
             </div>
         </div>
-        <div class="bg-surface-container-lowest p-6 rounded-2xl border border-surface-container/50 executive-shadow flex flex-col justify-between gap-4">
+        <div class="client-stat-card bg-surface-container-lowest p-2 md:p-6 rounded-xl md:rounded-2xl border border-surface-container/50 executive-shadow flex flex-col justify-between gap-1 md:gap-4">
             <div class="flex items-center gap-5">
-                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                <div class="client-stat-icon hidden w-12 md:flex h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
                     <span class="material-symbols-outlined">payments</span>
                 </div>
                 <div>
-                    <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Seuil d'éligibilité Auto</p>
-                    <p class="text-2xl font-black text-on-surface">{{ bar.seuil_dette_eligible|floatformat:0 }} FC</p>
+                    <p class="text-[8px] font-bold leading-tight text-on-surface-variant/40 uppercase tracking-wide md:text-[9px] md:tracking-widest">Seuil d'éligibilité Auto</p>
+                    <p class="text-lg font-black md:text-2xl text-on-surface">{{ bar.seuil_dette_eligible|floatformat:0 }} FC</p>
                 </div>
             </div>
-            {% if not read_only_interface %}<form method="POST" action="{% url 'clients_html' %}" class="flex items-center gap-2 mt-2 pt-2 border-t border-surface-container/50">
+            {% if not read_only_interface %}<form method="POST" action="{% url 'clients_html' %}" class="hidden md:flex items-center gap-2 mt-2 pt-2 border-t border-surface-container/50">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_threshold">
                 <input type="number" name="seuil_dette_eligible" value="{{ bar.seuil_dette_eligible|floatformat:0 }}" required class="w-full bg-surface-container-low border border-surface-container rounded-xl py-2 px-3 font-bold text-xs text-on-surface focus:ring-1 focus:ring-orange-500 transition-all" placeholder="Modifier le seuil en FC">
-                <button type="submit" class="citrus-gradient text-white px-3 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90 active:scale-95 flex items-center gap-1 shrink-0">
+                <button type="submit" class="citrus-gradient text-white px-3 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90 active:scale-[0.96] flex items-center gap-1 shrink-0">
                     <span class="material-symbols-outlined text-sm">save</span>
                     <span>Sauver</span>
                 </button>
             </form>{% endif %}
+            {% if not read_only_interface %}
+            <details class="mt-1 md:hidden">
+                <summary class="cursor-pointer text-[9px] font-black uppercase tracking-wide text-orange-600">Modifier</summary>
+                <form method="POST" action="{% url 'clients_html' %}" class="mt-2 flex flex-col gap-1.5">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_threshold">
+                    <input type="number" name="seuil_dette_eligible" value="{{ bar.seuil_dette_eligible|floatformat:0 }}" required class="min-w-0 rounded-lg border border-surface-container bg-white px-2 py-2 text-xs font-bold" aria-label="Nouveau seuil en francs congolais">
+                    <button type="submit" class="min-h-10 rounded-lg bg-orange-600 px-2 text-[9px] font-black uppercase text-white">Enregistrer</button>
+                </form>
+            </details>
+            {% endif %}
         </div>
     </div>
 
     <!-- Clients List Table -->
     <div class="bg-surface-container-lowest rounded-3xl border border-surface-container/50 executive-shadow overflow-hidden">
-        <div class="p-6 border-b border-surface-container flex items-center justify-between">
+        <div class="flex flex-col gap-2 border-b border-surface-container p-3 md:flex-row md:gap-4 md:p-6 md:items-center md:justify-between">
             <h3 class="font-black text-lg text-on-surface">{% if read_only_interface %}Clients que vous avez servis{% else %}Répertoire des Clients Whitelistés{% endif %}</h3>
-            <span class="text-[10px] font-black uppercase text-on-surface-variant/40 bg-surface-container px-3 py-1.5 rounded-full tracking-widest">Confiance & Crédit</span>
+            <div class="relative w-full md:w-72"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-base text-on-surface-variant/40">search</span><input id="clientSearch" type="search" oninput="filterClients(this.value)" placeholder="Nom ou téléphone…" class="h-11 w-full rounded-xl border border-surface-container bg-white pl-10 pr-10 text-sm font-bold text-on-surface outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"><button id="clearClientSearch" type="button" onclick="clearClientSearch()" class="absolute right-1 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="Effacer la recherche"><span class="material-symbols-outlined text-base">close</span></button></div>
         </div>
         
         <div class="overflow-x-auto">
@@ -97,7 +108,7 @@
                 </thead>
                 <tbody class="divide-y divide-surface-container">
                     {% for client in clients %}
-                    <tr id="client-row-{{ client.id }}" class="hover:bg-surface-container-low/30 transition-colors">
+                    <tr id="client-row-{{ client.id }}" data-client-row data-client-name="{{ client.nom|escape }}" data-client-phone="{{ client.telephone|escape }}" class="hover:bg-surface-container-low/30 transition-colors">
                         <td class="py-5 px-6">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-black text-sm">
@@ -153,25 +164,38 @@
                             </label>
                         </td>
                         <td class="py-5 px-6 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                            {% if client.whatsapp_url %}
+                            <a href="{{ client.whatsapp_url }}" target="_blank" rel="noopener noreferrer" data-no-pjax class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 transition-colors hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2" aria-label="Écrire à {{ client.nom }} sur WhatsApp" title="Écrire sur WhatsApp">
+                                <span class="material-symbols-outlined text-lg">chat</span>
+                            </a>
+                            {% endif %}
                             <form method="POST" action="{% url 'clients_html' %}" data-live-action="true" onsubmit="return confirm('Voulez-vous vraiment retirer ce client ?');" class="inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="name" value="{{ client.nom }}">
                                 <input type="hidden" name="client_id" value="{{ client.id }}">
-                                <button type="submit" class="w-8 h-8 rounded-lg bg-red-50 text-error hover:bg-red-100 flex items-center justify-center transition-colors">
+                                <button type="submit" class="flex h-11 w-11 items-center justify-center rounded-lg bg-red-50 text-error transition-colors hover:bg-red-100">
                                     <span class="material-symbols-outlined text-base">delete</span>
                                 </button>
                             </form>
+                            </div>
                         </td>{% endif %}
                     </tr>
                     {% empty %}
-                    <tr>
+                    <tr id="clientsInitialEmpty">
                         <td colspan="{% if read_only_interface %}7{% else %}6{% endif %}" class="py-16 text-center text-on-surface-variant/40 font-bold text-sm">
                             <span class="material-symbols-outlined text-4xl block mb-2 text-zinc-300">group_off</span>
                             Aucun client enregistré pour le moment.
                         </td>
                     </tr>
                     {% endfor %}
+                    <tr id="clientSearchEmpty" class="hidden">
+                        <td colspan="{% if read_only_interface %}7{% else %}6{% endif %}" class="py-14 text-center text-on-surface-variant/50 font-bold text-sm">
+                            <span class="material-symbols-outlined mb-2 block text-4xl text-zinc-300">search_off</span>
+                            Aucun client ne correspond à cette recherche.
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -180,16 +204,16 @@
 
 {% if not read_only_interface %}
 <!-- Modal: Add Client -->
-<div id="addClientModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+<div id="addClientModal" role="dialog" aria-modal="true" aria-label="Fenêtre de dialogue" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
     <div class="bg-white rounded-[40px] w-full max-w-md shadow-2xl scale-95 opacity-0 transition-all duration-300 transform flex flex-col overflow-hidden" id="addClientModalContent">
         <!-- Header -->
         <div class="p-8 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest shrink-0">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600">
                     <span class="material-symbols-outlined">person_add</span>
                 </div>
                 <div>
-                    <h3 class="text-2xl font-black text-on-surface tracking-tight">Ajouter un Client</h3>
+                    <h3 class="text-lg font-black md:text-2xl text-on-surface tracking-tight">Ajouter un Client</h3>
                     <p class="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest mt-1">Autorisation de crédit</p>
                 </div>
             </div>
@@ -224,7 +248,7 @@
                 <button type="button" onclick="closeAddClientModal()" class="w-1/2 bg-white border border-surface-container text-on-surface-variant py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-surface-container-low transition-all">
                     Annuler
                 </button>
-                <button type="submit" class="w-1/2 citrus-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:opacity-90 active:scale-95 transition-all">
+                <button type="submit" class="w-1/2 citrus-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:opacity-90 active:scale-[0.96] transition-all">
                     Confirmer
                 </button>
             </div>
@@ -302,4 +326,66 @@
     }
 </script>
 {% endif %}
+
+<script>
+    function normalizeClientSearch(value) {
+        return (value || "")
+            .toLocaleLowerCase("fr")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]/g, "");
+    }
+
+    function clientSearchTerms(row) {
+        const name = normalizeClientSearch(row.dataset.clientName);
+        const phone = normalizeClientSearch(row.dataset.clientPhone);
+        const localPhone = phone.startsWith("243") ? "0" + phone.slice(3) : phone;
+        return name + " " + phone + " " + localPhone;
+    }
+
+    function filterClients(value) {
+        const query = normalizeClientSearch(value);
+        let visibleClients = 0;
+
+        document.querySelectorAll("[data-client-row]").forEach((row) => {
+            const matches = !query || clientSearchTerms(row).includes(query);
+            row.classList.toggle("hidden", !matches);
+            if (matches) visibleClients += 1;
+        });
+
+        const emptyState = document.getElementById("clientSearchEmpty");
+        if (emptyState) emptyState.classList.toggle("hidden", visibleClients !== 0);
+
+        const initialEmptyState = document.getElementById("clientsInitialEmpty");
+        if (initialEmptyState) initialEmptyState.classList.toggle("hidden", Boolean(query));
+
+        const clearButton = document.getElementById("clearClientSearch");
+        if (clearButton) {
+            clearButton.classList.toggle("hidden", !query);
+            clearButton.classList.toggle("flex", Boolean(query));
+        }
+    }
+
+    function clearClientSearch() {
+        const input = document.getElementById("clientSearch");
+        if (!input) return;
+
+        input.value = "";
+        filterClients("");
+        input.focus();
+    }
+
+    function initializeClientSearch() {
+        const input = document.getElementById("clientSearch");
+        if (!input || input.dataset.searchReady === "true") return;
+
+        input.dataset.searchReady = "true";
+        input.addEventListener("input", () => filterClients(input.value));
+        input.addEventListener("search", () => filterClients(input.value));
+        filterClients(input.value);
+    }
+
+    initializeClientSearch();
+    document.addEventListener("barpilote:page-loaded", initializeClientSearch);
+</script>
 {% endblock %}

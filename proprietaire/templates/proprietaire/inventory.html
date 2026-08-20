@@ -5,6 +5,19 @@
 {% block extra_head %}
 <style>
     @media (max-width: 768px) {
+        .inventory-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: .35rem !important; }
+        .inventory-card { min-width: 0; padding: .6rem !important; border-bottom-width: 3px; }
+        .inventory-card-header { flex-direction: column; gap: .5rem !important; }
+        .inventory-card-image { width: 100% !important; height: 5.25rem !important; }
+        .inventory-card h3 { font-size: .72rem !important; line-height: 1.15; }
+        .inventory-card-stats { grid-template-columns: 1fr !important; gap: .35rem !important; margin-top: .55rem !important; padding-top: .55rem !important; }
+        .inventory-card-price { text-align: left !important; }
+        .inventory-card-price > div { align-items: flex-start !important; }
+        .inventory-card .text-xl { font-size: .82rem !important; }
+        .inventory-card-actions { margin-top: .5rem !important; gap: .3rem !important; }
+        .inventory-card-actions button:first-child { min-width: 0; padding-inline: .4rem; font-size: .55rem !important; }
+    }
+    @media (max-width: 768px) {
         .text-3xl { font-size: 1.5rem !important; }
         .text-2xl { font-size: 1.25rem !important; }
         .text-xl { font-size: 1.125rem !important; }
@@ -36,7 +49,7 @@
                 <span class="material-symbols-outlined text-xl">inventory</span>
                 <span class="hidden sm:inline">Arrivage Mixte</span>
             </a>
-            <a href="{% url 'catalogue_setup' %}" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-95 transition-all">
+            <a href="{% url 'catalogue_setup' %}" class="citrus-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 executive-shadow active:scale-[0.96] transition-all">
                 <span class="material-symbols-outlined">add</span>
                 <span>Nouveau Produit</span>
             </a>
@@ -60,13 +73,14 @@
     </div>
 
     <!-- Inventory Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="inventory-products-grid grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for item in inventory_items %}
         <div class="inventory-card bg-surface-container-lowest p-6 rounded-2xl executive-shadow border-b-4 {% if item.quantite_actuelle <= item.seuil_alerte %}border-orange-600{% else %}border-emerald-500{% endif %} group hover:translate-y-[-4px] transition-all"
-             data-category-id="{{ item.produit.categorie.id }}">
-            <div class="flex gap-4">
+             data-category-id="{{ item.produit.categorie.id }}"
+             data-inventory-search="{{ item.produit.nom|lower }} {{ item.produit.categorie.nom|lower }} {{ item.produit.volume|lower }}">
+            <div class="inventory-card-header flex gap-4">
                 <!-- Product Image -->
-                <div class="w-20 h-20 rounded-xl bg-surface-container-low overflow-hidden relative">
+                <div class="inventory-card-image w-20 h-20 rounded-xl bg-surface-container-low overflow-hidden relative">
                     {% if item.produit.photo %}
                     <img src="{{ item.produit.photo.url }}" class="w-full h-full object-cover" alt="{{ item.produit.nom }}">
                     {% else %}
@@ -91,7 +105,7 @@
             </div>
 
             <!-- Stats & Price -->
-            <div class="mt-6 pt-6 border-t border-surface-container grid grid-cols-2 gap-4">
+            <div class="inventory-card-stats mt-6 pt-6 border-t border-surface-container grid grid-cols-2 gap-4">
                 <div>
                     <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Stock Actuel</p>
                     <div class="flex items-baseline gap-1">
@@ -101,7 +115,7 @@
                         <span class="text-[9px] opacity-40 font-bold uppercase">Bout.</span>
                     </div>
                 </div>
-                <div class="text-right">
+                <div class="inventory-card-price text-right">
                     <p class="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Prix Vente</p>
                     <div class="flex flex-col items-end">
                         <p class="text-xl font-black text-on-surface">
@@ -111,6 +125,7 @@
                         <p class="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full mt-1">
                             Verre: {% if item.devise == 'CDF' %}{% display_price None item.prix_vente_verre %}{% else %}{% display_price item.prix_vente_verre %}{% endif %}
                         </p>
+                        <p class="mt-1 text-[9px] font-bold text-on-surface-variant/60">{{ item.volume_stock_restant_cl }} cl · {{ item.verres_restants }} verre(s) de {{ item.volume_verre_cl }} cl</p>
                         {% endif %}
                     </div>
                 </div>
@@ -123,7 +138,7 @@
             
             {% if not read_only_interface %}
             <!-- Quick Actions Overlay -->
-            <div class="mt-4 flex gap-2">
+            <div class="inventory-card-actions mt-4 flex gap-2">
                 <button onclick="openEditModal('{{ item.id }}', '{{ item.produit.nom|escapejs }}', '{{ item.prix_vente_unitaire }}', '{{ item.quantite_actuelle }}', '{{ item.seuil_alerte }}', '{{ item.devise }}', '{{ item.strategie_gestion }}', '{{ item.bouteilles_par_casier }}', '{{ item.prix_achat_casier }}', '{{ item.vente_au_verre|yesno:'true,false' }}', '{{ item.produit.volume_cl }}', '{{ item.volume_verre_cl }}', '{{ item.prix_vente_verre }}', '{{ item.reduction_bouteille_entiere }}', '{{ item.prix_achat_unitaire }}')" 
                         class="flex-1 py-2 bg-surface-container hover:bg-orange-50 hover:text-orange-600 text-on-surface-variant text-[10px] font-bold rounded-lg uppercase tracking-widest transition-all">
                     Modifier
@@ -149,7 +164,7 @@
 
 {% if not read_only_interface %}
 <!-- Edit Modal -->
-<div id="editModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+<div id="editModal" role="dialog" aria-modal="true" aria-label="Fenêtre de dialogue" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-[32px] w-full max-w-lg p-6 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform max-h-[95vh] overflow-y-auto" id="editModalContent">
         <div class="flex items-center justify-between mb-6">
             <div>
@@ -305,38 +320,6 @@
 </div>
 
 <script>
-    let currentCategory = 'all';
-
-    function filterByCategory(catId, btn) {
-        currentCategory = catId;
-        // Update tabs styling
-        document.querySelectorAll('.category-btn').forEach(b => {
-            b.classList.remove('bg-orange-600', 'text-white', 'active-cat');
-            b.classList.add('bg-white', 'text-on-surface-variant');
-        });
-        btn.classList.add('bg-orange-600', 'text-white', 'active-cat');
-        btn.classList.remove('bg-white', 'text-on-surface-variant');
-
-        applyFilters();
-    }
-
-    function applyFilters() {
-        const query = document.getElementById('inventorySearch').value.toLowerCase();
-        const cards = document.querySelectorAll('.inventory-card');
-        
-        cards.forEach(card => {
-            const name = card.querySelector('h3').innerText.toLowerCase();
-            const catMatch = (currentCategory === 'all' || card.dataset.categoryId === currentCategory);
-            const nameMatch = name.includes(query);
-            
-            if (catMatch && nameMatch) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
-
     function syncFromCasiers() {
         const nbCasiersField = document.getElementById('modalNbCasiers');
         const bpcField = document.getElementById('modalBouteillesParCasier');
@@ -457,4 +440,67 @@
     }
 </script>
 {% endif %}
+
+<script>
+    window.inventoryCurrentCategory = window.inventoryCurrentCategory || 'all';
+
+    function normalizeInventorySearch(value) {
+        return (value || '')
+            .toLocaleLowerCase('fr')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim();
+    }
+
+    function filterByCategory(categoryId, button) {
+        window.inventoryCurrentCategory = categoryId;
+        document.querySelectorAll('.category-btn').forEach((categoryButton) => {
+            categoryButton.classList.remove('bg-orange-600', 'text-white', 'active-cat');
+            categoryButton.classList.add('bg-white', 'text-on-surface-variant');
+        });
+        if (button) {
+            button.classList.add('bg-orange-600', 'text-white', 'active-cat');
+            button.classList.remove('bg-white', 'text-on-surface-variant');
+        }
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const input = document.getElementById('inventorySearch');
+        const query = normalizeInventorySearch(input ? input.value : '');
+        let visibleProducts = 0;
+
+        document.querySelectorAll('.inventory-card').forEach((card) => {
+            const searchableText = normalizeInventorySearch(card.dataset.inventorySearch || card.textContent);
+            const categoryMatches = window.inventoryCurrentCategory === 'all' || card.dataset.categoryId === window.inventoryCurrentCategory;
+            const searchMatches = !query || searchableText.includes(query);
+            const visible = categoryMatches && searchMatches;
+            card.classList.toggle('hidden', !visible);
+            if (visible) visibleProducts += 1;
+        });
+
+        let emptyState = document.getElementById('inventorySearchEmpty');
+        const grid = document.querySelector('.inventory-products-grid');
+        if (!emptyState && grid) {
+            emptyState = document.createElement('div');
+            emptyState.id = 'inventorySearchEmpty';
+            emptyState.className = 'col-span-full hidden py-12 text-center text-sm font-bold text-on-surface-variant/50';
+            emptyState.innerHTML = '<span class="material-symbols-outlined mb-2 block text-4xl text-on-surface-variant/25">search_off</span>Aucun produit ne correspond à cette recherche.';
+            grid.appendChild(emptyState);
+        }
+        if (emptyState) emptyState.classList.toggle('hidden', visibleProducts !== 0);
+    }
+
+    function initializeInventorySearch() {
+        const input = document.getElementById('inventorySearch');
+        if (!input || input.dataset.instantSearchReady === 'true') return;
+        input.dataset.instantSearchReady = 'true';
+        input.addEventListener('input', applyFilters);
+        input.addEventListener('search', applyFilters);
+        applyFilters();
+    }
+
+    initializeInventorySearch();
+    document.addEventListener('barpilote:page-loaded', initializeInventorySearch);
+</script>
 {% endblock %}

@@ -51,22 +51,35 @@
     return value;
   }
 
-  function updateToggle(currency) {
-    const circle = document.getElementById('toggleCircle');
-    const labelUSD = document.getElementById('labelUSD');
-    const labelCDF = document.getElementById('labelCDF');
-    if (!circle || !labelUSD || !labelCDF) return;
-    const isUSD = normalizeCurrency(currency) === 'USD';
-    circle.classList.toggle('left-1', isUSD);
-    circle.classList.toggle('left-5', !isUSD);
-    labelUSD.classList.toggle('text-orange-600', isUSD);
-    labelUSD.classList.toggle('text-gray-400', !isUSD);
-    labelCDF.classList.toggle('text-orange-600', !isUSD);
-    labelCDF.classList.toggle('text-gray-400', isUSD);
-    labelUSD.classList.toggle('text-orange-300', isUSD);
-    labelUSD.classList.toggle('text-white/45', !isUSD);
-    labelCDF.classList.toggle('text-orange-300', !isUSD);
-    labelCDF.classList.toggle('text-white/45', isUSD);
+  function updateCurrencyUI(currency) {
+    const dot = document.getElementById("switch-dot");
+    const labelUsd = document.getElementById("label-usd");
+    const labelCdf = document.getElementById("label-cdf");
+    const mobileUsd = document.getElementById("mobile-label-usd");
+    const mobileCdf = document.getElementById("mobile-label-cdf");
+    const activeStatus = document.getElementById("currencyActiveStatus");
+    const switchRoot = document.getElementById("currencySwitchRoot");
+    const normalized = normalizeCurrency(currency);
+    if (switchRoot) switchRoot.dataset.currency = normalized;
+
+    if (mobileUsd) mobileUsd.classList.toggle("is-selected", normalized === "USD");
+    if (mobileCdf) mobileCdf.classList.toggle("is-selected", normalized === "CDF");
+    if (activeStatus) activeStatus.textContent = "Devise active : " + normalized;
+    if (!dot || !labelUsd || !labelCdf) return;
+
+    if (normalized === "CDF") {
+      dot.classList.remove("translate-x-0");
+      dot.classList.add("translate-x-5");
+      dot.style.transform = "translateX(1.25rem)";
+      labelCdf.className = "text-xs font-bold transition-colors duration-200 text-[#F97316] px-2";
+      labelUsd.className = "text-xs font-bold transition-colors duration-200 text-emerald-400/60 px-2";
+    } else {
+      dot.classList.remove("translate-x-5");
+      dot.classList.add("translate-x-0");
+      dot.style.transform = "translateX(0)";
+      labelUsd.className = "text-xs font-bold transition-colors duration-200 text-white px-2";
+      labelCdf.className = "text-xs font-bold transition-colors duration-200 text-emerald-400/60 px-2";
+    }
   }
 
   function renderMoneyElement(element, currency) {
@@ -106,7 +119,7 @@
   function applyCurrency(currency) {
     const next = normalizeCurrency(currency || getStoredCurrency());
     document.querySelectorAll('.bp-money').forEach((element) => renderMoneyElement(element, next));
-    updateToggle(next);
+    updateCurrencyUI(next);
     window.__barpiloteCurrency = next;
     return next;
   }
@@ -135,7 +148,12 @@
   }
 
   function toggleCurrency() {
-    return setCurrency(getStoredCurrency() === 'USD' ? 'CDF' : 'USD');
+    const next = getStoredCurrency() === 'USD' ? 'CDF' : 'USD';
+    if (typeof window.persistCurrencyChoice === 'function') {
+      window.persistCurrencyChoice(next);
+      return next;
+    }
+    return setCurrency(next);
   }
 
   function getCsrfToken() {

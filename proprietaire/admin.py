@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Bar, BarAdvisorSettings, PilotProfile, Table, StockItem, StockSupply, Category, MasterProduct, Sale, Order, OrderItem, StaffShift, Notification
+from .models import AdministrationExpense, AdsenseRevenue, Bar, BarAdvisorSettings, PilotProfile, Table, StockItem, StockSupply, Category, MasterProduct, Sale, Order, OrderItem, StaffShift, Notification, SubscriptionPayment
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -88,3 +88,37 @@ class NotificationAdmin(admin.ModelAdmin):
     list_filter = ('category', 'bar', 'read_at', 'created_at')
     search_fields = ('title', 'message', 'recipient__username', 'recipient__email')
     ordering = ('-created_at',)
+
+@admin.register(SubscriptionPayment)
+class SubscriptionPaymentAdmin(admin.ModelAdmin):
+    list_display = ('bar', 'table_count', 'amount_usd', 'period_days', 'status', 'paid_at', 'reference', 'created_at')
+    list_filter = ('status', 'bar', 'created_at', 'paid_at')
+    search_fields = ('bar__nom', 'reference')
+    readonly_fields = ('created_at',)
+    ordering = ('-created_at',)
+
+@admin.register(AdministrationExpense)
+class AdministrationExpenseAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'amount_usd', 'spent_at', 'created_by', 'created_at')
+    list_filter = ('category', 'spent_at')
+    search_fields = ('title', 'notes')
+    readonly_fields = ('created_at', 'created_by')
+    ordering = ('-spent_at', '-created_at')
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+@admin.register(AdsenseRevenue)
+class AdsenseRevenueAdmin(admin.ModelAdmin):
+    list_display = ('period', 'amount_usd', 'created_by', 'created_at')
+    list_filter = ('period',)
+    search_fields = ('notes',)
+    readonly_fields = ('created_at', 'created_by')
+    ordering = ('-period',)
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)

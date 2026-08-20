@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto py-4 px-2 space-y-6">
+<div class="server-order-detail max-w-md mx-auto py-4 px-2 space-y-6">
 
     <!-- Ticket Summary -->
     <div class="bg-surface rounded-3xl p-6 border border-orange-100 premium-shadow space-y-3">
@@ -75,7 +75,7 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="pay">
             <input type="hidden" name="order_id" value="{{ order.id }}">
-            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl transition-all active:scale-95 text-xs">
+            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.96] text-xs">
                 <span class="material-symbols-outlined font-black">payments</span>
                 Enregistrer le Paiement
             </button>

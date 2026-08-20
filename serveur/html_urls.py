@@ -1,13 +1,14 @@
 from django.urls import path
 from proprietaire.html_views import AdvisorAPIView, NotificationsAPIView, FCMConfigAPIView, FCMTokenAPIView
 from .html_views import (
-    ServeurDashboardView, ServeurScanQRView, ServeurProfilSetupView,
+    ServeurDashboardView, ServeurTodayOrdersView, ServeurScanQRView, ServeurProfilSetupView,
     ServeurWelcomeView, ServeurCommandeDetailView, ServeurMissionView,
-    ServeurShiftActionView, ServeurWaitingConfirmationView, ServeurJoinView, ServeurLogoutView, ServeurToggleCurrencyView, ServeurClientHistoryView, ServeurClientOrderActionView, ServeurUpdateOrderStatusView, ServeurTakeOrderView, ServeurInventoryView, ServeurFinanceView, ServeurClientsView, ServeurTeamView, ServeurTablesView, ServeurTableActionView, ServeurReportView, ServeurRecordLossView, ServeurLiveOrdersAPIView, ServeurOrderNotificationActionView
+    ServeurShiftActionView, ServeurWaitingConfirmationView, ServeurJoinView, ServeurLogoutView, ServeurToggleCurrencyView, ServeurClientHistoryView, ServeurClientOrderActionView, ServeurUpdateOrderStatusView, ServeurTakeOrderView, ServeurInventoryView, ServeurFinanceView, ServeurFactureDownloadView, ServeurFacturesDownloadView, ServeurFactureDeleteView, ServeurClientsView, ServeurTeamView, ServeurTablesView, ServeurTableActionView, ServeurReportView, ServeurRecordLossView, ServeurLiveOrdersAPIView, ServeurPopoverOrderActionView, ServeurOrderNotificationActionView
 )
 
 urlpatterns = [
     path('dashboard/', ServeurDashboardView.as_view(), name='serveur_dashboard'),
+    path('commandes-du-jour/', ServeurTodayOrdersView.as_view(), name='serveur_today_orders'),
     path('scan/', ServeurScanQRView.as_view(), name='serveur_scan'),
     path('logout/', ServeurLogoutView.as_view(), name='serveur_logout'),
     path('toggle-currency/', ServeurToggleCurrencyView.as_view(), name='serveur_toggle_currency'),
@@ -17,6 +18,7 @@ urlpatterns = [
     path('api/client-order-action/', ServeurClientOrderActionView.as_view(), name='serveur_client_order_action'),
     path('api/notifications/', NotificationsAPIView.as_view(), name='serveur_notifications_api'),
     path('api/live-orders/', ServeurLiveOrdersAPIView.as_view(), name='serveur_live_orders_api'),
+    path('api/popover-order-action/', ServeurPopoverOrderActionView.as_view(), name='serveur_popover_order_action'),
     path('api/fcm/config/', FCMConfigAPIView.as_view(), name='serveur_fcm_config_api'),
     path('api/fcm/token/', FCMTokenAPIView.as_view(), name='serveur_fcm_token_api'),
     path('api/advisor/', AdvisorAPIView.as_view(), name='serveur_advisor_api'),
@@ -27,6 +29,9 @@ urlpatterns = [
     path('take-order/', ServeurTakeOrderView.as_view(), name='serveur_take_order'),
     path('inventory/', ServeurInventoryView.as_view(), name='serveur_inventory'),
     path('finance/', ServeurFinanceView.as_view(), name='serveur_finance'),
+    path('finance/facture/<uuid:facture_id>/pdf/', ServeurFactureDownloadView.as_view(), name='serveur_facture_download'),
+    path('finance/facture/<uuid:facture_id>/delete/', ServeurFactureDeleteView.as_view(), name='serveur_facture_delete'),
+    path('finance/factures/pdf/', ServeurFacturesDownloadView.as_view(), name='serveur_factures_download'),
     path('clients/', ServeurClientsView.as_view(), name='serveur_clients'),
     path('team/', ServeurTeamView.as_view(), name='serveur_team'),
     path('tables/', ServeurTablesView.as_view(), name='serveur_tables'),

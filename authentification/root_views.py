@@ -10,6 +10,8 @@ class RootRedirectView(View):
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('login_html')
+        if request.user.is_superuser:
+            return redirect('administration_dashboard')
             
         try:
             profile = PilotProfile.objects.get(user=request.user)

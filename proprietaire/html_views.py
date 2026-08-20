@@ -6,6 +6,7 @@ from django.urls import reverse
 import os
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum, Q, Count, F
+from django.core.paginator import Paginator
 from django.db import IntegrityError, OperationalError, close_old_connections
 from django.utils import timezone
 from datetime import timedelta
@@ -22,7 +23,7 @@ from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
 import uuid
-from .models import PilotProfile, Order, Table, Bar, BarAdvisorSettings, StockItem, OrderItem, Category, Facture, Client, Notification, grant_trial_if_eligible, record_owner_audit
+from .models import PilotProfile, Order, Table, Bar, BarAdvisorSettings, StockItem, OrderItem, Category, Facture, Client, Notification, SubscriptionPayment, grant_trial_if_eligible, record_owner_audit
 from .order_services import take_order_for_profile
 from .notifications import ensure_daily_debt_reminders, notify_bar_owners, notify_bar_servers, notify_debt_created, notify_order_created, notify_order_status, notify_user
 from .advisor import generate_advisor_response
@@ -139,6 +140,61 @@ class NotificationsAPIView(LoginRequiredMixin, View):
 
         return JsonResponse({'error': 'Action invalide.'}, status=400)
 
+class NotificationsPageView(LoginRequiredMixin, TemplateView):
+    template_name = "proprietaire/notifications.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        ensure_daily_debt_reminders(self.request.user)
+        notifications = Notification.objects.filter(recipient=self.request.user).select_related("actor", "bar")
+        search = self.request.GET.get("q", "").strip()
+        active_category = self.request.GET.get("category", "all").lower()
+        allowed_categories = {"all", "orders", "stocks", "payments", "system"}
+        if active_category not in allowed_categories:
+            active_category = "all"
+
+        if active_category == "orders":
+            notifications = notifications.filter(category="ORDER")
+        elif active_category == "stocks":
+            notifications = notifications.filter(
+                Q(title__icontains="stock") | Q(message__icontains="stock") |
+                Q(title__icontains="inventaire") | Q(message__icontains="inventaire") |
+                Q(title__icontains="seuil") | Q(message__icontains="seuil")
+            )
+        elif active_category == "payments":
+            notifications = notifications.filter(
+                Q(category="DEBT") | Q(title__icontains="paiement") |
+                Q(message__icontains="paiement") | Q(title__icontains="facture") |
+                Q(message__icontains="facture") | Q(title__icontains="régl") |
+                Q(message__icontains="régl")
+            )
+        elif active_category == "system":
+            notifications = notifications.filter(category__in=["SYSTEM", "TEAM", "TABLE"])
+
+        if search:
+            notifications = notifications.filter(
+                Q(title__icontains=search) | Q(message__icontains=search) |
+                Q(actor__first_name__icontains=search) | Q(actor__last_name__icontains=search) |
+                Q(actor__username__icontains=search)
+            )
+
+        page_obj = Paginator(notifications.order_by("-created_at"), 20).get_page(self.request.GET.get("page"))
+        for notification in page_obj.object_list:
+            notification.target_url = _notification_target_url(notification, self.request.user)
+            notification.actor_label = (notification.actor.get_full_name() or notification.actor.get_username()) if notification.actor else ""
+
+        all_notifications = Notification.objects.filter(recipient=self.request.user)
+        context.update({
+            "page_obj": page_obj,
+            "notifications": page_obj.object_list,
+            "notification_total": all_notifications.count(),
+            "notification_unread": all_notifications.filter(read_at__isnull=True).count(),
+            "active_category": active_category,
+            "search_query": search,
+        })
+        return context
+
+
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'proprietaire/dashboard.html'
     
@@ -153,7 +209,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context['bar'] = bar
             
             if bar:
-                today = timezone.now().date()
+                today = timezone.localdate()
                 
                 # Revenue (PAID orders today)
                 revenue_data = Order.objects.filter(
@@ -233,7 +289,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 ).count()
                 
                 # Recent Transactions
-                context['recent_orders'] = Order.objects.filter(bar=bar).order_by('-date_creation')[:10]
+                context['recent_orders'] = Order.objects.filter(
+                    bar=bar,
+                    date_creation__date=today,
+                ).order_by('-date_creation')[:10]
                 
                 context['order_assignment_mode'] = bar.order_assignment_mode
                 context['tables'] = Table.objects.filter(bar=bar).select_related('assigned_server').order_by('nom')
@@ -259,6 +318,86 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             pass
             
         return context
+
+class SalesHistoryView(LoginRequiredMixin, TemplateView):
+    template_name = "proprietaire/sales_history.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = get_object_or_404(PilotProfile, user=self.request.user, role="PROPRIETAIRE")
+        bar = profile.bar
+        context["bar"] = bar
+        context["profile"] = profile
+        if not bar:
+            context.update({"sales": [], "tables": [], "servers": []})
+            return context
+
+        today = timezone.localdate()
+        first_sale_at = Order.objects.filter(bar=bar, statut="PAID").order_by("date_creation").values_list("date_creation", flat=True).first()
+        default_start = timezone.localtime(first_sale_at).date() if first_sale_at else today
+        start_raw = self.request.GET.get("start_date", default_start.isoformat())
+        end_raw = self.request.GET.get("end_date", today.isoformat())
+        try:
+            start_date = timezone.datetime.strptime(start_raw, "%Y-%m-%d").date()
+            end_date = timezone.datetime.strptime(end_raw, "%Y-%m-%d").date()
+        except ValueError:
+            start_date, end_date = default_start, today
+        if start_date > end_date:
+            start_date, end_date = end_date, start_date
+
+        sales = Order.objects.filter(
+            bar=bar,
+            statut="PAID",
+            date_creation__date__range=(start_date, end_date),
+        ).select_related("table", "serveur", "serveur__user").prefetch_related(
+            "items__product_item__produit",
+        ).order_by("-date_creation")
+
+        selected_table = None
+        table_id = self.request.GET.get("table", "").strip()
+        if table_id:
+            try:
+                selected_table = Table.objects.filter(bar=bar, id=uuid.UUID(table_id)).first()
+            except (ValueError, AttributeError):
+                selected_table = None
+            if selected_table:
+                sales = sales.filter(table=selected_table)
+
+        selected_server = None
+        server_id = self.request.GET.get("server", "").strip()
+        if server_id:
+            try:
+                selected_server = PilotProfile.objects.filter(
+                    id=int(server_id), bar=bar, role__in=["SERVEUR", "PROPRIETAIRE"],
+                ).first()
+            except (ValueError, TypeError):
+                selected_server = None
+            if selected_server:
+                sales = sales.filter(serveur=selected_server)
+
+        totals = sales.aggregate(total_usd=Sum("total_usd"), total_cdf=Sum("total_cdf"), sales_count=Count("id"))
+        page_obj = Paginator(sales, 25).get_page(self.request.GET.get("page"))
+        query_params = self.request.GET.copy()
+        query_params.pop("page", None)
+        context.update({
+            "sales": page_obj.object_list,
+            "page_obj": page_obj,
+            "tables": Table.objects.filter(bar=bar).order_by("nom"),
+            "servers": PilotProfile.objects.filter(
+                Q(bar=bar) | Q(owned_bars=bar),
+                role__in=["SERVEUR", "PROPRIETAIRE"],
+            ).distinct().select_related("user").order_by("prenom", "nom"),
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+            "selected_table": selected_table,
+            "selected_server": selected_server,
+            "total_usd": totals["total_usd"] or 0,
+            "total_cdf": totals["total_cdf"] or 0,
+            "sales_count": totals["sales_count"] or 0,
+            "filter_query": query_params.urlencode(),
+        })
+        return context
+
 
 class TakeOrderView(LoginRequiredMixin, View):
     """Permet au propriétaire de prendre une commande directement."""
@@ -942,8 +1081,20 @@ class TeamView(LoginRequiredMixin, TemplateView):
 
             rate = Decimal(profile.bar.taux_change_usd_to_cdf or 2800)
             for member in serveur_staff:
+                import re
+                from urllib.parse import quote
+
                 member_pilot = PilotProfile.objects.filter(user=member.user, bar=profile.bar).first()
                 member.is_online = bool(member_pilot and member_pilot.is_online)
+                member.whatsapp_url = ''
+                phone_digits = re.sub(r'\D', '', member.telephone or '')
+                if phone_digits.startswith('0'):
+                    phone_digits = f"243{phone_digits[1:]}"
+                elif len(phone_digits) == 9:
+                    phone_digits = f"243{phone_digits}"
+                if len(phone_digits) >= 10:
+                    message = quote(f"Bonjour {member.prenom or member.nom}, ici l'équipe de {profile.bar.nom}.")
+                    member.whatsapp_url = f"https://wa.me/{phone_digits}?text={message}"
                 member.hierarchy_level = 3
                 if member.tables_access_granted:
                     member.hierarchy_level = 2
@@ -1211,8 +1362,8 @@ class TablesView(LoginRequiredMixin, TemplateView):
             
             # Identifier les tables occupées (commandes non payées/annulées)
             active_orders = Order.objects.filter(
+                Q(statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']) | Q(statut='PAID', client_meta__table_session__statut='PAID'),
                 bar=bar,
-                statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']
             ).select_related('table', 'serveur')
             
             occupied_tables = {}
@@ -1248,6 +1399,8 @@ class TablesView(LoginRequiredMixin, TemplateView):
             context['subscription_monthly_total'] = bar.prix_mensuel_estime
             context['occupied_count'] = len(occupied_tables)
             context['free_count'] = tables.count() - len(occupied_tables)
+            context['subscribed_count'] = sum(1 for table in tables if table.subscription_is_active)
+            context['unsubscribed_count'] = tables.count() - context['subscribed_count']
         return context
 
 class EstablishmentReadyView(LoginRequiredMixin, TemplateView):
@@ -1308,16 +1461,22 @@ class TableActionView(LoginRequiredMixin, View):
         elif action == 'liberate' and table_id:
             orders_to_close = list(Order.objects.filter(bar=profile.bar, table_id=table_id, statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']))
             now = timezone.now()
+            from client.models import TableParticipant, TableSession
+            active_table_sessions = TableSession.objects.filter(table_id=table_id, statut__in=['OPEN', 'PAID'])
+            TableParticipant.objects.filter(table_session__in=active_table_sessions, released_at__isnull=True).update(released_at=now)
+            active_table_sessions.update(statut='CLOSED', paid_at=now, closed_at=now)
             updated = Order.objects.filter(id__in=[order.id for order in orders_to_close]).update(statut='PAID', date_maj=now)
             if orders_to_close:
                 try:
-                    from client.models import ClientOrderMeta
+                    from client.models import ClientOrderMeta, TableParticipant, TableSession, mark_table_session_paid
                     ClientOrderMeta.objects.filter(order__in=orders_to_close).update(payment_requested=False, payment_confirmed_at=now, table_released_at=now, updated_at=now)
                 except Exception:
                     pass
                 for order in orders_to_close:
                     order.statut = 'PAID'
                     order.date_maj = now
+                    from .inventory_services import deduct_inventory_for_paid_order
+                    deduct_inventory_for_paid_order(order)
                     notify_order_status(order, actor=request.user, status_label='Payé')
             payload = {'success': True, 'message': f"La table a été libérée. {updated} commande(s) clôturée(s).", 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table_id), 'action': 'liberate', 'updated_orders': updated}}}
 
@@ -1347,6 +1506,7 @@ class TableActionView(LoginRequiredMixin, View):
             table.subscription_expires_at = base + timedelta(days=days)
             table.est_active = True
             table.save(update_fields=['subscription_started_at', 'subscription_expires_at', 'est_active'])
+            SubscriptionPayment.objects.create(bar=profile.bar, table_count=1, amount_usd=profile.bar.prix_table_mensuel_usd, period_days=days, period_started_at=now, period_ends_at=table.subscription_expires_at, recorded_by=profile)
             payload = {'success': True, 'message': f"Abonnement activé pour {table.nom} jusqu'au {timezone.localtime(table.subscription_expires_at).strftime('%d/%m/%Y %H:%M')}.", 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_id': str(table.id), 'action': 'activate_subscription'}}}
 
         elif action == 'activate_subscriptions_bulk':
@@ -1372,6 +1532,7 @@ class TableActionView(LoginRequiredMixin, View):
                 selected_count = len(selected_tables)
                 unit_price = profile.bar.prix_table_mensuel_usd
                 final_price = selected_count * unit_price
+                SubscriptionPayment.objects.create(bar=profile.bar, table_count=selected_count, amount_usd=final_price, period_days=days, period_started_at=now, period_ends_at=max(table.subscription_expires_at for table in selected_tables), recorded_by=profile)
                 names = ', '.join(table.nom for table in selected_tables[:5])
                 if selected_count > 5:
                     names += f' +{selected_count - 5}'
@@ -1793,7 +1954,12 @@ class MixedCaseArrivalView(LoginRequiredMixin, TemplateView):
 class ToggleCurrencyView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         profile = PilotProfile.objects.get(user=request.user)
-        profile.preferred_currency = 'CDF' if profile.preferred_currency == 'USD' else 'USD'
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            payload = {}
+        requested_currency = payload.get('currency')
+        profile.preferred_currency = requested_currency if requested_currency in ('USD', 'CDF') else ('CDF' if profile.preferred_currency == 'USD' else 'USD')
         profile.save(update_fields=['preferred_currency'])
         return JsonResponse({
             'currency': profile.preferred_currency,
@@ -1810,8 +1976,11 @@ class LiveOrdersAPIView(LoginRequiredMixin, View):
                 return JsonResponse({'orders': []})
                 
             active_orders = Order.objects.filter(
-                bar=bar, 
+                bar=bar,
+                date_creation__date=timezone.localdate(),
                 statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']
+            ).select_related('table', 'serveur', 'client_meta').prefetch_related(
+                'items__product_item__produit',
             ).order_by('date_creation')
             
             orders_data = []
@@ -1827,6 +1996,8 @@ class LiveOrdersAPIView(LoginRequiredMixin, View):
                         'devise': item.devise
                     })
 
+                client_meta = getattr(order, 'client_meta', None)
+
                 orders_data.append({
                     'id': str(order.id),
                     'table_nom': order.table.nom,
@@ -1840,6 +2011,10 @@ class LiveOrdersAPIView(LoginRequiredMixin, View):
                     'delivery_duration': int((order.date_service - order.date_creation).total_seconds()) if order.date_service else None,
                     'server_id': str(order.serveur_id) if order.serveur_id else '',
                     'server': f'{order.serveur.prenom} {order.serveur.nom}'.strip() if order.serveur else '',
+                    'payment_requested': bool(client_meta and client_meta.has_payment_request),
+                    'payment_requested_at': client_meta.payment_requested_at.isoformat() if client_meta and client_meta.payment_requested_at else None,
+                    'payment_confirmed': bool(client_meta and client_meta.payment_confirmed_at),
+                    'payment_confirmed_at': client_meta.payment_confirmed_at.isoformat() if client_meta and client_meta.payment_confirmed_at else None,
                     'items': items_data
                 })
                 
@@ -1890,6 +2065,7 @@ class UpdateOrderStatusView(LoginRequiredMixin, View):
                 try:
                     from client.models import ClientOrderMeta
                     ClientOrderMeta.objects.filter(order__in=orders).update(payment_requested=False, payment_confirmed_by=profile, payment_confirmed_at=status_now, updated_at=status_now)
+                    mark_table_session_paid(orders.first(), confirmed_by=profile)
                 except Exception:
                     pass
             
@@ -2263,11 +2439,25 @@ class ClientManagementView(LoginRequiredMixin, View):
             total_spent_cdf = float(total_cdf) + float(total_usd) * float(rate)
             
             eligible = c.dette_autorisee or (total_spent_cdf >= float(bar.seuil_dette_eligible))
+
+            whatsapp_url = ''
+            if c.telephone:
+                import re
+                from urllib.parse import quote
+                phone_digits = re.sub(r'\D', '', c.telephone)
+                if phone_digits.startswith('0'):
+                    phone_digits = f"243{phone_digits[1:]}"
+                elif len(phone_digits) == 9:
+                    phone_digits = f"243{phone_digits}"
+                if len(phone_digits) >= 10:
+                    message = quote(f"Bonjour {c.nom}, ici {bar.nom}.")
+                    whatsapp_url = f"https://wa.me/{phone_digits}?text={message}"
             
             clients_data.append({
                 'id': c.id,
                 'nom': c.nom,
                 'telephone': c.telephone or 'Non renseigné',
+                'whatsapp_url': whatsapp_url,
                 'dette_autorisee': c.dette_autorisee,
                 'total_spent_cdf': total_spent_cdf,
                 'eligible': eligible,

@@ -1,15 +1,16 @@
 from django.urls import path
 from .html_views import (
-    DashboardView, EstablishmentSetupView, ProfileSetupView,
+    DashboardView, SalesHistoryView, EstablishmentSetupView, ProfileSetupView,
     InventoryView, FinanceView, TeamView, TeamRequestActionView, TeamAccessActionView, TeamSalaryActionView, TablesView, EstablishmentDetailsView, TableSetupView,
     TableActionView, TableDownloadQRView, EstablishmentReadyView, StaffInvitationPDFView,
     RecordLossView, MixedCaseArrivalView, ToggleCurrencyView, FactureActionView, TakeOrderView,
     SwitchEstablishmentView,
-    LiveOrdersAPIView, UpdateOrderStatusView, DownloadFacturePDFView, DownloadAllFacturesView, ClientHistoryAPIView, ClientManagementView, NotificationsAPIView, AdvisorAPIView, AdvisorSettingsView, FCMConfigAPIView, FCMTokenAPIView
+    LiveOrdersAPIView, UpdateOrderStatusView, DownloadFacturePDFView, DownloadAllFacturesView, ClientHistoryAPIView, ClientManagementView, NotificationsAPIView, NotificationsPageView, AdvisorAPIView, AdvisorSettingsView, FCMConfigAPIView, FCMTokenAPIView
 )
 
 urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard_html'),
+    path('commandes/historique/', SalesHistoryView.as_view(), name='sales_history_html'),
     path('setup-bar/', EstablishmentSetupView.as_view(), name='establishment_setup'),
     path('profile-setup/', ProfileSetupView.as_view(), name='profile_setup'),
     path('inventory/', InventoryView.as_view(), name='inventory_html'),
@@ -37,6 +38,7 @@ urlpatterns = [
     path('api/update-order-status/', UpdateOrderStatusView.as_view(), name='api_update_order_status'),
     path('api/client-history/', ClientHistoryAPIView.as_view(), name='api_client_history'),
     path('clients/', ClientManagementView.as_view(), name='clients_html'),
+    path('notifications/', NotificationsPageView.as_view(), name='notifications_html'),
     path('api/notifications/', NotificationsAPIView.as_view(), name='notifications_api'),
     path('api/advisor/', AdvisorAPIView.as_view(), name='advisor_api'),
     path('advisor/settings/', AdvisorSettingsView.as_view(), name='advisor_settings'),

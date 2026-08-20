@@ -1,0 +1,58 @@
+
+
+/* BarPilote customer experience — mobile-first consumer ordering. */
+.bp-client-app {
+ --client-canvas:#f5f6f3;--client-surface:#fff;--client-subtle:#f1f3ef;--client-ink:#18201b;--client-muted:#5d6760;--client-line:rgba(24,32,27,.13);--client-forest:#13251d;--client-orange:#e85d16;--client-orange-strong:#bd4309;--client-orange-soft:#fff1e8;
+ background:var(--client-canvas)!important;color:var(--client-ink)!important;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+}
+.bp-client-app :where(h1,h2,h3){letter-spacing:-.025em!important;text-wrap:balance}
+.bp-client-app :where(p,li){text-wrap:pretty}
+.bp-client-app :where(a,button,input,select,textarea):focus-visible{outline:3px solid rgba(232,93,22,.3)!important;outline-offset:3px!important}
+.bp-client-app :where(a,button){-webkit-tap-highlight-color:transparent}
+.bp-client-app button:not(:disabled):active,.bp-client-app a:active{scale:.96}
+.bp-client-app :where(button,select,input:not([type="hidden"])){min-height:44px}
+.bp-client-app :where(.rounded-\[40px\],.rounded-\[36px\],.rounded-\[32px\],.rounded-\[28px\],.rounded-3xl,.rounded-2xl){border-radius:14px!important}
+.bp-client-app :where(button,input,select).rounded-full,.bp-client-app :where(button,input,select).rounded-2xl{border-radius:10px!important}
+.bp-client-app :where(.shadow-xl,.shadow-2xl,.executive-shadow){box-shadow:none!important}
+.bp-client-app img{outline:1px solid oklch(0 0 0/.1);outline-offset:-1px}
+.bp-client-app img[src*="logo"]{outline:0}
+.bp-client-app main{background:transparent}
+.bp-client-app main>header{border-color:var(--client-line)!important;background:rgba(255,255,255,.96)!important;backdrop-filter:blur(14px)}
+.bp-client-app .bp-client-intro{padding:.75rem!important;border:1px solid var(--client-line);background:var(--client-forest)!important;border-radius:14px!important}
+.bp-client-app .bp-client-intro>div:first-child,.bp-client-app .bp-client-intro .grid{display:none}
+.bp-client-app .bp-client-intro .mt-5{margin-top:0!important}
+.bp-client-app .bp-client-intro .rounded-3xl{border:0!important;background:transparent!important;padding:.25rem!important}
+.bp-client-app .category-pill{min-height:42px;border-radius:10px!important;transition:color 150ms ease-out,background-color 150ms ease-out,border-color 150ms ease-out}
+.bp-client-app .category-pill.active{background:var(--client-forest)!important;color:#fff!important}
+.bp-client-app .menu-item{border-color:var(--client-line)!important;border-radius:14px!important;box-shadow:none!important;transition:border-color 150ms ease-out,background-color 150ms ease-out}
+.bp-client-app .menu-item.selected-card{border-color:var(--client-orange)!important;background:#fffaf7!important;box-shadow:inset 0 0 0 1px var(--client-orange)!important}
+.bp-client-app .menu-item>div:first-child{border-radius:10px!important}
+.bp-client-app .quick-add{width:44px;height:44px;background:var(--client-orange)!important;box-shadow:0 8px 18px rgba(189,67,9,.2)!important}
+.bp-client-app .qty-btn{width:44px!important;height:44px!important}
+.bp-client-app .unit-select{min-height:40px;border-color:var(--client-line)!important;background:var(--client-subtle)!important}
+.bp-client-app :where(input,select,textarea):focus{border-color:var(--client-orange)!important;box-shadow:0 0 0 3px rgba(232,93,22,.14)!important}
+.bp-client-app #identitySheet,.bp-client-app #releaseTableModalContent{border-radius:16px 16px 0 0!important;border-color:var(--client-line)!important;box-shadow:0 -18px 48px rgba(19,37,29,.18)!important}
+.bp-client-app #orderActionBar{border-color:var(--client-line)!important;background:rgba(255,255,255,.98)!important;backdrop-filter:blur(14px)}
+.bp-client-app #submitOrder,.bp-client-app #confirmOrder{background:var(--client-orange)!important;border-radius:10px!important;box-shadow:none!important}
+.bp-client-app #submitOrder:hover,.bp-client-app #confirmOrder:hover{background:var(--client-orange-strong)!important}
+.bp-client-app #submitOrder:disabled{background:#d4d8d3!important;color:#606861!important}
+.bp-client-app>nav.fixed.bottom-0{min-height:calc(72px + env(safe-area-inset-bottom));padding:.45rem .5rem calc(.45rem + env(safe-area-inset-bottom))!important;border-color:rgba(255,255,255,.1)!important;background:var(--client-forest)!important;box-shadow:0 -14px 32px rgba(19,37,29,.18)!important}
+.bp-client-app>nav.fixed.bottom-0 a{min-height:54px;color:rgba(255,255,255,.65)!important;border-radius:10px!important}
+.bp-client-app>nav.fixed.bottom-0 a.bg-orange-50{background:rgba(255,255,255,.09)!important;color:#fff!important}
+@media(max-width:359px){.bp-client-app form>section.grid-cols-2{grid-template-columns:minmax(0,1fr)!important}.bp-client-app .menu-item h3{min-height:auto!important}}
+@media(min-width:768px){.bp-client-app main{border-inline:1px solid var(--client-line)}.bp-client-app #orderActionBar{bottom:73px}}
+@media(prefers-reduced-motion:reduce){.bp-client-app *,.bp-client-app *::before,.bp-client-app *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+.bp-client-app :where(.bg-orange-600,#submitOrder,#confirmOrder){background:#bd4309!important}
+.bp-client-app .category-pill{min-height:44px}
+.bp-client-app :where(input,textarea)::placeholder{color:#68736b!important}
+
+.bp-client-app .star-row{isolation:isolate}
+.bp-client-app .star{position:relative;display:inline-grid;min-width:44px;min-height:44px;place-items:center;color:#d7dcd7;transform-origin:50% 72%;transition:color 160ms ease-out,transform 160ms ease-out,filter 160ms ease-out}
+.bp-client-app .star:hover{color:#fb923c;transform:translateY(-2px) scale(1.06)}
+.bp-client-app .star.active{color:#f97316;filter:drop-shadow(0 5px 7px rgba(234,88,12,.24))}
+.bp-client-app .star.is-rating-pop{animation:bp-star-fill 460ms cubic-bezier(.2,.85,.25,1.35) both;animation-delay:var(--star-delay,0ms)}
+.bp-client-app .star.is-rating-picked{animation-name:bp-star-picked;animation-duration:560ms}
+@keyframes bp-star-fill{0%{transform:scale(.72) rotate(-10deg);color:#d7dcd7}55%{transform:scale(1.28) rotate(6deg);color:#fb923c}100%{transform:scale(1) rotate(0);color:#f97316}}
+@keyframes bp-star-picked{0%{transform:scale(.72) rotate(-12deg)}45%{transform:scale(1.42) rotate(8deg)}72%{transform:scale(.9) rotate(-3deg)}100%{transform:scale(1) rotate(0)}}
+@media(prefers-reduced-motion:reduce){.bp-client-app .star.is-rating-pop,.bp-client-app .star.is-rating-picked{animation:none!important}}

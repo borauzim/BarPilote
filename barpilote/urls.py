@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from authentification.views import GoogleLogin
 from authentification.root_views import RootRedirectView
 from proprietaire.html_views import FirebaseMessagingServiceWorkerView
+from barpilote.admin_views import AdministrationDashboardView, AdministrationEstablishmentDetailView, AdministrationExpenseCreateView, AdministrationAdsenseRevenueCreateView
 
 from django.http import HttpResponse
 from django.views.generic import RedirectView
@@ -73,6 +74,10 @@ urlpatterns = [
     path('ads.txt', ads_txt, name='ads_txt'),
     path('barpilote-sw.js', barpilote_sw, name='barpilote_sw'),
     path('firebase-messaging-sw.js', FirebaseMessagingServiceWorkerView.as_view(), name='firebase_messaging_sw'),
+    path('administration/', AdministrationDashboardView.as_view(), name='administration_dashboard'),
+    path('administration/adsense/ajouter/', AdministrationAdsenseRevenueCreateView.as_view(), name='administration_adsense_create'),
+    path('administration/depenses/ajouter/', AdministrationExpenseCreateView.as_view(), name='administration_expense_create'),
+    path('administration/etablissements/<uuid:bar_id>/', AdministrationEstablishmentDetailView.as_view(), name='administration_establishment_detail'),
     path('admin/', admin.site.urls),
     
     # Overrides Allauth local routes to force our custom page

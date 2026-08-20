@@ -83,10 +83,10 @@
 {% if is_pending_confirmation %}
 <div class="min-h-[70vh] flex flex-col justify-center space-y-6 py-8">
     <div class="text-center space-y-3">
-        <p class="text-[10px] font-black uppercase tracking-widest text-primary">Demande envoyee</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-primary">Demande envoyée</p>
         <h1 class="text-3xl font-black tracking-tight text-on-surface">Tableau de bord en attente</h1>
         <p class="text-sm text-on-surface-variant leading-relaxed max-w-sm mx-auto">
-            Awaiting confirmation from the owner ({{ owner_name }}) of the establishment ({{ bar.nom }}).
+            En attente de validation par {{ owner_name }}, responsable de {{ bar.nom }}.
         </p>
     </div>
 
@@ -95,21 +95,19 @@
             <span class="material-symbols-outlined text-4xl">hourglass_top</span>
         </div>
         <div class="space-y-2">
-            <h2 class="text-lg font-black text-on-surface">Aucune operation disponible</h2>
+            <h2 class="text-lg font-black text-on-surface">Aucune opération disponible</h2>
             <p class="text-xs text-on-surface-variant leading-relaxed">
-                Vos commandes, shifts et statistiques apparaitront ici apres validation par le proprietaire.
+                Vos commandes, shifts et statistiques apparaîtront ici après validation par le propriétaire.
             </p>
         </div>
-        <a href="{% url 'serveur_setup' %}" class="inline-flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high border border-orange-100 text-on-surface px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
+        <a href="{% url 'serveur_setup' %}" class="inline-flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high border border-orange-100 text-on-surface px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-[0.96]">
             <span class="material-symbols-outlined text-primary text-sm">edit</span>
-            Completer le profil
+            Compléter le profil
         </a>
     </div>
 </div>
 {% else %}
-<section class="relative overflow-hidden rounded-[40px] p-10 executive-shadow border border-white/20 bg-white group">
-    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[120px] -mr-48 -mt-48"></div>
-    <div class="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[100px] -ml-24 -mb-24"></div>
+<section class="bp-server-performance relative overflow-hidden rounded-3xl border border-stone-200/70 border-t-4 border-t-emerald-800 bg-[#F2EFE9] p-6 shadow-sm">
     <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div class="space-y-4">
             <div class="flex items-center gap-3">
@@ -119,7 +117,7 @@
             <div>
                 <h2 class="text-sm font-bold text-on-surface-variant/60 uppercase mb-1">Vos ventes du jour</h2>
                 <div class="flex items-end gap-4">
-                    <h1 class="text-6xl md:text-7xl font-black tracking-tighter text-on-surface leading-none">
+                    <h1 class="text-6xl md:text-7xl font-black tabular-nums tracking-tighter text-on-surface leading-none">
                         <span id="serverTodayRevenueValue">{% display_price total_revenue_usd total_revenue_cdf %}</span>
                     </h1>
                     <div class="mb-2">
@@ -139,19 +137,13 @@
                 </div>
             </div>
         </div>
-        <div class="relative w-full md:w-64 h-32 flex items-end gap-1 px-4">
-            {% for i in "123456789012" %}
-            <div class="flex-1 bg-orange-100 rounded-t-lg transition-all duration-700 hover:bg-orange-500" style="height: {{ forloop.counter|add:20 }}%; opacity: {{ forloop.counter|add:30 }}%"></div>
-            {% endfor %}
-            <div class="absolute inset-0 bg-gradient-to-t from-white to-transparent h-12 bottom-0"></div>
-        </div>
     </div>
 </section>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-    <div class="lg:col-span-2 space-y-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-white p-8 rounded-[32px] executive-shadow border border-surface-container-high relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+<div class="bp-server-dashboard-grid grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="bp-server-primary lg:col-span-2 space-y-6">
+        <div class="bp-server-kpis grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white/90 rounded-3xl border border-stone-200/70 shadow-sm p-6 relative overflow-hidden">
                 <div class="flex justify-between items-center mb-8">
                     <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shadow-inner">
                         <span class="material-symbols-outlined">table_bar</span>
@@ -174,7 +166,7 @@
                 </div>
             </div>
 
-            <div class="bg-white p-8 rounded-[32px] executive-shadow border border-surface-container-high relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+            <div class="bg-white/90 rounded-3xl border border-stone-200/70 shadow-sm p-6 relative overflow-hidden">
                 <div class="flex justify-between items-center mb-8">
                     <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
                         <span class="material-symbols-outlined">room_service</span>
@@ -183,14 +175,9 @@
                 </div>
                 <h3 class="text-[10px] font-black tracking-[0.2em] text-on-surface-variant/40 mb-2 uppercase">Vos Commandes Actives</h3>
                 <p id="serverActiveOrdersCount" class="text-5xl font-black text-on-surface tracking-tighter">{{ active_orders|default:"0" }}</p>
-                <div class="flex gap-2 mt-8">
-                    {% for i in "123456" %}
-                    <div class="h-3 flex-1 {% if forloop.counter <= active_orders %}bg-blue-600{% else %}bg-surface-container{% endif %} rounded-full transition-all duration-500"></div>
-                    {% endfor %}
-                </div>
             </div>
 
-            <div class="bg-white p-8 rounded-[32px] executive-shadow border border-surface-container-high relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+            <div class="bg-white/90 rounded-3xl border border-stone-200/70 shadow-sm p-6 relative overflow-hidden">
                 <div class="flex justify-between items-center mb-8">
                     <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
                         <span class="material-symbols-outlined">checklist</span>
@@ -209,20 +196,24 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-[32px] sm:rounded-[40px] p-4 sm:p-8 lg:p-10 executive-shadow border border-surface-container-high">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+        <div id="journal-commandes" class="bp-server-journal h-full bg-white/90 rounded-3xl border border-stone-200/70 shadow-sm p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                 <div>
                     <h2 class="text-2xl font-black tracking-tight text-on-surface">Journal de Bord</h2>
                     <p class="text-xs text-on-surface-variant/40 font-bold uppercase tracking-widest mt-1">Vos commandes uniquement · occupation globale</p>
                 </div>
-                <button type="button" onclick="openTakeOrderPopover()" class="inline-flex items-center justify-center gap-2 bg-on-surface text-white hover:bg-orange-600 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
+                <button type="button" onclick="openTakeOrderPopover()" class="inline-flex items-center justify-center gap-2 bg-[#F97316] hover:bg-[#e0630d] text-white px-4 py-2.5 rounded-xl shadow-sm text-[10px] font-black uppercase tracking-widest transition-all active:scale-[0.96]">
                     <span class="material-symbols-outlined text-sm">add</span>
                     Nouvelle commande
                 </button>
             </div>
 
+            <div class="mb-3 flex items-center justify-between gap-3">
+                <p class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-700"><span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>Commandes en direct</p>
+                <span class="rounded-lg bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">{{ active_orders }}</span>
+            </div>
             <div id="liveOrdersContainer" class="space-y-3 max-h-[68vh] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar scroll-smooth">
-                {% for order in recent_orders %}
+                {% for order in active_orders_list %}
                 <article data-server-order-id="{{ order.id }}" class="rounded-[24px] border border-surface-container bg-white transition-all hover:border-orange-100 hover:bg-surface-container-lowest hover:executive-shadow">
                     <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-[1fr_auto] sm:items-center sm:p-5">
                         <button type="button" onclick="openServerOrderDetailsPopover('{{ order.table.nom|escapejs }}', '{{ order.get_statut_display|escapejs }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'.2f' }}, {{ order.total_cdf|stringformat:'.0f' }})" class="w-full min-w-0 text-left">
@@ -236,7 +227,7 @@
                                         <span class="inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase border {% if order.statut == 'PAID' %}bg-emerald-50 text-emerald-600 border-emerald-100{% elif order.statut == 'SERVED' %}bg-blue-50 text-blue-600 border-blue-100{% elif order.statut == 'ACCEPTEE' or order.statut == 'PREPARING' %}bg-orange-50 text-orange-600 border-orange-100{% elif order.statut == 'CANCELLED' %}bg-red-50 text-red-600 border-red-100{% else %}bg-amber-50 text-amber-600 border-amber-100{% endif %}">{{ order.get_statut_display }}</span>
                                     </div>
                                     <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant/50">
-                                        <span>{{ order.date_creation|timesince }} ago</span>
+                                        <span>il y a {{ order.date_creation|timesince }}</span>
                                         <span class="delivery-timer inline-flex items-center gap-1 rounded-full px-2 py-0.5 {% if order.statut == 'CANCELLED' %}bg-red-50 text-red-600{% elif order.date_service %}bg-emerald-50 text-emerald-600{% else %}bg-orange-50 text-orange-600{% endif %} font-black"
                                               data-status="{{ order.statut }}"
                                               data-start="{{ order.date_creation|date:'U' }}"
@@ -274,7 +265,7 @@
                                     {% elif order.statut == 'ACCEPTEE' %}
                                     <button type="button" onclick="event.stopPropagation(); markServerOrderPreparing('{{ order.id }}')" class="rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-orange-700">Préparer</button>
                                     {% elif order.statut == 'PREPARING' %}
-                                    <button type="button" onclick="event.stopPropagation(); markServerOrderServed('{{ order.id }}')" class="rounded-xl bg-blue-600 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white">Servie</button>
+                                    <button type="button" onclick="event.stopPropagation(); markServerOrderServed('{{ order.id }}')" class="rounded-xl bg-blue-600 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white">Servir</button>
                                     {% elif order.statut == 'SERVED' %}
                                     <button type="button" onclick="event.stopPropagation(); confirmClientCash('{{ order.id }}')" class="rounded-xl bg-emerald-600 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white">{% if order.client_meta.has_payment_request %}Confirmer cash{% else %}Commande payée{% endif %}</button>
                                     {% endif %}
@@ -313,16 +304,35 @@
                 </div>
                 {% endfor %}
             </div>
+
+            <details class="mt-4 overflow-hidden rounded-xl border border-orange-200 bg-white/50 hover:bg-orange-50">
+                <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-xs font-black text-on-surface">
+                    <span class="flex items-center gap-2"><span class="material-symbols-outlined text-base text-on-surface-variant">history</span>Commandes précédentes</span>
+                    <span class="flex items-center gap-2"><span class="rounded-lg bg-white px-2 py-1 text-[10px] text-on-surface-variant">{{ previous_today_orders|length }}</span><span class="material-symbols-outlined text-base">expand_more</span></span>
+                </summary>
+                <div class="max-h-64 space-y-2 overflow-y-auto border-t border-surface-container p-3">
+                    {% for order in previous_today_orders %}
+                    <button type="button" onclick="openServerOrderDetailsPopover('{{ order.table.nom|escapejs }}', '{{ order.get_statut_display|escapejs }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'.2f' }}, {{ order.total_cdf|stringformat:'.0f' }})" class="flex w-full items-center justify-between gap-3 rounded-lg bg-white p-3 text-left">
+                        <span class="min-w-0"><strong class="block truncate text-xs text-on-surface">{{ order.table.nom }}</strong><span class="text-[9px] font-bold uppercase text-on-surface-variant/50">{{ order.date_creation|date:'H:i' }} · {{ order.get_statut_display }}</span></span>
+                        <strong class="shrink-0 text-xs text-on-surface">{% display_price order.total_usd order.total_cdf %}</strong>
+                    </button>
+                    {% empty %}<p class="py-5 text-center text-xs font-bold text-on-surface-variant/50">Aucune commande précédente aujourd’hui.</p>{% endfor %}
+                </div>
+            </details>
+
+            <a href="{% url 'serveur_today_orders' %}" class="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-200 bg-white/50 px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[#F97316] hover:bg-orange-50">
+                <span class="material-symbols-outlined text-base">today</span>Toutes les commandes du jour
+            </a>
         </div>
     </div>
 
-    <div class="space-y-8">
-        <div class="bg-white p-8 rounded-[40px] executive-shadow border border-red-50 relative overflow-hidden">
+    <div class="bp-server-dashboard-aside lg:col-span-1 space-y-6">
+        <div class="bg-white/90 rounded-3xl border border-stone-200/70 shadow-sm p-6 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full -mr-12 -mt-12"></div>
             <div class="relative z-10">
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xs font-black text-on-surface uppercase tracking-widest">Alerte Stocks</h3>
-                    <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center animate-bounce">
+                    <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center ">
                         <span class="material-symbols-outlined text-sm">notifications_active</span>
                     </div>
                 </div>
@@ -346,13 +356,13 @@
                     </div>
                     {% endfor %}
                 </div>
-                <a href="{% url 'serveur_inventory' %}" class="block w-full mt-10 py-4 bg-on-surface text-white text-[10px] font-black rounded-2xl uppercase tracking-widest text-center shadow-xl hover:bg-orange-600 transition-all active:scale-95">
+                <a href="{% url 'serveur_inventory' %}" class="block w-full mt-10 py-3 bg-[#06382B] text-white text-[10px] font-black rounded-xl uppercase tracking-widest text-center shadow-sm hover:bg-[#084032] transition-all active:scale-[0.96]">
                     Ouvrir l'Inventaire
                 </a>
             </div>
         </div>
 
-        <div class="citrus-gradient rounded-[40px] p-10 shadow-2xl relative overflow-hidden group">
+        <div class="bg-[#F97316] text-white rounded-3xl p-6 shadow-sm relative overflow-hidden group">
             <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full transition-all duration-700 group-hover:scale-150"></div>
             <div class="relative z-10">
                 <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6">
@@ -385,7 +395,47 @@
 {% block extra_body %}
 {% if not is_pending_confirmation %}
 
-<div id="lossModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+<div id="todayOrdersPopover" class="fixed inset-0 z-[78] hidden items-end justify-center bg-black/50 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="todayOrdersPopoverTitle" onclick="if (event.target === this) closeTodayOrdersPopover()">
+    <div class="max-h-[82vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div class="flex items-center justify-between border-b border-surface-container bg-white p-4">
+            <div><h2 id="todayOrdersPopoverTitle" class="text-lg font-black text-on-surface">Toutes les commandes du jour</h2><p class="mt-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50">{{ all_today_orders|length }} commande{{ all_today_orders|length|pluralize }}</p></div>
+            <button type="button" onclick="closeTodayOrdersPopover()" class="flex h-11 w-11 items-center justify-center rounded-lg bg-surface-container text-on-surface" aria-label="Fermer"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="max-h-[calc(82vh-5rem)] space-y-2 overflow-y-auto bg-surface-container-lowest p-3">
+            {% for order in all_today_orders %}
+            <button type="button" onclick="closeTodayOrdersPopover(); openServerOrderDetailsPopover('{{ order.table.nom|escapejs }}', '{{ order.get_statut_display|escapejs }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'.2f' }}, {{ order.total_cdf|stringformat:'.0f' }})" class="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-surface-container bg-white p-3 text-left">
+                <span class="min-w-0"><strong class="block truncate text-sm text-on-surface">{{ order.table.nom }}</strong><span class="mt-1 block text-[9px] font-bold uppercase tracking-wide text-on-surface-variant/50">{{ order.date_creation|date:'H:i' }} · {{ order.get_statut_display }} · {{ order.items.count }} article{{ order.items.count|pluralize }}</span></span>
+                <strong class="shrink-0 text-xs text-on-surface">{% display_price order.total_usd order.total_cdf %}</strong>
+            </button>
+            {% empty %}<div class="py-12 text-center"><span class="material-symbols-outlined text-4xl text-on-surface-variant/25">inbox</span><p class="mt-2 text-xs font-bold text-on-surface-variant/50">Aucune commande aujourd’hui.</p></div>{% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+function openTodayOrdersPopover() {
+    const popover = document.getElementById('todayOrdersPopover');
+    if (!popover) return;
+    popover.classList.remove('hidden');
+    popover.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+    popover.querySelector('button')?.focus();
+}
+
+function closeTodayOrdersPopover() {
+    const popover = document.getElementById('todayOrdersPopover');
+    if (!popover) return;
+    popover.classList.remove('flex');
+    popover.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+}
+
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') closeTodayOrdersPopover();
+});
+</script>
+
+<div id="lossModal" role="dialog" aria-modal="true" aria-label="Fenêtre de dialogue" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
     <div class="bg-white rounded-[40px] w-full max-w-5xl max-h-[90vh] p-8 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform overflow-y-auto custom-scrollbar" id="lossModalContent">
         <div class="flex items-center justify-between mb-8">
             <div>
@@ -418,14 +468,14 @@
                 </div>
             </div>
             <button type="button" onclick="addLossRow()" class="w-full py-3 rounded-2xl bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all">Ajouter une autre perte</button>
-            <button type="submit" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-red-700 transition-all active:scale-95">Confirmer les pertes</button>
+            <button type="submit" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-red-700 transition-all active:scale-[0.96]">Confirmer les pertes</button>
         </form>
     </div>
 </div>
 
 
 
-<div id="serverOrderDetailsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[75] hidden items-start justify-center pt-6 md:pt-10 p-4">
+<div id="serverOrderDetailsModal" role="dialog" aria-modal="true" aria-label="Fenêtre de dialogue" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[75] hidden items-start justify-center pt-6 md:pt-10 p-4">
     <div id="serverOrderDetailsModalContent" class="bg-white rounded-[36px] w-full max-w-lg shadow-2xl scale-95 translate-y-4 opacity-0 transition-all duration-300 overflow-hidden origin-top">
         <div class="p-6 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest">
             <div>
@@ -447,7 +497,7 @@
     </div>
 </div>
 
-<div id="serverPaymentModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] hidden items-center justify-center p-4">
+<div id="serverPaymentModal" role="dialog" aria-modal="true" aria-label="Fenêtre de dialogue" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] hidden items-center justify-center p-4">
     <div id="serverPaymentModalContent" class="bg-white rounded-[36px] w-full max-w-lg shadow-2xl scale-95 opacity-0 transition-all duration-300 overflow-hidden">
         <div class="p-6 border-b border-surface-container flex items-center justify-between bg-surface-container-lowest">
             <div>
@@ -532,7 +582,7 @@
         <div class="p-4 bg-white border-t border-surface-container-high">
             <div class="relative flex items-center">
                 <input type="text" id="aiInput" placeholder="Posez une question..." class="w-full bg-surface-container-low border-none rounded-2xl py-4 pl-6 pr-12 text-sm font-medium text-on-surface placeholder:text-on-surface-variant/50 caret-orange-600 focus:ring-2 focus:ring-orange-500 transition-all">
-                <button onclick="sendMessage()" class="absolute right-2 w-10 h-10 citrus-gradient text-white rounded-xl flex items-center justify-center active:scale-95 transition-all">
+                <button onclick="sendMessage()" class="absolute right-2 w-10 h-10 citrus-gradient text-white rounded-xl flex items-center justify-center active:scale-[0.96] transition-all">
                     <span class="material-symbols-outlined text-sm">send</span>
                 </button>
             </div>
@@ -570,8 +620,8 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            {% if item.can_sell_bottle %}<button type="button" onclick="addToServerOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_unitaire|stringformat:'.2f' }}, 'BOUTEILLE', '{{ item.devise }}')" class="flex-1 py-3 bg-on-surface text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary transition-all active:scale-95">+ Bottle</button>{% endif %}
-                            {% if item.can_sell_glass %}<button type="button" onclick="addToServerOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_verre|stringformat:'.2f' }}, 'VERRE', '{{ item.devise }}')" class="flex-1 py-3 bg-orange-50 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-95 border border-orange-100">+ Glass</button>{% endif %}
+                            {% if item.can_sell_bottle %}<button type="button" onclick="addToServerOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_unitaire|stringformat:'.2f' }}, 'BOUTEILLE', '{{ item.devise }}')" class="flex-1 py-3 bg-on-surface text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary transition-all active:scale-[0.96]">+ Bouteille</button>{% endif %}
+                            {% if item.can_sell_glass %}<button type="button" onclick="addToServerOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_verre|stringformat:'.2f' }}, 'VERRE', '{{ item.devise }}')" class="flex-1 py-3 bg-orange-50 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-[0.96] border border-orange-100">+ Verre</button>{% endif %}
                             {% if not item.can_sell_bottle and not item.can_sell_glass %}<span class="w-full py-3 bg-red-50 text-red-600 rounded-xl text-[9px] font-black uppercase tracking-widest text-center border border-red-100">Prix non configuré</span>{% endif %}
                         </div>
                     </article>
@@ -586,7 +636,7 @@
                     <div id="serverSelectedItems" class="space-y-3 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
                         <p id="serverEmptyOrderMsg" class="text-xs text-center py-6 text-on-surface-variant italic">Aucun article sélectionné</p>
                     </div>
-                    <button type="submit" class="w-full citrus-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                    <button type="submit" class="w-full citrus-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-[0.96] transition-all">
                         Confirmer la commande
                     </button>
                 </section>
@@ -790,7 +840,7 @@
                 <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
                     ${status === 'PENDING' ? `<button type="button" onclick="event.stopPropagation(); markServerOrderAccepted('${order.id}')" class="rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-orange-700">Accepter</button>` : ''}
                     ${status === 'ACCEPTEE' ? `<button type="button" onclick="event.stopPropagation(); markServerOrderPreparing('${order.id}')" class="rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-orange-700">Préparer</button>` : ''}
-                    ${status === 'PREPARING' ? `<button type="button" onclick="event.stopPropagation(); markServerOrderServed('${order.id}')" class="rounded-xl bg-blue-600 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white">Servie</button>` : ''}
+                    ${status === 'PREPARING' ? `<button type="button" onclick="event.stopPropagation(); markServerOrderServed('${order.id}')" class="rounded-xl bg-blue-600 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white">Servir</button>` : ''}
                     ${status === 'SERVED' ? `<button type="button" onclick="event.stopPropagation(); confirmClientCash('${order.id}')" class="rounded-xl bg-emerald-600 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white">${cashButtonLabel}</button>` : ''}
                     <button type="button" onclick="event.stopPropagation(); cancelClientOrder('${order.id}')" class="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-600">Annuler</button>
                 </div>` : '';
@@ -1155,9 +1205,26 @@
         showLiveMessage(message || 'Action effectuée.');
     }
 
+    function showCashConfirmedCelebration(title, message) {
+        let overlay = document.getElementById("bpCashCelebration");
+        if (!overlay) {
+            overlay = document.createElement("div");
+            overlay.id = "bpCashCelebration"; overlay.className = "bp-cash-celebration";
+            overlay.setAttribute("role", "status"); overlay.setAttribute("aria-live", "assertive");
+            overlay.innerHTML = `<div class="bp-cash-celebration__receipt"><div class="bp-cash-celebration__seal"><svg class="bp-cash-celebration__check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg></div><p class="bp-cash-celebration__title"></p><p class="bp-cash-celebration__message"></p><span class="bp-cash-celebration__bar"></span></div>`;
+            document.body.appendChild(overlay);
+        }
+        overlay.querySelector(".bp-cash-celebration__title").textContent = title;
+        overlay.querySelector(".bp-cash-celebration__message").textContent = message;
+        overlay.classList.remove("is-visible"); void overlay.offsetWidth; overlay.classList.add("is-visible");
+        if (navigator.vibrate) navigator.vibrate([60, 35, 100]);
+        clearTimeout(window.__bpCashCelebrationTimer);
+        window.__bpCashCelebrationTimer = setTimeout(() => overlay.classList.remove("is-visible"), 2200);
+    }
+
     function confirmClientCash(orderId) {
         postClientOrderServerAction(orderId, 'confirm_cash', {payment_currency: 'USD'}).then(data => {
-            if (data.success) updateServerOrderCard(orderId, 'PAID', 'Paiement cash confirmé.');
+            if (data.success) { showCashConfirmedCelebration("Cash confirmé", "Le paiement est enregistré et le client vient d’être informé."); updateServerOrderCard(orderId, 'PAID', 'Paiement cash confirmé.'); }
             else alert(data.error || 'Erreur confirmation cash.');
         });
     }
@@ -1171,7 +1238,12 @@
             headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken')},
             body: bodyParams.toString()
         }).then(res => res.json()).then(data => {
-            if (data.success) updateServerOrderCard(orderId, 'ACCEPTEE', 'Commande acceptée.');
+            if (data.success) {
+                updateServerOrderCard(orderId, 'ACCEPTEE', 'Commande acceptée.');
+                const journal = document.getElementById('journal-commandes');
+                history.replaceState(null, '', '#journal-commandes');
+                journal?.scrollIntoView({behavior: 'smooth', block: 'start'});
+            }
             else alert(data.error || "Erreur lors de l'acceptation.");
         });
     }
@@ -1323,7 +1395,7 @@
         const canDefer = serverEligibleForDebt || guaranteed;
         btn.disabled = !canDefer;
         if (canDefer) {
-            btn.className = 'py-4 rounded-2xl bg-orange-600 text-white font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all';
+            btn.className = 'py-4 rounded-2xl bg-orange-600 text-white font-black text-[10px] uppercase tracking-widest active:scale-[0.96] transition-all';
         } else {
             btn.className = 'py-4 rounded-2xl bg-surface-container text-on-surface-variant/40 font-black text-[10px] uppercase tracking-widest cursor-not-allowed';
         }

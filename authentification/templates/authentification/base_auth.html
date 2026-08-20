@@ -12,7 +12,7 @@
         })();
     </script>
     <title>{% block title %}BarPilote{% endblock %}</title>
-    <meta name="theme-color" content="#ff5e00"/>
+    <meta name="theme-color" content="#102b21"/>
     <meta name="mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -20,7 +20,7 @@
     <link rel="manifest" href="{% static 'manifest.webmanifest' %}"/>
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'barpilote_icon_transparent_512.png' %}"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script id="tailwind-config">
         tailwind.config = {
@@ -43,9 +43,9 @@
                         "surface-container-highest": "#e2e2e4",
                     },
                     fontFamily: {
-                        "headline": ["Inter", "sans-serif"],
-                        "body": ["Inter", "sans-serif"],
-                        "label": ["Inter", "sans-serif"]
+                        "headline": ["Public Sans", "sans-serif"],
+                        "body": ["Public Sans", "sans-serif"],
+                        "label": ["Public Sans", "sans-serif"]
                     },
                     borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
                 },
@@ -54,7 +54,7 @@
     </script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Public Sans', sans-serif;
             background-color: #f5f5f7;
             -webkit-font-smoothing: antialiased;
             min-height: 100vh;
@@ -69,10 +69,19 @@
             background: linear-gradient(145deg, #ff5e00 0%, #a63b00 100%);
         }
     </style>
-    <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}?v=nav-4"/>
+    <link rel="stylesheet" href="{% static 'css/barpilote-auth.css' %}?v=auth-premium-1"/>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="text-on-surface min-h-screen">
+<body class="bp-auth-app text-on-surface min-h-screen">
+<!--
+THESIS: BarPilote transforme les commandes, tables et alertes en missions visibles; il refuse le tableau de bord SaaS générique en cartes uniformes.
+OWN-WORLD: Vert forêt mat, ivoire opérationnel, orange signal et vert de confirmation; rails sombres, panneaux précis, lignes fines et coins mesurés.
+STORY: Le propriétaire supervise, le serveur exécute et le client commande dans une chaîne continue, lisible et traçable.
+FIRST VIEWPORT: Un rail de commande cadre une surface d activité hiérarchisée; sur mobile, la mission ou l action principale occupe immédiatement le centre.
+FORM: Centre de contrôle, option A approuvée par délégation; seed 92babb8e.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
     <main class="min-h-screen">
         {% block content %}
         {% endblock %}

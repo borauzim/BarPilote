@@ -35,13 +35,18 @@ _load_local_env()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)_nhtwpu6wixdkzr&)k(wch%eo@=7dh=t!*_)_j024)9u02s3#'
+def _env_bool(name, default=False):
+    return os.environ.get(name, str(default)).lower() in {'1', 'true', 'yes', 'on'}
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# Development remains convenient; production values live only in the VPS .env.
+DEBUG = _env_bool('DJANGO_DEBUG', True)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-development-only-change-me')
+if not DEBUG and SECRET_KEY == 'django-insecure-development-only-change-me':
+    raise RuntimeError('DJANGO_SECRET_KEY must be configured when DJANGO_DEBUG=false')
+
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
 
 SITE_URL = os.environ.get('SITE_URL', '').rstrip('/')
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -209,7 +214,7 @@ DATABASES = {
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400  # 24 heures
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # True en production avec HTTPS
+SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
@@ -218,6 +223,13 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # Nettoyage automatique des sessions expirées
 SESSION_COOKIE_DOMAIN = None
+
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = _env_bool('DJANGO_SECURE_SSL_REDIRECT', not DEBUG)
+SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_SECURE_HSTS_SECONDS', '0' if DEBUG else '31536000'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
 
 
 # Password validation
@@ -275,7 +287,7 @@ ACCOUNT_SESSION_REMEMBER = True  # Garder la session active par défaut
 ACCOUNT_LOGOUT_ON_GET = True  # Déconnexion immédiate sans page de confirmation
 
 # Google Maps Configuration
-GOOGLE_MAPS_API_KEY = 'AIzaSyASTWqTlQeuJL90FEwiuluw675kqSaW-A8'
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 
 
 # AI Advisor Configuration
@@ -321,3 +333,9 @@ FCM_WEB_STORAGE_BUCKET = os.environ.get('FCM_WEB_STORAGE_BUCKET', '')
 FCM_WEB_MESSAGING_SENDER_ID = os.environ.get('FCM_WEB_MESSAGING_SENDER_ID', '')
 FCM_WEB_APP_ID = os.environ.get('FCM_WEB_APP_ID', '')
 FCM_WEB_VAPID_KEY = os.environ.get('FCM_WEB_VAPID_KEY', '')
+
+# Google AdSense Reporting API (OAuth read-only)
+ADSENSE_ACCOUNT_ID = os.environ.get('ADSENSE_ACCOUNT_ID', '')
+ADSENSE_REFRESH_TOKEN = os.environ.get('ADSENSE_REFRESH_TOKEN', '')
+GOOGLE_ADSENSE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_ADSENSE_OAUTH_CLIENT_ID', os.environ.get('GOOGLE_OAUTH_CLIENT_ID', ''))
+GOOGLE_ADSENSE_OAUTH_CLIENT_SECRET = os.environ.get('GOOGLE_ADSENSE_OAUTH_CLIENT_SECRET', os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', ''))

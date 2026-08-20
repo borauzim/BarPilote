@@ -205,111 +205,170 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}?v=notification-popover-2"/>
+    <link rel="stylesheet" href="{% static 'css/barpilote-owner.css' %}?v=owner-sidebar-fixed-22"/>
+    <meta id="bp-page-head-start"/>
     {% block extra_head %}{% endblock %}
+    <meta id="bp-page-head-end"/>
 </head>
-<body class="text-on-surface min-h-screen pb-32">
-    <!-- TopAppBar -->
-    <header id="main-header" class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-[0_10px_30px_rgba(26,28,29,0.04)]">
-        <div class="bp-main-header-inner flex items-center justify-between px-8 h-16 w-full max-w-none mx-0">
-            <div class="bp-header-brand flex items-center gap-4">
-                {% if user.pilot_profile.photo_profil %}
-                <img alt="Profile" class="bp-header-avatar w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.pilot_profile.photo_profil.url }}"/>
-                {% else %}
-                <img alt="Profile" class="bp-header-avatar w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.socialaccount_set.all.0.get_avatar_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN' }}"/>
-                {% endif %}
-                <div class="bp-header-title-group flex items-center gap-3">
-                    <span class="bp-brand-name text-2xl font-black tracking-tighter text-orange-600">BarPilote</span>
-                    {% if owned_bars %}
-                    <details class="bp-establishment-switcher relative">
-                        <summary class="list-none cursor-pointer rounded-full border border-surface-container bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:border-orange-200 hover:text-orange-600 transition-colors">
-                            {{ current_bar.nom|default:'Etablissement' }}
-                        </summary>
-                        <div class="absolute left-0 mt-2 w-72 overflow-hidden rounded-2xl border border-surface-container bg-white shadow-2xl z-[70]">
-                            <div class="px-4 py-3 border-b border-surface-container bg-surface-container-lowest">
-                                <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Mes etablissements</p>
-                            </div>
-                            <div class="max-h-72 overflow-auto">
-                                {% for owned_bar in owned_bars %}
-                                <form method="post" action="{% url 'switch_establishment' %}" data-live-action="true" class="border-b border-surface-container last:border-b-0">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="bar_id" value="{{ owned_bar.id }}">
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button type="submit" class="w-full text-left px-4 py-3 hover:bg-surface-container-low transition-colors {% if current_bar and current_bar.id == owned_bar.id %}bg-orange-50 text-orange-700{% else %}text-on-surface{% endif %}">
-                                        <span class="block text-sm font-black">{{ owned_bar.nom }}</span>
-                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/40">{{ owned_bar.get_type_etablissement_display }}</span>
-                                    </button>
-                                </form>
-                                {% endfor %}
-                            </div>
-                            <div class="border-t border-surface-container p-2">
-                                <a href="{% url 'establishment_setup' %}" class="flex items-center justify-center gap-2 rounded-xl bg-orange-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-orange-700 hover:bg-orange-100 transition-colors">
-                                    <span class="material-symbols-outlined text-sm">add_business</span>
-                                    Ajouter un etablissement
-                                </a>
-                            </div>
-                        </div>
-                    </details>
-                    {% endif %}
-                </div>
+<body class="bp-owner-app min-h-screen w-full m-0 p-0 overflow-x-hidden bg-[#F8F6F0] text-on-surface">
+    <div class="bp-owner-layout flex min-h-screen w-full m-0 p-0 bg-[#F8F6F0] overflow-x-hidden">
+    <aside id="main-header" class="bp-owner-sidebar fixed top-0 left-0 bottom-0 h-screen w-64 z-40 bg-[#06382B] text-white flex flex-col justify-between p-4" aria-label="Navigation propriétaire">
+        <div class="bp-mobile-topbar" aria-label="En-tête mobile">
+            <div class="bp-mobile-brand">
+                <a href="{% url 'dashboard_html' %}" class="bp-mobile-logo" aria-label="BarPilote — Tableau de bord"><img src="{% static 'logo_orange.png' %}" alt="Logo BarPilote"></a>
+                <span class="bp-mobile-title">
+                    <strong>BarPilote</strong>
+                    {% if owned_bars|length > 1 %}
+                    <form method="post" action="{% url 'switch_establishment' %}" class="bp-mobile-establishment-form">
+                        {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <label for="mobile-establishment-select" class="sr-only">Changer d’établissement</label>
+                        <select id="mobile-establishment-select" name="bar_id" onchange="this.form.submit()" aria-label="Établissement actif">{% for establishment in owned_bars %}<option value="{{ establishment.id }}" {% if current_bar and establishment.id == current_bar.id %}selected{% endif %}>{{ establishment.nom }}</option>{% endfor %}</select>
+                    </form>
+                    {% else %}<small>{% if current_bar %}{{ current_bar.nom }}{% else %}Mon établissement{% endif %}</small>{% endif %}
+                </span>
             </div>
-            
-            <nav class="hidden md:flex items-center gap-8">
-                <a class="{% if request.resolver_match.url_name == 'dashboard_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'dashboard_html' %}">Dashboard</a>
-                <a class="{% if request.resolver_match.url_name == 'inventory_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'inventory_html' %}">Stock</a>
-                <a class="{% if request.resolver_match.url_name == 'finance_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'finance_html' %}">Finance</a>
-                <a class="{% if request.resolver_match.url_name == 'clients_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'clients_html' %}">Clients</a>
-                <a class="{% if request.resolver_match.url_name == 'team_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'team_html' %}">Équipe</a>
-                <a class="{% if request.resolver_match.url_name == 'tables_html' %}text-orange-600 font-bold{% else %}text-on-surface-variant font-medium{% endif %} hover:text-orange-600 transition-all text-sm uppercase tracking-widest" href="{% url 'tables_html' %}">Tables</a>
-            </nav>
-
-            <div class="bp-header-actions flex items-center gap-2">
-                <!-- Currency Toggle (AJAX) -->
-                <div class="bp-currency-control mr-2">
-                    <button onclick="toggleCurrency()" id="currencyToggleBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container hover:bg-orange-50 hover:text-orange-600 transition-all active:scale-90 group relative overflow-hidden">
-                        <span id="labelUSD" class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300 {% if pref_currency == 'USD' %}text-orange-600{% else %}text-gray-400{% endif %}">USD</span>
-                        <div class="w-9 h-5 bg-gray-200 rounded-full relative p-1 transition-colors duration-300 group-hover:bg-orange-100">
-                            <div id="toggleCircle" class="absolute top-1 w-3 h-3 rounded-full citrus-gradient shadow-sm transition-all duration-300 ease-out {% if pref_currency == 'USD' %}left-1{% else %}left-5{% endif %}"></div>
-                        </div>
-                        <span id="labelCDF" class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300 {% if pref_currency == 'CDF' %}text-orange-600{% else %}text-gray-400{% endif %}">CDF</span>
-                    </button>
+            <div class="bp-mobile-actions">
+                <div class="bp-mobile-currency" role="group" aria-label="Devise d’affichage">
+                    <button id="mobile-label-usd" type="button" onclick="selectCurrency(&quot;USD&quot;)" aria-label="Afficher en dollars américains">USD</button>
+                    <button id="mobile-label-cdf" type="button" onclick="selectCurrency(&quot;CDF&quot;)" aria-label="Afficher en francs congolais">CDF</button>
                 </div>
-
-                <script>
-                    function toggleCurrency() {
-                        fetch("{% url 'toggle_currency' %}", {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': window.BarPiloteCurrency ? window.BarPiloteCurrency.getCsrfToken() : '{{ csrf_token }}',
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (window.BarPiloteCurrency) {
-                                window.BarPiloteCurrency.setCurrency(data.currency || 'USD', { persist: true, broadcast: true });
-                            }
-                        });
-                    }
-                </script>
-
-                <a href="{% url 'profile_setup' %}" class="flex items-center justify-center p-2 rounded-full hover:bg-surface-container text-gray-400 hover:text-orange-600 transition-colors active:scale-95 duration-200" title="Modifier mes informations">
-                    <span class="material-symbols-outlined">account_circle</span>
+                <div id="bpMobileNotificationSlot" class="bp-mobile-notification-slot"></div>
+                <a href="{% url 'account_logout' %}" data-no-pjax class="bp-mobile-logout" aria-label="Se déconnecter" title="Déconnexion">
+                    <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                 </a>
-                <a href="{% url 'account_logout' %}" class="flex items-center justify-center p-2 rounded-full hover:bg-surface-container text-gray-400 hover:text-error transition-colors active:scale-95 duration-200" title="Déconnexion">
-                    <span class="material-symbols-outlined">logout</span>
-                </a>
-                {% include 'includes/notification_center.html' with is_server_interface=False %}
             </div>
         </div>
-    </header>
+        <div class="bp-sidebar-brand">
+            <a href="{% url 'dashboard_html' %}" class="bp-sidebar-logo flex items-center gap-3" aria-label="BarPilote — Tableau de bord"><span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm"><img src="{% static 'logo_orange.png' %}" alt="" class="h-9 w-9 object-contain"></span><span>BarPilote<span>.</span></span></a>
+            {% if current_bar %}<p>{{ current_bar.nom }}</p>{% endif %}
+        </div>
 
-    <main class="pt-24 pb-12 px-8 w-full max-w-none mx-0 overflow-x-hidden">
+        <nav class="bp-owner-primary-nav flex-1 space-y-1 py-4" aria-label="Navigation principale">
+            <a class="{% if request.resolver_match.url_name == 'dashboard_html' %}is-active{% endif %}" href="{% url 'dashboard_html' %}"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span><span>Dashboard</span></a>
+            <a href="{% url 'dashboard_html' %}#journal-commandes" class="flex items-center justify-between w-full">
+                <span class="flex items-center gap-3">
+                    <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+                    <span>Commandes</span>
+                </span>
+                {% if live_orders_count > 0 %}
+                    <span class="bp-live-orders-badge bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md ml-auto" aria-label="{{ live_orders_count }} commande{{ live_orders_count|pluralize }} en cours">
+                        {% if live_orders_count > 99 %}99+{% else %}{{ live_orders_count }}{% endif %}
+                    </span>
+                {% endif %}
+            </a>
+            <a class="{% if request.resolver_match.url_name == 'inventory_html' %}is-active{% endif %}" href="{% url 'inventory_html' %}"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><span>Inventaires</span></a>
+            <a class="{% if request.resolver_match.url_name == 'clients_html' %}is-active{% endif %}" href="{% url 'clients_html' %}"><span class="material-symbols-outlined" aria-hidden="true">group</span><span>Clients</span></a>
+            <a class="{% if request.resolver_match.url_name == 'team_html' %}is-active{% endif %}" href="{% url 'team_html' %}"><span class="material-symbols-outlined" aria-hidden="true">badge</span><span>Team</span></a>
+            <a class="{% if request.resolver_match.url_name == 'tables_html' %}is-active{% endif %}" href="{% url 'tables_html' %}"><span class="material-symbols-outlined" aria-hidden="true">table_bar</span><span>Tables</span></a>
+            <a class="{% if request.resolver_match.url_name == 'finance_html' %}is-active{% endif %}" href="{% url 'finance_html' %}"><span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span><span>Finances</span></a>
+        </nav>
+
+        <div class="bp-sidebar-footer">
+            <div class="flex items-center justify-between bg-[#06382B] p-1.5 rounded-xl border border-emerald-900/60 w-full cursor-pointer select-none" onclick="toggleCurrency()" role="button" tabindex="0" aria-label="Basculer entre USD et CDF" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleCurrency(); }">
+                <span id="label-usd" class="text-xs font-bold transition-colors duration-200 text-white px-2">USD</span>
+                <div class="relative w-11 h-6 bg-emerald-950 rounded-full p-0.5 border border-emerald-800 transition-colors" aria-hidden="true">
+                    <div id="switch-dot" class="w-4 h-4 bg-[#F97316] rounded-full shadow-md transform transition-transform duration-200 ease-in-out translate-x-0"></div>
+                </div>
+                <span id="label-cdf" class="text-xs font-bold transition-colors duration-200 text-emerald-400/60 px-2">CDF</span>
+            </div>
+            <div class="bp-sidebar-account">
+                <a href="{% url 'profile_setup' %}" aria-label="Modifier mon profil">
+                    {% if user.pilot_profile.photo_profil %}<img src="{{ user.pilot_profile.photo_profil.url }}" alt="Profil">{% else %}<span class="material-symbols-outlined">account_circle</span>{% endif %}
+                </a>
+                {% include 'includes/notification_center.html' with is_server_interface=False %}
+                <a href="{% url 'account_logout' %}" aria-label="Se déconnecter"><span class="material-symbols-outlined">logout</span></a>
+            </div>
+        </div>
+    </aside>
+
+    <script>
+        (function () {
+            function positionOwnerNotificationPopover() {
+                var button = document.getElementById('notif-btn');
+                var panel = document.getElementById('notif-menu');
+                if (!button || !panel || !panel.classList.contains('bp-mobile-notif-panel')) return;
+                var rect = button.getBoundingClientRect();
+                var panelWidth = Math.min(320, window.innerWidth - 24);
+                var preferredRight = window.innerWidth - rect.right;
+                var maximumRight = window.innerWidth - panelWidth - 12;
+                panel.style.width = panelWidth + 'px';
+                panel.style.right = Math.max(12, Math.min(preferredRight, maximumRight)) + 'px';
+                panel.style.top = Math.round(rect.bottom + 8) + 'px';
+            }
+
+            function placeOwnerNotifications() {
+                var center = document.getElementById('notificationCenter');
+                var panel = document.getElementById('notif-menu');
+                var toast = document.getElementById('notificationToast');
+                var mobileSlot = document.getElementById('bpMobileNotificationSlot');
+                var desktopHome = document.querySelector('.bp-sidebar-account');
+                var logoutLink = desktopHome && desktopHome.querySelector('a[href*="logout"]');
+                if (!center || !mobileSlot || !desktopHome) return;
+
+                if (window.matchMedia('(max-width: 1023px)').matches) {
+                    if (center.parentElement !== mobileSlot) mobileSlot.appendChild(center);
+                    if (panel && panel.parentElement !== document.body) document.body.appendChild(panel);
+                    if (panel) panel.classList.add('bp-mobile-notif-panel');
+                    if (toast && toast.parentElement !== document.body) document.body.appendChild(toast);
+                    positionOwnerNotificationPopover();
+                } else if (center.parentElement !== desktopHome) {
+                    desktopHome.insertBefore(center, logoutLink || null);
+                    if (panel) {
+                        center.appendChild(panel);
+                        panel.classList.remove('bp-mobile-notif-panel');
+                    }
+                    if (toast) desktopHome.insertBefore(toast, logoutLink || null);
+                }
+            }
+
+            placeOwnerNotifications();
+            window.addEventListener('resize', function () {
+                placeOwnerNotifications();
+                positionOwnerNotificationPopover();
+            });
+            document.addEventListener('click', function (event) {
+                if (event.target.closest('#notif-btn')) requestAnimationFrame(positionOwnerNotificationPopover);
+            });
+            document.addEventListener('barpilote:page-loaded', placeOwnerNotifications);
+        })();
+    </script>
+
+    <script>
+        function persistCurrencyChoice(targetCurrency) {
+            var nextCurrency = targetCurrency === "CDF" ? "CDF" : "USD";
+            if (window.BarPiloteCurrency) window.BarPiloteCurrency.setCurrency(nextCurrency, {persist: true, broadcast: true});
+            fetch("{% url 'toggle_currency' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": window.BarPiloteCurrency ? window.BarPiloteCurrency.getCsrfToken() : "{{ csrf_token }}",
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body: JSON.stringify({currency: nextCurrency})
+            }).then(function (response) { return response.json(); }).then(function (data) {
+                if (window.BarPiloteCurrency) window.BarPiloteCurrency.setCurrency(data.currency || nextCurrency, {persist: true, broadcast: true});
+            });
+        }
+
+        function selectCurrency(currency) {
+            var current = window.BarPiloteCurrency ? window.BarPiloteCurrency.getStoredCurrency() : window.__barpiloteCurrency;
+            if (current !== currency) persistCurrencyChoice(currency);
+        }
+
+        function toggleCurrency() {
+            var current = window.BarPiloteCurrency ? window.BarPiloteCurrency.getStoredCurrency() : (window.__barpiloteCurrency || "USD");
+            persistCurrencyChoice(current === "USD" ? "CDF" : "USD");
+        }
+    </script>
+
+    <main class="flex-1 w-full lg:ml-64 p-6 space-y-6 m-0 border-0">
         {% trial_ad_banner current_bar 'owner' %}
         {% block content %}
         {% endblock %}
     </main>
+    </div>
 
     <!-- BottomNavBar (Mobile Only) -->
     <nav id="mobile-nav" class="md:hidden fixed bottom-0 left-0 w-full glass-nav flex justify-around items-center px-6 pb-10 pt-4 rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.05)] z-50">
@@ -368,18 +427,18 @@
             if (fab && !fab.contains(event.target)) toggleFloatingActions(false);
         });
     </script>
-    <script src="{% static 'js/barpilote-currency.js' %}"></script>
+    <script src="{% static 'js/barpilote-currency.js' %}?v=currency-switch-7"></script>
     <script src="{% static 'js/barpilote-live-actions.js' %}"></script>
-    <script src="{% static 'js/barpilote-notifications.js' %}"></script>
+    <script src="{% static 'js/barpilote-notifications.js' %}?v=client-call-3"></script>
 
     <div id="bpOwnerGlobalOrderAlertStack" class="bp-global-order-alert-stack" aria-live="assertive" aria-atomic="false"></div>
     <script>
         (function () {
             if (window.__barpiloteOwnerGlobalOrderAlertsStarted) return;
-            if (window.location.pathname.indexOf('/proprietaire/dashboard') === 0) return;
             window.__barpiloteOwnerGlobalOrderAlertsStarted = true;
             const alertedOrders = new Set();
             const dashboardUrl = "{% url 'dashboard_html' %}";
+            const ownerOrderActionUrl = "{% url 'api_update_order_status' %}";
 
             function escapeHtml(value) {
                 const div = document.createElement('div');
@@ -429,6 +488,36 @@
                 setTimeout(function () { bubble.remove(); }, 220);
             }
 
+            async function handleOwnerOrderAction(order, action, button) {
+                button.disabled = true;
+                const formData = new FormData();
+                formData.append('order_id', order.id);
+                formData.append('status', action === 'accept' ? 'ACCEPTEE' : 'CANCELLED');
+                try {
+                    const response = await fetch(ownerOrderActionUrl, {
+                        method: 'POST', credentials: 'same-origin',
+                        headers: {'X-CSRFToken': window.BarPiloteCurrency ? window.BarPiloteCurrency.getCsrfToken() : ''},
+                        body: formData
+                    });
+                    const payload = await response.json();
+                    if (!response.ok || !payload.success) throw new Error(payload.error || 'Action impossible.');
+                    closeBubble(order.id);
+                    window.BarPiloteLiveActions?.flashMessage(action === 'accept' ? 'Commande acceptée.' : 'Commande refusée.');
+                    if (action === 'accept') {
+                        const journal = document.getElementById('journal-commandes');
+                        if (journal) {
+                            history.replaceState(null, '', '#journal-commandes');
+                            journal.scrollIntoView({behavior: 'smooth', block: 'start'});
+                        } else {
+                            window.location.assign(dashboardUrl + '#journal-commandes');
+                        }
+                    }
+                } catch (error) {
+                    button.disabled = false;
+                    window.BarPiloteLiveActions?.flashMessage(error.message || 'Action impossible.');
+                }
+            }
+
             function showBubble(order) {
                 if (!order || !order.id || alertedOrders.has(String(order.id))) return;
                 if (String(order.statut || '').toUpperCase() !== 'PENDING') return;
@@ -457,13 +546,18 @@
                             </div>
                             <p class="mt-1 line-clamp-2 text-xs font-bold text-on-surface-variant/70">${itemLabel}</p>
                             <p class="mt-2 text-lg font-black text-on-surface">${formatMoney(order.total_usd, order.total_cdf)}</p>
-                            <div class="mt-3 grid grid-cols-1 gap-2">
-                                <a href="${dashboardUrl}" class="rounded-xl bg-orange-600 px-3 py-2 text-center text-[10px] font-black uppercase tracking-widest text-white">Ouvrir dashboard</a>
+                            <div class="mt-3 grid grid-cols-2 gap-2">
+                                <button type="button" data-bp-owner-order-accept class="rounded-xl bg-emerald-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50">Accepter</button>
+                                <button type="button" data-bp-owner-order-refuse class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-700 disabled:opacity-50">Refuser</button>
                             </div>
                         </div>
                     </div>`;
                 const closeButton = bubble.querySelector('[data-bp-close-alert]');
                 if (closeButton) closeButton.addEventListener('click', function () { closeBubble(order.id); });
+                const acceptButton = bubble.querySelector('[data-bp-owner-order-accept]');
+                const refuseButton = bubble.querySelector('[data-bp-owner-order-refuse]');
+                if (acceptButton) acceptButton.addEventListener('click', function () { handleOwnerOrderAction(order, 'accept', acceptButton); });
+                if (refuseButton) refuseButton.addEventListener('click', function () { handleOwnerOrderAction(order, 'refuse', refuseButton); });
                 if (document.hidden && window.BarPiloteNotifications && typeof window.BarPiloteNotifications.showSystemNotification === 'function') {
                     window.BarPiloteNotifications.showSystemNotification({
                         id: 'order-' + String(order.id),
@@ -493,7 +587,11 @@
             connect();
         })();
     </script>
-    {% block extra_body %}{% endblock %}
+    <div id="bp-page-extra-root">
+        {% block extra_body %}{% endblock %}
+    </div>
+    <script src="{% static 'js/barpilote-owner-navigation.js' %}?v=2"></script>
+    <script src="{% static 'js/barpilote-instant-filters.js' %}?v=1"></script>
     <script src="{% static 'js/barpilote-theme.js' %}"></script>
     <script src="{% static 'js/barpilote-pwa.js' %}?v=4"></script>
 </body>

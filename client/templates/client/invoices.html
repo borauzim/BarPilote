@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BarPilote - Factures client</title>
-    <meta name="theme-color" content="#ff5e00"/>
+    <meta name="theme-color" content="#102b21"/>
     <meta name="mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -14,12 +14,21 @@
     <link rel="manifest" href="{% static 'manifest.webmanifest' %}"/>
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'barpilote_icon_transparent_512.png' %}"/>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <style>body{font-family:Inter,sans-serif;background:#fbfbfc;color:#171717}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 650,'GRAD' 0,'opsz' 24}</style>
-    <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}">
+    <style>body{font-family:'Public Sans',sans-serif;background:#fbfbfc;color:#171717}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 650,'GRAD' 0,'opsz' 24}</style>
+    <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}?v=nav-4">
+    <link rel="stylesheet" href="{% static 'css/barpilote-client.css' %}?v=client-premium-1">
 </head>
-<body>
+<body class="bp-client-app">
+<!--
+THESIS: BarPilote transforme les commandes, tables et alertes en missions visibles; il refuse le tableau de bord SaaS générique en cartes uniformes.
+OWN-WORLD: Vert forêt mat, ivoire opérationnel, orange signal et vert de confirmation; rails sombres, panneaux précis, lignes fines et coins mesurés.
+STORY: Le propriétaire supervise, le serveur exécute et le client commande dans une chaîne continue, lisible et traçable.
+FIRST VIEWPORT: Un rail de commande cadre une surface d activité hiérarchisée; sur mobile, la mission ou l action principale occupe immédiatement le centre.
+FORM: Centre de contrôle, option A approuvée par délégation; seed 92babb8e.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
 <main class="mx-auto min-h-screen max-w-3xl px-4 pb-28 pt-4">
     {% trial_ad_banner table.bar "client" %}
     <header class="sticky top-0 z-30 -mx-4 border-b border-neutral-200/70 bg-white/90 px-4 py-3 backdrop-blur-xl">

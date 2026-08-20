@@ -363,13 +363,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                     bar=order.bar,
                     table=order.table,
                     item=line.product_item,
+                    unite_vente=line.unite_vente,
                     quantite=line.quantite,
                     prix_unitaire_applique=line.prix_unitaire,
-                    devise=line.devise
+                    devise=line.devise,
+                    deduire_stock=False,
                 )
-                # Décrémenter le stock
-                line.product_item.quantite_actuelle -= line.quantite
-                line.product_item.save()
 
         serializer = self.get_serializer(order)
         return Response(serializer.data)

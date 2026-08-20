@@ -232,6 +232,8 @@ class LoginRedirectView(LoginRequiredMixin, View):
     """
     def get(self, request, *args, **kwargs):
         user = request.user
+        if user.is_superuser:
+            return redirect('administration_dashboard')
         try:
             profile = PilotProfile.objects.get(user=user)
             if not profile.role:
@@ -311,21 +313,22 @@ class CatalogueSetupView(LoginRequiredMixin, TemplateView):
         query = self.request.GET.get('q', '')
         category_id = self.request.GET.get('category', '')
 
-        master_products = MasterProduct.objects.all()
+        # Afficher le catalogue complet. L'ancienne tranche [:40] masquait les nouvelles références.
+        master_products = MasterProduct.objects.select_related('categorie').order_by(
+            'categorie__nom', 'nom', 'volume_cl'
+        )
 
-        if query:
-            master_products = master_products.filter(nom__icontains=query)
-        if category_id:
-            master_products = master_products.filter(categorie_id=category_id)
+        # Le filtrage est instantané dans le navigateur. Le catalogue complet
+        # reste disponible pour changer de recherche ou de catégorie sans requête.
 
         # On récupère les IDs des produits déjà en stock pour l'affichage
         in_stock_ids = []
         if profile.bar:
             in_stock_ids = list(StockItem.objects.filter(bar=profile.bar).values_list('produit_id', flat=True))
 
-        context['products'] = master_products[:40] # Plus de produits visibles
+        context['products'] = master_products
         context['in_stock_ids'] = in_stock_ids
-        context['categories'] = Category.objects.all()
+        context['categories'] = Category.objects.order_by('nom')
         context['bar'] = profile.bar
         context['query'] = query
         context['selected_category'] = category_id

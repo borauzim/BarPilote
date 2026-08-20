@@ -1,19 +1,21 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="fr">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Configuration du Catalogue - BarPilote</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Public Sans', sans-serif; background-color: #f8fafc; }
         .citrus-gradient { background: linear-gradient(135deg, #FF5E00 0%, #FF9248 100%); }
         .executive-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); }
     </style>
+    <link rel="stylesheet" href="{% static 'css/barpilote-auth.css' %}?v=auth-premium-1">
 </head>
-<body class="text-[#111827]">
+<body class="bp-auth-app text-[#111827]">
 
     <div class="min-h-screen flex flex-col">
         <!-- Header -->
@@ -64,16 +66,20 @@
             
             <!-- Search & Actions -->
             <div class="flex flex-col md:flex-row gap-6 mb-12">
-                <form class="flex-1 relative" method="get">
-                    <input type="text" name="q" value="{{ query }}" placeholder="Rechercher un produit (ex: Primus, Heineken...)" 
-                           class="w-full bg-white border-gray-200 rounded-2xl py-4 pl-14 pr-6 focus:ring-2 focus:ring-orange-500 focus:border-transparent executive-shadow transition-all font-medium">
+                <form id="catalogue-search-form" class="flex-1 relative" method="get" role="search">
+                    <input id="catalogue-search" type="search" name="q" value="{{ query }}" placeholder="Tapez les premières lettres : Pri, Coc, Mut..."
+                           autocomplete="off" spellcheck="false" aria-controls="catalogue-products" aria-describedby="catalogue-search-status"
+                           class="w-full bg-white border-gray-200 rounded-xl py-4 pl-14 pr-14 focus:ring-2 focus:ring-orange-500 focus:border-transparent executive-shadow transition-all font-medium">
                     <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                    <button id="catalogue-search-clear" type="button" aria-label="Effacer la recherche" class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <span class="material-symbols-outlined text-xl">close</span>
+                    </button>
                     {% if selected_category %}
                     <input type="hidden" name="category" value="{{ selected_category }}">
                     {% endif %}
                 </form>
                 
-                <button type="button" onclick="openCreateModal()" class="citrus-gradient text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest executive-shadow flex items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all">
+                <button type="button" onclick="openCreateModal()" class="citrus-gradient text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest executive-shadow flex items-center gap-3 hover:scale-[1.02] active:scale-[0.96] transition-all">
                     <span class="material-symbols-outlined">add</span>
                     Produit Manquant
                 </button>
@@ -81,20 +87,21 @@
 
             <!-- Categories -->
             <div class="flex flex-wrap gap-3 mb-8">
-                <a href="?q={{ query }}" class="px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all {% if not selected_category %}bg-orange-600 text-white shadow-lg{% else %}bg-white text-gray-500 hover:bg-gray-100 border border-gray-200{% endif %}">
+                <a href="?q={{ query }}" data-category-filter="all" aria-pressed="{% if not selected_category %}true{% else %}false{% endif %}" class="px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 {% if not selected_category %}bg-orange-600 text-white shadow-lg{% else %}bg-white text-gray-500 hover:bg-gray-100 border border-gray-200{% endif %}">
                     Tous
                 </a>
                 {% for cat in categories %}
-                <a href="?category={{ cat.id }}&q={{ query }}" class="px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all {% if selected_category|add:0 == cat.id %}bg-orange-600 text-white shadow-lg{% else %}bg-white text-gray-500 hover:bg-gray-100 border border-gray-200{% endif %}">
+                <a href="?category={{ cat.id }}&q={{ query }}" data-category-filter="{{ cat.id }}" aria-pressed="{% if selected_category|add:0 == cat.id %}true{% else %}false{% endif %}" class="px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 {% if selected_category|add:0 == cat.id %}bg-orange-600 text-white shadow-lg{% else %}bg-white text-gray-500 hover:bg-gray-100 border border-gray-200{% endif %}">
                     {{ cat.nom }}
                 </a>
                 {% endfor %}
             </div>
 
             <!-- Products Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div id="catalogue-search-status" class="mb-4 min-h-5 text-sm font-semibold text-gray-500" aria-live="polite"></div>
+            <div id="catalogue-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {% for product in products %}
-                <div class="bg-white rounded-[32px] p-6 executive-shadow border border-gray-50 flex flex-col group hover:border-orange-500/20 transition-all duration-300">
+                <div data-catalogue-product data-category="{{ product.categorie_id }}" data-search="{{ product.nom }} {{ product.volume }} {{ product.categorie.nom }}" class="bg-white rounded-[32px] p-6 executive-shadow border border-gray-50 flex flex-col group hover:border-orange-500/20 transition-all duration-300">
                     <div class="w-full aspect-square bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden relative">
                         {% if product.photo %}
                         <img src="{{ product.photo.url }}" alt="{{ product.nom }}" class="w-full h-full object-cover">
@@ -143,12 +150,19 @@
                 </div>
                 {% endfor %}
             </div>
+            <div id="catalogue-no-results" class="hidden py-20 text-center" role="status">
+                <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-5 text-orange-600">
+                    <span class="material-symbols-outlined text-3xl">search_off</span>
+                </div>
+                <h3 class="text-xl font-black text-gray-900">Aucun produit correspondant</h3>
+                <p class="text-gray-500 mt-2">Modifiez les premières lettres ou effacez la recherche.</p>
+            </div>
 
         </main>
     </div>
 
     <!-- Modal: Create Missing Product -->
-    <div id="createModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div id="createModal" role="dialog" aria-modal="true" aria-label="Fenêtre de dialogue" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-[40px] w-full max-w-lg p-10 shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="createModalContent">
             <div class="flex items-center justify-between mb-8">
                 <div>
@@ -202,7 +216,7 @@
                 </div>
 
                 <div class="pt-6">
-                    <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:shadow-orange-500/20 transition-all active:scale-95">
+                    <button type="submit" class="w-full citrus-gradient text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:shadow-orange-500/20 transition-all active:scale-[0.96]">
                         Créer & Ajouter au stock
                     </button>
                 </div>
@@ -211,6 +225,73 @@
     </div>
 
     <script>
+        const catalogueSearch = document.getElementById("catalogue-search");
+        const catalogueSearchForm = document.getElementById("catalogue-search-form");
+        const catalogueSearchClear = document.getElementById("catalogue-search-clear");
+        const catalogueSearchStatus = document.getElementById("catalogue-search-status");
+        const catalogueNoResults = document.getElementById("catalogue-no-results");
+        const catalogueProducts = Array.from(document.querySelectorAll("[data-catalogue-product]"));
+        const catalogueCategoryFilters = Array.from(document.querySelectorAll("[data-category-filter]"));
+        let selectedCatalogueCategory = catalogueCategoryFilters.find((filter) => filter.getAttribute("aria-pressed") === "true")?.dataset.categoryFilter || "all";
+
+        function normalizeCatalogueText(value) {
+            return value.toLocaleLowerCase("fr").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        }
+
+        function filterCatalogue() {
+            const query = normalizeCatalogueText(catalogueSearch.value);
+            let visibleCount = 0;
+            catalogueProducts.forEach((card) => {
+                const matchesSearch = !query || normalizeCatalogueText(card.dataset.search).includes(query);
+                const matchesCategory = selectedCatalogueCategory === "all" || card.dataset.category === selectedCatalogueCategory;
+                const matches = matchesSearch && matchesCategory;
+                card.classList.toggle("hidden", !matches);
+                if (matches) visibleCount += 1;
+            });
+            catalogueSearchClear.classList.toggle("hidden", !query);
+            catalogueSearchClear.classList.toggle("flex", Boolean(query));
+            catalogueNoResults.classList.toggle("hidden", visibleCount !== 0);
+            const activeCategory = catalogueCategoryFilters.find((filter) => filter.dataset.categoryFilter === selectedCatalogueCategory)?.textContent.trim();
+            const suffix = selectedCatalogueCategory !== "all" ? " dans « " + activeCategory + " »" : "";
+            catalogueSearchStatus.textContent = visibleCount + " produit" + (visibleCount !== 1 ? "s" : "") + " trouvé" + (visibleCount !== 1 ? "s" : "") + suffix;
+        }
+
+        function selectCatalogueCategory(category) {
+            selectedCatalogueCategory = category;
+            catalogueCategoryFilters.forEach((filter) => {
+                const active = filter.dataset.categoryFilter === category;
+                filter.setAttribute("aria-pressed", String(active));
+                filter.classList.toggle("bg-orange-600", active);
+                filter.classList.toggle("text-white", active);
+                filter.classList.toggle("shadow-lg", active);
+                filter.classList.toggle("bg-white", !active);
+                filter.classList.toggle("text-gray-500", !active);
+                filter.classList.toggle("border", !active);
+                filter.classList.toggle("border-gray-200", !active);
+            });
+            filterCatalogue();
+        }
+
+        catalogueCategoryFilters.forEach((filter) => {
+            filter.addEventListener("click", (event) => {
+                event.preventDefault();
+                selectCatalogueCategory(filter.dataset.categoryFilter);
+                const url = new URL(window.location.href);
+                if (selectedCatalogueCategory === "all") url.searchParams.delete("category");
+                else url.searchParams.set("category", selectedCatalogueCategory);
+                history.replaceState({}, "", url);
+            });
+        });
+
+        catalogueSearchForm.addEventListener("submit", (event) => { event.preventDefault(); filterCatalogue(); });
+        catalogueSearch.addEventListener("input", filterCatalogue);
+        catalogueSearchClear.addEventListener("click", () => {
+            catalogueSearch.value = "";
+            filterCatalogue();
+            catalogueSearch.focus();
+        });
+        filterCatalogue();
+
         function previewImage(input) {
             const preview = document.getElementById('photo_preview');
             const placeholder = document.getElementById('photo_preview_placeholder');

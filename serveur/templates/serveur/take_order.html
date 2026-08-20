@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="space-y-5 pb-8">
+<div class="server-take-order space-y-5 pb-8">
     <section class="bg-surface rounded-3xl border border-orange-100 premium-shadow p-5 space-y-2">
         <p class="text-[10px] font-black uppercase tracking-widest text-primary">Mode Service Direct</p>
         <h1 class="text-2xl font-black tracking-tight text-on-surface">Prendre une commande</h1>
@@ -55,7 +55,7 @@
                 {% endfor %}
             </div>
 
-            <div class="p-5 space-y-3" id="serviceProductsGrid">
+            <div class="grid grid-cols-2 gap-2 p-2 sm:p-5" id="serviceProductsGrid">
                 {% for item in inventory_items %}
                 <article class="service-product-card bg-surface-container-lowest p-4 rounded-3xl border border-orange-100 transition-all" data-category="cat-{{ item.produit.categorie.id }}">
                     <div class="flex justify-between items-start gap-3 mb-4">
@@ -90,13 +90,13 @@
 
                     <div class="flex gap-2">
                         {% if item.can_sell_bottle %}
-                        <button type="button" onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_unitaire|stringformat:'.2f' }}, 'BOUTEILLE', '{{ item.devise }}')" class="flex-1 py-3 bg-on-surface text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary transition-all active:scale-95">
-                            + Bottle
+                        <button type="button" onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_unitaire|stringformat:'.2f' }}, 'BOUTEILLE', '{{ item.devise }}')" class="flex-1 py-3 bg-on-surface text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary transition-all active:scale-[0.96]">
+                            + Bouteille
                         </button>
                         {% endif %}
                         {% if item.can_sell_glass %}
-                        <button type="button" onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_verre|stringformat:'.2f' }}, 'VERRE', '{{ item.devise }}')" class="flex-1 py-3 bg-orange-50 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-95 border border-orange-100">
-                            + Glass
+                        <button type="button" onclick="addToOrder('{{ item.id }}', '{{ item.produit.nom|escapejs }}', {{ item.prix_vente_verre|stringformat:'.2f' }}, 'VERRE', '{{ item.devise }}')" class="flex-1 py-3 bg-orange-50 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all active:scale-[0.96] border border-orange-100">
+                            + Verre
                         </button>
                         {% endif %}
                         {% if not item.can_sell_bottle and not item.can_sell_glass %}<span class="w-full py-3 bg-red-50 text-red-600 rounded-xl text-[9px] font-black uppercase tracking-widest text-center border border-red-100">Prix non configuré</span>{% endif %}
@@ -120,7 +120,7 @@
                     <p id="emptyOrderMsg" class="text-xs text-center py-6 text-on-surface-variant italic">Aucun article sélectionné</p>
                 </div>
             </div>
-            <button type="submit" class="w-full citrus-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+            <button type="submit" class="w-full citrus-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-[0.96] transition-all">
                 Confirmer la commande
             </button>
         </section>
