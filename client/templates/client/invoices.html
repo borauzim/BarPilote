@@ -5,6 +5,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9887734033971072"
+            crossorigin="anonymous"></script>
     <title>BarPilote - Factures client</title>
     <meta name="theme-color" content="#102b21"/>
     <meta name="mobile-web-app-capable" content="yes"/>
@@ -94,15 +96,18 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                     <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">USD</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_usd|floatformat:2 }} USD</p></div>
                     <div class="px-2 py-2"><p class="text-[10px] font-black uppercase text-neutral-400">CDF</p><p class="text-sm font-black text-neutral-950">{{ facture.montant_cdf|floatformat:0 }} FC</p></div>
                 </div>
-                <div class="mt-3 grid grid-cols-2 gap-2">
+                <div class="mt-3 grid gap-2">
                     <form method="post" action="{% url "client_invoices" table.id %}" class="invoice-pay-form" data-scope="one">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="pay_one">
                         <input type="hidden" name="facture_id" value="{{ facture.id }}">
-                        <button type="submit" name="payment_currency" value="CDF" class="h-11 w-full rounded-2xl bg-orange-600 text-xs font-black text-white">Payer FC</button>
+                        <button type="submit" name="payment_currency" value="CDF" class="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 text-sm font-black text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2" aria-label="Je veux payer la facture {{ facture.numero }} en francs congolais">
+                            <span class="material-symbols-outlined text-lg" aria-hidden="true">payments</span>
+                            <span>Je veux payer cette facture</span>
+                        </button>
                     </form>
                     {% with order=facture.orders.first %}{% if order %}
-                    <a href="{% url "client_invoice_download" order.id %}" class="flex h-11 items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white text-xs font-black text-neutral-900"><span class="material-symbols-outlined text-base">download</span>PDF</a>
+                    <a href="{% url "client_invoice_download" order.id %}" class="flex h-11 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white text-xs font-black text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"><span class="material-symbols-outlined text-base" aria-hidden="true">download</span>Télécharger le PDF</a>
                     {% endif %}{% endwith %}
                 </div>
                 {% with order=facture.orders.first %}{% if order and order.statut != 'CANCELLED' %}

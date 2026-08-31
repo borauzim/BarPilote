@@ -526,6 +526,14 @@ def _debt_notification_action_url(order, server_profile, action):
     return reverse('serveur_order_notification_action') + f'?token={token}'
 
 
+def _client_call_action_url(order, server_profile, action):
+    token = signing.dumps(
+        {'order_id': str(order.id), 'server_id': str(server_profile.id), 'action': action, 'kind': 'client_call'},
+        salt='barpilote-server-order-notification-action',
+    )
+    return reverse('serveur_order_notification_action') + f'?token={token}'
+
+
 def _notify_assignment(order, label='Client QR'):
     server_profiles = list(
         PilotProfile.objects.filter(bar=order.bar, role='SERVEUR')
@@ -941,6 +949,10 @@ class ClientOrderStatusAPIView(View):
             'payment_confirmed': bool(meta.payment_confirmed_at),
             'payment_confirmed_at': meta.payment_confirmed_at.isoformat() if meta.payment_confirmed_at else None,
             'cash_confirmation_seconds_left': cash_seconds_left,
+            'server_call_status': meta.server_call_status,
+            'server_call_requested_at': meta.server_call_requested_at.isoformat() if meta.server_call_requested_at else None,
+            'server_call_responded_at': meta.server_call_responded_at.isoformat() if meta.server_call_responded_at else None,
+            'server_call_responded_by': f'{meta.server_call_responded_by.prenom} {meta.server_call_responded_by.nom}'.strip() if meta.server_call_responded_by else '',
             'debt_requested': meta.debt_requested,
             'debt_status': meta.debt_status,
             'debt_due_date': meta.debt_due_date.isoformat() if meta.debt_due_date else None,
@@ -991,6 +1003,12 @@ class ClientOrderActionView(View):
             if not cache.add(cache_key, True, timeout=cooldown_seconds):
                 return JsonResponse({'error': 'Le serveur a déjà été appelé. Réessayez dans quelques instants.', 'cooldown_seconds': cooldown_seconds}, status=429)
 
+            meta.server_call_status = 'REQUESTED'
+            meta.server_call_requested_at = timezone.now()
+            meta.server_call_responded_at = None
+            meta.server_call_responded_by = None
+            meta.save(update_fields=['server_call_status', 'server_call_requested_at', 'server_call_responded_at', 'server_call_responded_by', 'updated_at'])
+
             server_name = order.serveur.prenom or 'Le serveur'
             notify_user(
                 order.serveur.user,
@@ -1005,6 +1023,10 @@ class ClientOrderActionView(View):
                     'order_id': str(order.id),
                     'table_id': str(order.table_id),
                     'table_nom': order.table.nom,
+                    'action_accept_url': _client_call_action_url(order, order.serveur, 'accept'),
+                    'action_refuse_url': _client_call_action_url(order, order.serveur, 'refuse'),
+                    'action_accept_label': "J’arrive",
+                    'action_refuse_label': 'Patientez un peu',
                 },
             )
             return JsonResponse({'success': True, 'message': f'{server_name} a été appelé. Son téléphone va sonner.', 'cooldown_seconds': cooldown_seconds})

@@ -192,6 +192,21 @@
         .bp-global-order-alert-bubble.is-urgent {
             animation: bpGlobalOrderPulse 1.25s ease-in-out infinite;
         }
+        .bp-global-order-alert-bubble.bp-client-call-popover {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            z-index: 9997;
+            width: min(28rem, calc(100vw - 2rem));
+            max-height: calc(100dvh - 2rem);
+            overflow-y: auto;
+            transform: translate(-50%, -54%) scale(0.96);
+            box-shadow: 0 0 0 100vmax rgba(15, 23, 42, 0.48), 0 24px 72px rgba(15, 23, 42, 0.28);
+        }
+        .bp-global-order-alert-bubble.bp-client-call-popover.is-visible {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .bp-global-order-alert-bubble.bp-client-call-popover.is-urgent { animation: none; }
         @keyframes bpGlobalOrderPulse {
             0%, 100% { box-shadow: 0 22px 60px rgba(26, 28, 29, 0.2), 0 2px 0 0 rgba(16, 43, 33, 0.06); }
             50% { box-shadow: 0 22px 60px rgba(26, 28, 29, 0.22), 0 8px 18px 0 rgba(16, 43, 33, 0.08); }
@@ -366,7 +381,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     </script>
     <script src="{% static 'js/barpilote-currency.js' %}?v=server-currency-switch-3"></script>
     <script src="{% static 'js/barpilote-live-actions.js' %}"></script>
-    <script src="{% static 'js/barpilote-notifications.js' %}?v=client-call-3"></script>
+    <script src="{% static 'js/barpilote-notifications.js' %}?v=client-call-5"></script>
 
     <div id="bpServerGlobalOrderAlertStack" class="bp-global-order-alert-stack" aria-live="assertive" aria-atomic="false"></div>
     <script>
@@ -512,6 +527,58 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                 requestAnimationFrame(function () { bubble.classList.add('is-visible'); });
                 ringAlarm();
             }
+
+            async function handleClientCallAction(item, actionUrl, button) {
+                if (!actionUrl || !button) return;
+                button.disabled = true;
+                try {
+                    const response = await fetch(actionUrl, {method: 'POST', credentials: 'same-origin', headers: {'X-CSRFToken': window.BarPiloteCurrency ? window.BarPiloteCurrency.getCsrfToken() : ''}});
+                    const payload = await response.json();
+                    if (!response.ok || !payload.success) throw new Error(payload.message || payload.error || 'Action impossible.');
+                    window.BarPiloteNotifications?.stopClientCallRingtone();
+                    closeBubble('call-' + String(item.id));
+                    if (item.id) window.markNotificationRead?.(item.id);
+                    window.BarPiloteLiveActions?.flashMessage(payload.message);
+                } catch (error) {
+                    button.disabled = false;
+                    window.BarPiloteLiveActions?.flashMessage(error.message || 'Action impossible.');
+                }
+            }
+
+            function showClientCallBubble(item) {
+                const data = item && item.data ? item.data : {};
+                if (String(data.kind || '').toUpperCase() !== 'CLIENT_CALL') return;
+                const alertId = 'call-' + String(item.id || data.notification_id || data.order_id || Date.now());
+                if (document.querySelector('[data-bp-server-global-order-alert-id="' + alertId + '"]')) return;
+                const stack = document.getElementById('bpServerGlobalOrderAlertStack');
+                if (!stack) return;
+                const bubble = document.createElement('article');
+                bubble.className = 'bp-global-order-alert-bubble bp-client-call-popover is-urgent';
+                bubble.dataset.bpServerGlobalOrderAlertId = alertId;
+                bubble.setAttribute('role', 'dialog');
+                bubble.setAttribute('aria-modal', 'true');
+                bubble.setAttribute('aria-label', 'Appel client de ' + String(data.table_nom || 'la table'));
+                bubble.innerHTML = '<div class="flex items-start gap-3 p-4"><div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-600 text-white shadow-lg"><span class="material-symbols-outlined">notifications_active</span></div><div class="min-w-0 flex-1"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-widest text-orange-600">Appel client</p><h3 data-bp-call-table class="truncate text-base font-black text-on-surface"></h3></div><button type="button" data-bp-close-alert class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface-container text-on-surface-variant" aria-label="Fermer"><span class="material-symbols-outlined text-sm">close</span></button></div><p data-bp-call-message class="mt-1 text-xs font-bold text-on-surface-variant/70"></p><div class="mt-3 grid grid-cols-2 gap-2"><button type="button" data-bp-call-coming class="rounded-xl bg-emerald-600 px-3 py-3 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50"></button><button type="button" data-bp-call-wait class="rounded-xl border border-orange-200 bg-orange-50 px-3 py-3 text-[10px] font-black uppercase tracking-widest text-orange-700 disabled:opacity-50"></button></div></div></div>';
+                bubble.querySelector('[data-bp-call-table]').textContent = data.table_nom || 'Table';
+                bubble.querySelector('[data-bp-call-message]').textContent = item.body || 'Le client vous appelle à sa table.';
+                const comingButton = bubble.querySelector('[data-bp-call-coming]');
+                const waitButton = bubble.querySelector('[data-bp-call-wait]');
+                comingButton.textContent = data.action_accept_label || 'J’arrive';
+                waitButton.textContent = data.action_refuse_label || 'Patientez un peu';
+                bubble.querySelector('[data-bp-close-alert]')?.addEventListener('click', function () { window.BarPiloteNotifications?.stopClientCallRingtone(); closeBubble(alertId); });
+                comingButton.addEventListener('click', function () { handleClientCallAction(item, data.action_accept_url, comingButton); });
+                waitButton.addEventListener('click', function () { handleClientCallAction(item, data.action_refuse_url, waitButton); });
+                stack.prepend(bubble);
+                Array.from(stack.children).slice(4).forEach(function (node) { node.remove(); });
+                requestAnimationFrame(function () { bubble.classList.add('is-visible'); comingButton.focus({preventScroll: true}); });
+            }
+
+            window.addEventListener('barpilote:notification', function (event) {
+                const item = event.detail || {};
+                if (String(item.data?.kind || '').toUpperCase() !== 'CLIENT_CALL') return;
+                event.preventDefault();
+                showClientCallBubble(item);
+            });
 
             function connect() {
                 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';

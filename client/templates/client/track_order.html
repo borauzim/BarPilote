@@ -6,6 +6,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9887734033971072"
+            crossorigin="anonymous"></script>
     <title>BarPilote - Suivi commande</title>
     <meta name="theme-color" content="#102b21"/>
     <meta name="mobile-web-app-capable" content="yes"/>
@@ -220,6 +222,13 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         <a href="{% url 'client_menu' order.table.id %}" class="action-card flex min-h-24 flex-col justify-between rounded-[24px] border border-neutral-200 bg-white p-4 text-neutral-950 transition"><span class="material-symbols-outlined text-orange-600">add_shopping_cart</span><span class="text-sm font-black">Ajouter autre chose</span></a>
     </section>
 
+    <section id="serverCallStatusPanel" role="status" aria-live="polite" class="mt-5 hidden rounded-2xl border border-blue-200 bg-blue-50 p-4">
+        <div class="flex items-center gap-3">
+            <span id="serverCallStatusIcon" class="material-symbols-outlined text-blue-700" aria-hidden="true">hourglass_top</span>
+            <div><h2 id="serverCallStatusTitle" class="text-base font-black text-neutral-950">Serveur appelé</h2><p id="serverCallStatusText" class="mt-1 text-xs font-bold text-blue-800">Votre serveur n’a pas encore répondu.</p></div>
+        </div>
+    </section>
+
     <section id="cashConfirmationPanel" class="mt-5 hidden rounded-[28px] border border-orange-200 bg-orange-50 p-4">
         <div class="flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-orange-700"><span class="material-symbols-outlined">timer</span></div>
@@ -325,6 +334,23 @@ const loopMinutesLabel=document.getElementById('loopMinutesLabel');
 const loopLabel=document.getElementById('loopLabel');
 function csrf(){return document.querySelector('[name=csrfmiddlewaretoken]')?.value || document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1] || '';}
 function showToast(message){toast.textContent=message;toast.classList.add('toast-show');setTimeout(()=>toast.classList.remove('toast-show'),3600);}
+const serverCallStatusPanel=document.getElementById('serverCallStatusPanel');
+const serverCallStatusIcon=document.getElementById('serverCallStatusIcon');
+const serverCallStatusTitle=document.getElementById('serverCallStatusTitle');
+const serverCallStatusText=document.getElementById('serverCallStatusText');
+let lastServerCallStatus='{{ meta.server_call_status|default:"NONE"|escapejs }}';
+function setServerCallStatus(status, notify=false, serverName=""){
+    const responder=String(serverName||"Votre serveur").trim()||"Votre serveur";
+    const normalized=String(status||'NONE').toUpperCase();
+    if(!serverCallStatusPanel)return;
+    serverCallStatusPanel.classList.toggle('hidden', normalized==='NONE');
+    if(normalized==='REQUESTED'){serverCallStatusIcon.textContent='hourglass_top';serverCallStatusTitle.textContent='Serveur appelé';serverCallStatusText.textContent='Votre serveur n’a pas encore répondu.';}
+    if(normalized==='COMING'){serverCallStatusIcon.textContent='directions_walk';serverCallStatusTitle.textContent=responder+" arrive";serverCallStatusText.textContent=responder+" arrive à votre table.";}
+    if(normalized==='WAITING'){serverCallStatusIcon.textContent='schedule';serverCallStatusTitle.textContent='Patientez un peu';serverCallStatusText.textContent=responder+" a vu votre appel et vous demande un peu de patience.";}
+    if(notify && normalized!==lastServerCallStatus && normalized==='COMING'){const message=responder+" arrive à votre table.";showToast(message);showClientSystemNotification('SERVER_COMING',message);if(navigator.vibrate)navigator.vibrate([120,60,120]);}
+    if(notify && normalized!==lastServerCallStatus && normalized==='WAITING'){const message=responder+" vous demande de patienter un peu.";showToast(message);showClientSystemNotification('SERVER_WAITING',message);if(navigator.vibrate)navigator.vibrate([120,60,120]);}
+    lastServerCallStatus=normalized;
+}
 function postAction(action, extra={}){const body=new URLSearchParams({action,...extra});return fetch("{% url 'client_order_action' order.id %}",{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':csrf()},body:body.toString()}).then(async r=>{const data=await r.json();if(!r.ok&&!data.error)data.error='Erreur.';return data;});}
 function paymentData(){const form=document.getElementById('paymentIdentityForm');return form?Object.fromEntries(new FormData(form).entries()):{};}
 function ratingData(){const form=document.getElementById('ratingForm');return form?Object.fromEntries(new FormData(form).entries()):{};}
@@ -686,6 +712,7 @@ if(enableClientNotifications){
 refreshClientNotificationPrompt();
 function applyClientOrderData(data, options={}){
     if(!data) return;
+    if(data.server_call_status!==undefined)setServerCallStatus(data.server_call_status, options.notify===true, data.server_call_responded_by || data.server);
     const status = data.status || data.statut;
     if(groupReadinessLabel && data.phones_count !== undefined){groupReadinessLabel.textContent=data.group_order_sent ? 'Commande envoyée' : data.ready_phones_count + '/' + data.phones_count + ' téléphones prêts';}
     if(statusLabel && (data.status_label || data.status || data.statut)) statusLabel.textContent = clientStatusLabel(status, data.status_label);
@@ -949,6 +976,7 @@ function startStatusFallback(){
 }
 connectClientOrderSocket();
 startStatusFallback();
+setServerCallStatus(lastServerCallStatus, false, '{{ server_name|default:"Votre serveur"|escapejs }}');
 refreshStatus({notify: true});
 setTimeout(() => refreshStatus({notify: true}), 800);
 setTimeout(() => refreshStatus({notify: true}), 2000);

@@ -1454,6 +1454,21 @@ class ServeurOrderNotificationActionView(View):
         pilot_profile = get_object_or_404(PilotProfile, id=payload.get('server_id'), role='SERVEUR')
         order = get_object_or_404(Order.objects.select_related('bar', 'table', 'serveur'), id=payload.get('order_id'), bar=pilot_profile.bar)
 
+        if kind == 'client_call':
+            if order.serveur_id != pilot_profile.id:
+                return JsonResponse({'error': 'Cet appel est assigné à un autre serveur.'}, status=403)
+            meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
+            if meta.server_call_status != 'REQUESTED':
+                return JsonResponse({'success': False, 'message': 'Cet appel a déjà reçu une réponse.'}, status=409)
+            meta.server_call_status = 'COMING' if action == 'accept' else 'WAITING'
+            meta.server_call_responded_at = timezone.now()
+            meta.server_call_responded_by = pilot_profile
+            meta.save(update_fields=['server_call_status', 'server_call_responded_at', 'server_call_responded_by', 'updated_at'])
+            from services.order_realtime import broadcast_order_changed
+            broadcast_order_changed(order)
+            message = "J’arrive envoyé au client." if action == 'accept' else 'Patientez un peu envoyé au client.'
+            return JsonResponse({'success': True, 'message': message, 'status': meta.server_call_status})
+
         if kind == 'debt':
             meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
             if not meta.debt_requested:

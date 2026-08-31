@@ -19,12 +19,12 @@
   }
 
   function showDesktopSoundPrompt() {
-    if (!window.location.pathname.startsWith("/serveur/") || window.matchMedia("(max-width: 767px)").matches) return;
+    if (!window.location.pathname.startsWith("/serveur/")) return;
     if (state.audioUnlocked || document.getElementById("bpDesktopSoundPrompt")) return;
     const prompt = document.createElement("section");
     prompt.id = "bpDesktopSoundPrompt";
     prompt.className = "fixed bottom-5 right-5 z-[9998] flex max-w-sm items-center gap-3 rounded-2xl border border-orange-200 bg-white p-4 text-neutral-950 shadow-2xl";
-    prompt.innerHTML = '<span class="material-symbols-outlined text-2xl text-orange-600">volume_up</span><div class="min-w-0 flex-1"><p class="text-sm font-black">Sonnerie des appels clients</p><p class="mt-1 text-xs font-bold text-neutral-500">Activez le son sur cet ordinateur.</p></div><button type="button" class="rounded-xl bg-orange-600 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-white">Activer</button>';
+    prompt.innerHTML = '<span class="material-symbols-outlined text-2xl text-orange-600">volume_up</span><div class="min-w-0 flex-1"><p class="text-sm font-black">Sonnerie des appels clients</p><p class="mt-1 text-xs font-bold text-neutral-500">Activez le son sur cet appareil.</p></div><button type="button" class="rounded-xl bg-orange-600 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-white">Activer</button>';
     prompt.querySelector("button").addEventListener("click", async () => {
       if (await unlockNotificationSound()) {
         playNotificationSound();
@@ -212,12 +212,15 @@
     const body = item.body || '';
     if (wasRecentlyShown(item)) return;
 
-    window.dispatchEvent(new CustomEvent('barpilote:notification', { detail: item }));
+    const notificationEvent = new CustomEvent('barpilote:notification', { detail: item, cancelable: true });
+    window.dispatchEvent(notificationEvent);
     if (isClientCall(item)) {
       startClientCallRingtone();
     } else {
       playNotificationSound();
     }
+
+    if (notificationEvent.defaultPrevented) return;
 
     if (document.hidden) {
       showSystemNotification(item);
@@ -355,7 +358,7 @@
     });
   }
 
-  window.BarPiloteNotifications = { connectWebSocket, setupFirebasePush, setupCapacitorPush, playNotificationSound, showSystemNotification, showPermissionPrompt, stopClientCallRingtone };
+  window.BarPiloteNotifications = { connectWebSocket, setupFirebasePush, setupCapacitorPush, playNotificationSound, startClientCallRingtone, showSystemNotification, showPermissionPrompt, stopClientCallRingtone };
   document.addEventListener('DOMContentLoaded', () => {
     ['click', 'touchstart', 'keydown'].forEach((eventName) => {
       document.addEventListener(eventName, unlockNotificationSound, { once: true, passive: true });
