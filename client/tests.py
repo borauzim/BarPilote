@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.core import signing
-from django.test import Client as DjangoClient, TestCase
+from django.test import Client as DjangoClient, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from unittest.mock import patch
@@ -9,6 +9,40 @@ from datetime import timedelta
 from client.models import ClientOrderMeta, TableParticipant, TableSession, mark_table_session_paid
 from client.views import _finalize_group_order
 from proprietaire.models import Bar, Category, Facture, MasterProduct, Order, OrderItem, PilotProfile, StockItem, Table
+
+
+@override_settings(SITE_URL="https://www.barpilote.com")
+class ClientTableMenuIsolationTests(TestCase):
+    def setUp(self):
+        now = timezone.now()
+        self.bar_one = Bar.objects.create(nom="Établissement Alpha", adresse="Kinshasa")
+        self.bar_two = Bar.objects.create(nom="Établissement Beta", adresse="Goma")
+        self.table_one = Table.objects.create(
+            bar=self.bar_one, nom="Table Alpha 1", subscription_started_at=now,
+            subscription_expires_at=now + timedelta(days=30),
+        )
+        self.table_two = Table.objects.create(
+            bar=self.bar_two, nom="Table Beta 1", subscription_started_at=now,
+            subscription_expires_at=now + timedelta(days=30),
+        )
+        category = Category.objects.create(nom="Menus isolés")
+        alpha_product = MasterProduct.objects.create(nom="Produit exclusif Alpha", categorie=category)
+        beta_product = MasterProduct.objects.create(nom="Produit exclusif Beta", categorie=category)
+        StockItem.objects.create(bar=self.bar_one, produit=alpha_product, quantite_actuelle=10, prix_vente_unitaire=2)
+        StockItem.objects.create(bar=self.bar_two, produit=beta_product, quantite_actuelle=10, prix_vente_unitaire=3)
+
+    def test_qr_url_opens_the_menu_of_the_tables_establishment_only(self):
+        self.assertEqual(
+            self.table_one.client_menu_url,
+            f"https://www.barpilote.com/client/{self.table_one.id}/",
+        )
+        response = self.client.get(reverse("client_menu", args=[self.table_one.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["bar"], self.bar_one)
+        self.assertEqual(response.context["table"], self.table_one)
+        self.assertContains(response, "Établissement Alpha")
+        self.assertContains(response, "Produit exclusif Alpha")
+        self.assertNotContains(response, "Produit exclusif Beta")
 
 
 class ClientReleaseTableTests(TestCase):

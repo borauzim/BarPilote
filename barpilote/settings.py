@@ -48,7 +48,7 @@ if not DEBUG and SECRET_KEY == 'django-insecure-development-only-change-me':
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
 
-SITE_URL = os.environ.get('SITE_URL', '').rstrip('/')
+SITE_URL = os.environ.get('SITE_URL', 'https://www.barpilote.com').rstrip('/')
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Application definition
