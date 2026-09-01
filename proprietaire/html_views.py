@@ -19,7 +19,7 @@ import qrcode
 import io
 import zipfile
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A6
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
@@ -1632,9 +1632,9 @@ class TableDownloadQRView(LoginRequiredMixin, View):
         return response
 
     def draw_badge(self, buffer, table):
-        # Format A6 (105 x 148 mm)
-        c = canvas.Canvas(buffer, pagesize=A6)
-        width, height = A6
+        # Format A4 (210 x 297 mm), adapté à l'impression standard.
+        c = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
         
         # Couleurs Premium
         orange_primary = HexColor("#FF5E00")
@@ -1646,44 +1646,44 @@ class TableDownloadQRView(LoginRequiredMixin, View):
         c.rect(0, 0, width, height, stroke=0, fill=1)
 
         # 1. LOGO PRINCIPAL (Original BarPilote Logo - Orange Version)
-        y_pos = height - 35*mm
+        y_pos = height - 42*mm
         logo_path = os.path.join(settings.BASE_DIR, 'static', 'logo_orange.png')
         if os.path.exists(logo_path):
-            l_size = 28*mm # Légèrement plus petit pour laisser de la place au texte
+            l_size = 34*mm
             c.drawImage(ImageReader(logo_path), (width - l_size)/2, y_pos, width=l_size, height=l_size, mask='auto')
             
             # Ajout du nom du site sous le logo
             c.setFillColor(orange_primary)
-            c.setFont("Helvetica-Bold", 14)
+            c.setFont("Helvetica-Bold", 18)
             c.drawCentredString(width/2, y_pos - 5*mm, "BarPilote")
-            y_pos -= 8*mm # Décalage supplémentaire pour le texte
+            y_pos -= 10*mm
         else:
             c.setFillColor(orange_primary)
-            c.setFont("Helvetica-Bold", 16)
+            c.setFont("Helvetica-Bold", 20)
             c.drawCentredString(width/2, height - 20*mm, "BarPilote")
             
         # 2. NOM ÉTABLISSEMENT
         y_pos -= 4*mm
         c.setFillColor(gray_muted)
-        c.setFont("Helvetica-Bold", 10)
+        c.setFont("Helvetica-Bold", 13)
         c.drawCentredString(width/2, y_pos, table.bar.nom.upper())
         
         # 3. TITRE DE LA TABLE
         y_pos -= 8*mm
         c.setFillColor(dark_text)
-        c.setFont("Helvetica-Bold", 18) 
+        c.setFont("Helvetica-Bold", 28)
         c.drawCentredString(width/2, y_pos, table.nom)
         
         # 4. LABEL D'ACTIVITÉ (Souligné en orange)
         y_pos -= 6*mm
         c.setFillColor(orange_primary)
-        c.setFont("Helvetica-Bold", 7)
+        c.setFont("Helvetica-Bold", 10)
         c.drawCentredString(width/2, y_pos, "ZONE DE SERVICE ACTIVE")
         
         # 5. QR CODE AREA
-        qr_size = 58*mm
+        qr_size = 110*mm
         qr_x = (width - qr_size) / 2
-        y_pos -= 68*mm # Espace pour le QR
+        y_pos = 92*mm
         
         # Bordure arrondie premium (Plus large radius)
         c.setStrokeColor(orange_primary)
@@ -1705,19 +1705,19 @@ class TableDownloadQRView(LoginRequiredMixin, View):
         c.drawImage(ImageReader(qr_buffer), qr_x, y_pos, width=qr_size, height=qr_size)
         
         # 6. FOOTER (Juste sous le QR)
-        y_footer = y_pos - 10*mm
+        y_footer = y_pos - 16*mm
         c.setFillColor(gray_muted)
-        c.setFont("Helvetica-Bold", 7)
+        c.setFont("Helvetica-Bold", 10)
         c.drawCentredString(width/2, y_footer, "PORTAIL DE COMMANDE")
         
         # URL en bas (Orange et propre)
-        y_footer -= 5*mm
+        y_footer -= 7*mm
         c.setFillColor(orange_primary)
-        c.setFont("Helvetica", 8)
+        c.setFont("Helvetica", 10)
         url_text = str(qr_url or '').replace("https://", "").replace("http://", "")
         url_text = url_text.strip('/') or str(qr_url or '')
-        if len(url_text) > 36:
-            url_text = f"{url_text[:33]}..."
+        if len(url_text) > 58:
+            url_text = f"{url_text[:55]}..."
         
         c.drawCentredString(width/2, y_footer, url_text) 
         

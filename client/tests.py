@@ -36,6 +36,7 @@ class ClientTableMenuIsolationTests(TestCase):
             self.table_one.client_menu_url,
             f"https://www.barpilote.com/client/{self.table_one.id}/",
         )
+        self.assertNotIn('//client/', self.table_one.client_menu_url)
         response = self.client.get(reverse("client_menu", args=[self.table_one.id]))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["bar"], self.bar_one)

@@ -293,7 +293,9 @@ class Table(models.Model):
     def client_menu_url(self):
         """Lien public à encoder dans le QR code de la table."""
         path = reverse('client_menu', args=[self.id])
-        site_url = getattr(settings, 'SITE_URL', '').rstrip()
+        # SITE_URL peut être fourni par l'environnement de déploiement.
+        # Normaliser uniquement les slashs finaux pour éviter les URLs `//client/...`.
+        site_url = str(getattr(settings, 'SITE_URL', '') or '').strip().rstrip('/')
         return f"{site_url}{path}" if site_url else path
 
     class Meta:
