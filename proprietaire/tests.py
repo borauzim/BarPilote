@@ -168,3 +168,34 @@ class TableCreationTests(TestCase):
         self.assertEqual(Table.objects.filter(bar=bar).count(), 2)
         self.assertTrue(Table.objects.filter(bar=bar, nom='Table 1').exists())
         self.assertTrue(Table.objects.filter(bar=bar, nom='Table 2').exists())
+
+    def test_owner_can_add_tables_after_deleting_one(self):
+        user = User.objects.create_user(username='owner-readd-tables', email='owner-readd@example.com', password='pass')
+        bar = Bar.objects.create(nom='Readd Tables Bar')
+        profile, _ = PilotProfile.objects.get_or_create(user=user)
+        profile.role = 'PROPRIETAIRE'
+        profile.bar = bar
+        profile.save(update_fields=['role', 'bar'])
+        profile.owned_bars.add(bar)
+        Table.objects.create(bar=bar, nom='Table 1')
+        deleted_table = Table.objects.create(bar=bar, nom='Table 2')
+        client = Client()
+        client.force_login(user)
+
+        delete_response = client.post('/proprietaire/tables/action/', {
+            'action': 'delete',
+            'table_id': str(deleted_table.id),
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest', HTTP_ACCEPT='application/json')
+        self.assertTrue(delete_response.json()['success'])
+
+        add_response = client.post('/proprietaire/tables/action/', {
+            'action': 'add',
+            'count': '2',
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest', HTTP_ACCEPT='application/json')
+
+        self.assertEqual(add_response.status_code, 200)
+        self.assertTrue(add_response.json()['success'])
+        self.assertEqual(
+            list(Table.objects.filter(bar=bar).order_by('nom').values_list('nom', flat=True)),
+            ['Table 1', 'Table 2', 'Table 3'],
+        )

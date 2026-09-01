@@ -719,3 +719,25 @@ body.bp-owner-app:has(#bpOwnerGlobalOrderAlertStack) {
 .bp-owner-app main { transition: opacity 140ms ease-out; }
 .bp-owner-navigating .bp-owner-app main, .bp-owner-app.bp-owner-navigating main { opacity: .45; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .bp-owner-app main { transition: none; } }
+
+/* Keep every owner destination, including Finances, visible in the mobile dock. */
+@media (max-width: 767px) {
+    .bp-owner-app #mobile-nav {
+        justify-content: space-evenly !important;
+        gap: 0 !important;
+        overflow-x: hidden !important;
+        padding-inline: .25rem !important;
+    }
+    .bp-owner-app #mobile-nav a {
+        min-width: 0 !important;
+        max-width: none !important;
+        flex: 1 1 0 !important;
+        padding-inline: .125rem;
+    }
+    .bp-owner-app #mobile-nav a > span:last-child {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
