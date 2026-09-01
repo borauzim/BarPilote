@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.template import Context, Template
@@ -143,6 +144,41 @@ class TableSubscriptionSelectionTests(TestCase):
 
 
 class TableCreationTests(TestCase):
+    def test_native_mobile_form_adds_tables_and_redirects(self):
+        user = User.objects.create_user(username='owner-mobile-tables', email='owner-mobile@example.com', password='pass')
+        bar = Bar.objects.create(nom='Mobile Tables Bar')
+        profile, _ = PilotProfile.objects.get_or_create(user=user)
+        profile.role = 'PROPRIETAIRE'
+        profile.bar = bar
+        profile.save(update_fields=['role', 'bar'])
+        client = Client()
+        client.force_login(user)
+
+        response = client.post('/proprietaire/tables/action/', {'action': 'add', 'count': '3'})
+
+        self.assertRedirects(response, '/proprietaire/tables/')
+        self.assertEqual(Table.objects.filter(bar=bar).count(), 3)
+
+    @patch('proprietaire.html_views.notify_bar_servers', side_effect=RuntimeError('notification unavailable'))
+    def test_notification_failure_does_not_fail_table_creation(self, _notify):
+        user = User.objects.create_user(username='owner-notify-tables', email='owner-notify@example.com', password='pass')
+        bar = Bar.objects.create(nom='Notification Tables Bar')
+        profile, _ = PilotProfile.objects.get_or_create(user=user)
+        profile.role = 'PROPRIETAIRE'
+        profile.bar = bar
+        profile.save(update_fields=['role', 'bar'])
+        client = Client()
+        client.force_login(user)
+
+        response = client.post('/proprietaire/tables/action/', {
+            'action': 'add',
+            'count': '1',
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest', HTTP_ACCEPT='application/json')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+        self.assertTrue(Table.objects.filter(bar=bar, nom='Table 1').exists())
+
     def test_live_add_creates_tables_and_refreshes_table_list(self):
         user = User.objects.create_user(username='owner-tables', email='owner-tables@example.com', password='pass')
         bar = Bar.objects.create(nom='Tables Bar')

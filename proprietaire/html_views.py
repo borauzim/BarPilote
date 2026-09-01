@@ -1,6 +1,7 @@
 from django.views.generic import TemplateView, View
 from django.contrib import messages
 import json
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 import os
@@ -27,6 +28,8 @@ from .models import PilotProfile, Order, Table, Bar, BarAdvisorSettings, StockIt
 from .order_services import take_order_for_profile
 from .notifications import ensure_daily_debt_reminders, notify_bar_owners, notify_bar_servers, notify_debt_created, notify_order_created, notify_order_status, notify_user
 from .advisor import generate_advisor_response
+
+logger = logging.getLogger(__name__)
 
 
 def _expects_json(request):
@@ -1577,8 +1580,12 @@ class TableActionView(LoginRequiredMixin, View):
                     created_names.append(table.nom)
                     created_ids.append(str(table.id))
                 if created_names:
-                    notify_bar_servers(profile.bar, actor=request.user, category='TABLE', title='Nouvelles tables ajoutées', message=f"{len(created_names)} table(s) ajoutée(s): {', '.join(created_names[:4])}.", url='/serveur/tables/')
-                    notify_bar_owners(profile.bar, actor=request.user, category='TABLE', title='Nouvelles tables ajoutées', message=f"{len(created_names)} table(s) ajoutée(s): {', '.join(created_names[:4])}.", url='/proprietaire/tables/')
+                    notification_message = f"{len(created_names)} table(s) ajoutée(s): {', '.join(created_names[:4])}."
+                    try:
+                        notify_bar_servers(profile.bar, actor=request.user, category='TABLE', title='Nouvelles tables ajoutées', message=notification_message, url='/serveur/tables/')
+                        notify_bar_owners(profile.bar, actor=request.user, category='TABLE', title='Nouvelles tables ajoutées', message=notification_message, url='/proprietaire/tables/')
+                    except Exception:
+                        logger.exception("Les tables ont ete creees, mais leur notification a echoue pour le bar %s", profile.bar_id)
                     payload = {
                         'success': True,
                         'message': f"{len(created_names)} table(s) ajoutée(s).",

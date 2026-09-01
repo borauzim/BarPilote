@@ -984,7 +984,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 window.addEventListener('focus', () => refreshStatus({notify: true}));
 window.addEventListener('online', () => refreshStatus({notify: true}));
 </script>
-    <script src="{% static 'js/barpilote-theme.js' %}"></script>
+    <script src="{% static 'js/barpilote-theme.js' %}?v=viewport-dialogs-2"></script>
     <script src="{% static 'js/barpilote-pwa.js' %}?v=4"></script>
 <script>
 window.showCashConfirmedCelebration = function(title, message) {

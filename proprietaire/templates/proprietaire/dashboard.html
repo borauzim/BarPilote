@@ -844,11 +844,8 @@
             renderLiveOrders(ownerLiveOrders);
         }
 
-        function connectOwnerDashboardSocket() {
-            const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-            const socket = new WebSocket(`${protocol}://${location.host}/ws/proprietaire/dashboard/`);
-            socket.onmessage = (event) => {
-                const payload = JSON.parse(event.data || '{}');
+        function handleOwnerDashboardMessage(event) {
+                const payload = event.detail || {};
                 if (!['proprietaire.commande_accepted', 'proprietaire.commande_changed'].includes(payload.type) || !payload.commande) return;
                 if (payload.dashboard) {
                     const revenueEl = document.getElementById('todayRevenueValue');
@@ -864,10 +861,10 @@
                     }
                 }
                 mergeOwnerRealtimeOrder(payload.commande);
-            };
-            socket.onclose = () => setTimeout(connectOwnerDashboardSocket, 3000);
         }
-        connectOwnerDashboardSocket();
+        window.removeEventListener('barpilote:owner-dashboard-message', window.__barpiloteOwnerDashboardHandler);
+        window.__barpiloteOwnerDashboardHandler = handleOwnerDashboardMessage;
+        window.addEventListener('barpilote:owner-dashboard-message', handleOwnerDashboardMessage);
 
         function updateOrderStatus(orderId, newStatus) {
             fetch('/proprietaire/api/update-order-status/', {

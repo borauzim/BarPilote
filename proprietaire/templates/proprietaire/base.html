@@ -433,7 +433,7 @@
     </script>
     <script src="{% static 'js/barpilote-currency.js' %}?v=currency-switch-7"></script>
     <script src="{% static 'js/barpilote-live-actions.js' %}"></script>
-    <script src="{% static 'js/barpilote-notifications.js' %}?v=client-call-5"></script>
+    <script src="{% static 'js/barpilote-notifications.js' %}?v=websocket-fix-6"></script>
 
     <div id="bpOwnerGlobalOrderAlertStack" class="bp-global-order-alert-stack" aria-live="assertive" aria-atomic="false"></div>
     <script>
@@ -577,6 +577,7 @@
                 ringAlarm();
             }
 
+            let dashboardSocketRetryCount = 0;
             function connect() {
                 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
                 const socket = new WebSocket(protocol + '://' + window.location.host + '/ws/proprietaire/dashboard/');
@@ -585,8 +586,13 @@
                     try { payload = JSON.parse(event.data || '{}'); } catch (error) { return; }
                     if (!['proprietaire.commande_accepted', 'proprietaire.commande_changed'].includes(payload.type)) return;
                     showBubble(payload.commande);
+                    window.dispatchEvent(new CustomEvent('barpilote:owner-dashboard-message', {detail: payload}));
                 };
-                socket.onclose = function () { setTimeout(connect, 3000); };
+                socket.onopen = function () { dashboardSocketRetryCount = 0; };
+                socket.onclose = function () {
+                    dashboardSocketRetryCount += 1;
+                    if (dashboardSocketRetryCount <= 5) setTimeout(connect, Math.min(30000, 2000 * (2 ** (dashboardSocketRetryCount - 1))));
+                };
             }
             connect();
         })();
@@ -594,9 +600,9 @@
     <div id="bp-page-extra-root">
         {% block extra_body %}{% endblock %}
     </div>
-    <script src="{% static 'js/barpilote-owner-navigation.js' %}?v=2"></script>
+    <script src="{% static 'js/barpilote-owner-navigation.js' %}?v=mobile-tables-4"></script>
     <script src="{% static 'js/barpilote-instant-filters.js' %}?v=1"></script>
-    <script src="{% static 'js/barpilote-theme.js' %}"></script>
+    <script src="{% static 'js/barpilote-theme.js' %}?v=viewport-dialogs-2"></script>
     <script src="{% static 'js/barpilote-pwa.js' %}?v=4"></script>
 </body>
 </html>

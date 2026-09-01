@@ -237,6 +237,8 @@
   }
 
   function connectWebSocket() {
+    if (!('WebSocket' in window)) return;
+    if (state.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(state.socket.readyState)) return;
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const socket = new WebSocket(`${protocol}://${window.location.host}/ws/notifications/`);
     state.socket = socket;
@@ -247,12 +249,21 @@
     };
 
     socket.onclose = () => {
-      setTimeout(connectWebSocket, 3000);
+      if (state.socket === socket) state.socket = null;
+      if (state.socketPingTimer) clearInterval(state.socketPingTimer);
+      state.socketPingTimer = null;
+      state.socketRetryCount = (state.socketRetryCount || 0) + 1;
+      if (state.socketRetryCount <= 5) {
+        const delay = Math.min(30000, 2000 * (2 ** (state.socketRetryCount - 1)));
+        state.socketRetryTimer = setTimeout(connectWebSocket, delay);
+      }
     };
 
     socket.onopen = () => {
+      state.socketRetryCount = 0;
       socket.send(JSON.stringify({ type: 'ping' }));
-      setInterval(() => {
+      if (state.socketPingTimer) clearInterval(state.socketPingTimer);
+      state.socketPingTimer = setInterval(() => {
         if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'ping' }));
       }, 30000);
     };

@@ -95,4 +95,3 @@ class EmailLoginCodeTests(TestCase):
         old_code.refresh_from_db()
         self.assertIsNotNone(old_code.used_at)
         self.assertEqual(EmailLoginCode.objects.filter(email=email, used_at__isnull=True).count(), 1)
-

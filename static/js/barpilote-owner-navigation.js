@@ -4,6 +4,55 @@
   window.__barpiloteOwnerNavigationReady = true;
   var controller = null, sequence = 0;
 
+  function openAddTablesModal() {
+    var modal = document.getElementById('addTablesModal');
+    var content = document.getElementById('addTablesModalContent');
+    if (!modal || !content) return;
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    requestAnimationFrame(function () {
+      content.classList.remove('translate-y-4', 'opacity-0');
+      content.classList.add('translate-y-0', 'opacity-100');
+      var count = document.getElementById('add_count_number');
+      if (count && matchMedia('(pointer: fine)').matches) count.focus();
+    });
+  }
+
+  async function submitAddTables(form) {
+    var button = form.querySelector('[type="submit"]');
+    if (!button || button.disabled) return;
+    var originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Ajout en cours…';
+    try {
+      var response = await fetch(form.getAttribute('action') || location.href, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRFToken': (form.querySelector('[name="csrfmiddlewaretoken"]') || {}).value || ''
+        },
+        body: new FormData(form)
+      });
+      var contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) throw new Error('Réponse serveur invalide (HTTP ' + response.status + ').');
+      var payload = await response.json();
+      if (!response.ok || !payload.success) throw new Error(payload.message || payload.error || 'Impossible d’ajouter les tables.');
+      if (typeof window.closeAddTablesModal === 'function') window.closeAddTablesModal();
+      else document.getElementById('addTablesModal')?.classList.add('hidden');
+      window.BarPiloteLiveActions?.flashMessage?.(payload.message || 'Tables ajoutées.');
+      if (payload.dispatch_event) window.dispatchEvent(new CustomEvent(payload.dispatch_event.type, {detail: payload.dispatch_event.detail || {}}));
+    } catch (error) {
+      window.BarPiloteLiveActions?.flashMessage?.(error.message || 'Impossible d’ajouter les tables.');
+      console.warn('Add tables failed:', error);
+    } finally {
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  }
+
   function eligible(link, event) {
     if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
     if (link.target || link.hasAttribute('download') || link.hasAttribute('data-no-pjax')) return false;
@@ -90,6 +139,12 @@
   }
 
   document.addEventListener('click', function (event) {
+    var addTablesButton = event.target.closest('[data-open-add-tables]');
+    if (addTablesButton) {
+      event.preventDefault();
+      openAddTablesModal();
+      return;
+    }
     var link = event.target.closest('a[href]');
     if (link && !event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
       var localUrl = new URL(link.href, location.href);

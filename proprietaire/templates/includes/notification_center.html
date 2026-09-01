@@ -49,7 +49,6 @@
     let knownNotificationIds = new Set();
     let firstNotificationLoad = true;
     let notificationRequestInFlight = false;
-    let notificationSocket = null;
     let activeNotificationFilter = 'all';
     let currentToastActionUrls = {accept: '', refuse: ''};
     let currentToastNotificationId = '';
@@ -284,20 +283,8 @@
             .finally(() => { notificationRequestInFlight = false; });
     };
 
-    function connectNotificationSocket() {
-        if (notificationSocket && (notificationSocket.readyState === WebSocket.OPEN || notificationSocket.readyState === WebSocket.CONNECTING)) {
-            return;
-        }
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        notificationSocket = new WebSocket(`${protocol}://${window.location.host}/ws/notifications/`);
-        notificationSocket.onmessage = function (event) {
-            const payload = JSON.parse(event.data || '{}');
-            if (payload.type !== 'notification' || !payload.notification) return;
-            upsertNotificationFromSocket(payload.notification);
-        };
-        notificationSocket.onclose = function () {
-            setTimeout(connectNotificationSocket, 3000);
-        };
+    function handleRealtimeNotification(event) {
+        if (event.detail) upsertNotificationFromSocket(event.detail);
     }
 
     function setNotificationMenuOpen(open) {
@@ -394,7 +381,8 @@
     document.addEventListener('DOMContentLoaded', function () {
         paintNotificationFilters();
         window.loadNotifications();
-        connectNotificationSocket();
+        window.removeEventListener('barpilote:notification', handleRealtimeNotification);
+        window.addEventListener('barpilote:notification', handleRealtimeNotification);
     });
 })();
 </script>
