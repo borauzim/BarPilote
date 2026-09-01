@@ -140,3 +140,31 @@ class TableSubscriptionSelectionTests(TestCase):
         self.assertTrue(table_1.subscription_is_active)
         self.assertFalse(table_2.subscription_is_active)
         self.assertTrue(table_3.subscription_is_active)
+
+
+class TableCreationTests(TestCase):
+    def test_live_add_creates_tables_and_refreshes_table_list(self):
+        user = User.objects.create_user(username='owner-tables', email='owner-tables@example.com', password='pass')
+        bar = Bar.objects.create(nom='Tables Bar')
+        profile, _ = PilotProfile.objects.get_or_create(user=user)
+        profile.role = 'PROPRIETAIRE'
+        profile.bar = bar
+        profile.save(update_fields=['role', 'bar'])
+        profile.owned_bars.add(bar)
+        client = Client()
+        client.force_login(user)
+
+        response = client.post('/proprietaire/tables/action/', {
+            'action': 'add',
+            'count': '2',
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest', HTTP_ACCEPT='application/json')
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload['success'])
+        self.assertNotIn('redirect_url', payload)
+        self.assertEqual(payload['close_selector'], '#addTablesModal')
+        self.assertEqual(payload['dispatch_event']['detail']['action'], 'add')
+        self.assertEqual(Table.objects.filter(bar=bar).count(), 2)
+        self.assertTrue(Table.objects.filter(bar=bar, nom='Table 1').exists())
+        self.assertTrue(Table.objects.filter(bar=bar, nom='Table 2').exists())

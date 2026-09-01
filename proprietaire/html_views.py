@@ -1579,7 +1579,15 @@ class TableActionView(LoginRequiredMixin, View):
                 if created_names:
                     notify_bar_servers(profile.bar, actor=request.user, category='TABLE', title='Nouvelles tables ajoutées', message=f"{len(created_names)} table(s) ajoutée(s): {', '.join(created_names[:4])}.", url='/serveur/tables/')
                     notify_bar_owners(profile.bar, actor=request.user, category='TABLE', title='Nouvelles tables ajoutées', message=f"{len(created_names)} table(s) ajoutée(s): {', '.join(created_names[:4])}.", url='/proprietaire/tables/')
-                    payload = {'success': True, 'message': f"{len(created_names)} table(s) ajoutée(s).", 'dispatch_event': {'type': 'barpilote:tables-changed', 'detail': {'table_ids': created_ids, 'action': 'add'}}}
+                    payload = {
+                        'success': True,
+                        'message': f"{len(created_names)} table(s) ajoutée(s).",
+                        'close_selector': '#addTablesModal',
+                        'dispatch_event': {
+                            'type': 'barpilote:tables-changed',
+                            'detail': {'table_ids': created_ids, 'action': 'add'},
+                        },
+                    }
         
         live = _live_payload(request, payload)
         if live is not None:

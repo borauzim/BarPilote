@@ -480,6 +480,43 @@
     document.getElementById('addTablesModal')?.addEventListener('click', (event) => { if (event.target.id === 'addTablesModal') closeAddTablesModal(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !document.getElementById('addTablesModal')?.classList.contains('hidden')) closeAddTablesModal(); });
 
+    if (!window.__barpiloteTablesChangedListener) {
+        window.__barpiloteTablesChangedListener = true;
+        window.addEventListener('barpilote:tables-changed', async (event) => {
+            if (event.detail?.action !== 'add') return;
+            const currentPage = document.querySelector('.tables-page');
+            if (!currentPage) return;
+
+            currentPage.setAttribute('aria-busy', 'true');
+            try {
+                const response = await fetch(window.location.href, {
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html',
+                    },
+                });
+                if (!response.ok) throw new Error('Impossible de mettre à jour le plan de salle.');
+
+                const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+                const nextPage = nextDocument.querySelector('.tables-page');
+                if (!nextPage) throw new Error('Plan de salle introuvable dans la réponse.');
+
+                currentPage.replaceWith(document.importNode(nextPage, true));
+                const currentSubscriptionModal = document.getElementById('subscriptionModal');
+                const nextSubscriptionModal = nextDocument.getElementById('subscriptionModal');
+                if (currentSubscriptionModal && nextSubscriptionModal) {
+                    currentSubscriptionModal.replaceWith(document.importNode(nextSubscriptionModal, true));
+                }
+                window.BarPiloteCurrency?.applyCurrency?.();
+            } catch (error) {
+                currentPage.removeAttribute('aria-busy');
+                window.BarPiloteLiveActions?.flashMessage?.('Tables ajoutées, mais l’affichage n’a pas pu être actualisé.');
+                console.warn('Tables refresh failed:', error);
+            }
+        });
+    }
+
     function downloadAllQRs() {
         const tableLinks = Array.from(document.querySelectorAll('a[href*="download-qr"]'));
         let i = 0;

@@ -392,6 +392,10 @@
             <span class="material-symbols-outlined" style="{% if request.resolver_match.url_name == 'tables_html' %}font-variation-settings: 'FILL' 1;{% endif %}">qr_code_2</span>
             <span class="text-[10px] font-bold uppercase tracking-tighter">Tables</span>
         </a>
+        <a class="flex flex-col items-center gap-1 {% if request.resolver_match.url_name == 'finance_html' %}text-orange-600{% else %}text-on-surface-variant{% endif %}" href="{% url 'finance_html' %}">
+            <span class="material-symbols-outlined" style="{% if request.resolver_match.url_name == 'finance_html' %}font-variation-settings: 'FILL' 1;{% endif %}">account_balance_wallet</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Finances</span>
+        </a>
     </nav>
 
     {% if current_bar %}

@@ -404,7 +404,12 @@
     .bp-server-app .bp-header-avatar { display: none !important; }
     .bp-server-app .bp-brand-name { gap: .75rem !important; color: #fff !important; font-size: 1.15rem !important; font-weight: 800 !important; letter-spacing: -.03em !important; }
     .bp-server-app .bp-brand-name img { width: 2.75rem !important; height: 2.75rem !important; padding: .25rem !important; border-radius: 12px !important; }
-    .bp-server-app .bp-server-establishment { margin-top: .45rem !important; overflow: hidden; color: #a7f3d0 !important; font-size: .7rem !important; font-weight: 600 !important; text-overflow: ellipsis; white-space: nowrap; }
+    .bp-server-app .bp-server-establishment { margin-top: .65rem !important; min-width: 0; display: flex; align-items: center; gap: .55rem; overflow: hidden; color: rgba(209,250,229,.78) !important; font-size: .72rem !important; font-weight: 650 !important; line-height: 1.2; }
+    .bp-server-app .bp-server-establishment-logo { width: 1.75rem; height: 1.75rem; flex: 0 0 auto; border-radius: 8px; background: rgba(255,255,255,.09); object-fit: contain; }
+    .bp-server-app img.bp-server-establishment-logo { padding: .15rem; }
+    .bp-server-app .bp-server-establishment-fallback { display: grid; place-items: center; color: rgba(167,243,208,.82); }
+    .bp-server-app .bp-server-establishment-fallback .material-symbols-outlined { font-size: 1rem; }
+    .bp-server-app .bp-server-establishment-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .bp-server-app .bp-server-primary-nav { flex: 1 1 auto !important; min-height: 0 !important; padding: 1rem 0 !important; overflow-y: auto !important; }
     .bp-server-app .bp-server-primary-nav a { min-height: 2.75rem !important; gap: .75rem !important; padding: .7rem .8rem !important; border-radius: 10px !important; color: #d1fae5 !important; font-size: .78rem !important; font-weight: 600 !important; letter-spacing: 0 !important; }
     .bp-server-app .bp-server-primary-nav a::before { color: #6ee7b7 !important; }
@@ -418,7 +423,7 @@
     .bp-server-app #notificationCenter { position: relative !important; overflow: visible !important; }
     .bp-server-app #notif-menu { left: 100% !important; right: auto !important; bottom: 0 !important; margin-left: .75rem !important; }
 }
-@media (max-width: 1023px) { .bp-server-app .bp-server-establishment, .bp-server-app .bp-server-profile-link { display: none !important; } }
+@media (min-width: 768px) and (max-width: 1023px) { .bp-server-app .bp-server-establishment, .bp-server-app .bp-server-profile-link { display: none !important; } }
 
 /* Server sidebar component details. */
 @media (min-width: 1024px) {
@@ -683,9 +688,16 @@
 .bp-server-app #main-header{inset:0 0 auto 0!important;width:100%!important;height:4.25rem!important;min-height:4.25rem!important;padding:0!important;display:block!important;overflow:visible!important;border:0!important;border-bottom:1px solid var(--role-line)!important;background:rgba(255,255,255,.98)!important;color:var(--role-ink)!important}
 .bp-server-app #main-header .bp-main-header-inner{width:100%!important;height:4.25rem!important;padding:.5rem .75rem!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:.5rem!important;overflow:visible!important}
 .bp-server-app #main-header .bp-header-brand{min-width:0!important;padding:0!important;display:flex!important;align-items:center!important;gap:.5rem!important;border:0!important;overflow:hidden!important}
-.bp-server-app #main-header .bp-header-avatar,.bp-server-app #main-header .bp-server-primary-nav,.bp-server-app #main-header .bp-currency-control,.bp-server-app #main-header .bp-server-establishment,.bp-server-app #main-header .bp-server-profile-link{display:none!important}
+.bp-server-app #main-header .bp-header-avatar,.bp-server-app #main-header .bp-server-primary-nav,.bp-server-app #main-header .bp-currency-control,.bp-server-app #main-header .bp-server-profile-link{display:none!important}
+.bp-server-app #main-header .bp-header-title-group{min-width:0!important;display:flex!important;flex:1 1 auto!important;gap:.15rem!important}
 .bp-server-app #main-header .bp-brand-name{min-width:0!important;gap:.5rem!important;color:#06382b!important;font-size:1rem!important;transform:none!important}
 .bp-server-app #main-header .bp-brand-name img{width:2.5rem!important;height:2.5rem!important;border-radius:10px!important}
+.bp-server-app #main-header .bp-server-establishment{min-width:0!important;margin:0 0 0 3rem!important;display:flex!important;align-items:center!important;gap:.35rem!important;overflow:hidden!important;color:#64748b!important;font-size:.68rem!important;font-weight:650!important;line-height:1!important}
+.bp-server-app #main-header .bp-server-establishment-logo{width:1rem!important;height:1rem!important;flex:0 0 auto!important;border-radius:4px!important;background:#eef2ef!important;object-fit:contain!important}
+.bp-server-app #main-header img.bp-server-establishment-logo{padding:.08rem!important}
+.bp-server-app #main-header .bp-server-establishment-fallback{display:grid!important;place-items:center!important;color:#64748b!important}
+.bp-server-app #main-header .bp-server-establishment-fallback .material-symbols-outlined{font-size:.7rem!important}
+.bp-server-app #main-header .bp-server-establishment-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
 .bp-server-app #main-header .bp-header-actions{width:auto!important;margin:0!important;padding:0!important;display:flex!important;flex:0 0 auto!important;align-items:center!important;gap:.25rem!important;border:0!important}
 .bp-server-app #main-header .bp-header-actions>a,.bp-server-app #main-header .bp-header-actions button{width:2.75rem!important;min-width:2.75rem!important;height:2.75rem!important;color:#47534c!important;background:#f1f3ef!important}
 .bp-server-app>main,.bp-server-app main:has(#liveOrdersContainer){width:100%!important;margin:0!important;padding:5rem .75rem calc(6.75rem + env(safe-area-inset-bottom))!important}

@@ -221,7 +221,7 @@
         }
     </style>
     <link rel="stylesheet" href="{% static 'css/barpilote-theme.css' %}?v=notification-popover-2"/>
-    <link rel="stylesheet" href="{% static 'css/barpilote-server.css' %}?v=notification-popover-4"/>
+    <link rel="stylesheet" href="{% static 'css/barpilote-server.css' %}?v=establishment-brand-1"/>
     <meta id="bp-server-page-head-start"/>
     {% block extra_head %}{% endblock %}
     <meta id="bp-server-page-head-end"/>
@@ -246,8 +246,21 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                 {% else %}
                 <img alt="Profile" class="bp-header-avatar w-10 h-10 rounded-full object-cover border-2 border-orange-100" src="{{ user.socialaccount_set.all.0.get_avatar_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuC5cKDoHjikpRIO9idMI-3S_ejeqd6PjCLmNCScEsEoHwWvwa5h9nbKLVgxnuxgErazSIINm9pUPAmlJRU0naGFfH3hiw3xHQmYRU74D14eWCJekclfEixwJYLljbpZvyrAIRraumLcRRDMKortL4gTC5v9VhNnMK0P4xxfvE_jrsS-LSjvQgFxgwlqnRrYu8MgXA5_MXqLa_w1em7WEog_UHubmxwZ8pcI165pBiDR9xq7IAf86QyQIVDenritaPH4k_suRXzsuvTN' }}"/>
                 {% endif %}
-                <a href="{% url 'serveur_dashboard' %}" class="bp-brand-name flex items-center gap-2.5 text-2xl font-black tracking-tighter text-orange-600" aria-label="BarPilote — Service"><img src="{% static 'logo_orange.png' %}" alt="" class="h-10 w-10 shrink-0 rounded-xl bg-white object-contain p-0.5 shadow-sm"><span>BarPilote<span class="bp-brand-dot">.</span></span></a>
-                <p class="bp-server-establishment">YO!</p>
+                <div class="bp-header-title-group flex min-w-0 flex-1 flex-col">
+                    <a href="{% url 'serveur_dashboard' %}" class="bp-brand-name flex items-center gap-2.5 text-2xl font-black tracking-tighter text-orange-600" aria-label="BarPilote — Service"><img src="{% static 'logo_orange.png' %}" alt="" class="h-10 w-10 shrink-0 rounded-xl bg-white object-contain p-0.5 shadow-sm"><span>BarPilote<span class="bp-brand-dot">.</span></span></a>
+                    {% if bar %}
+                    <div class="bp-server-establishment" title="{{ bar.nom }}" aria-label="Établissement : {{ bar.nom }}">
+                        {% if bar.logo %}
+                        <img src="{{ bar.logo.url }}" alt="Logo de {{ bar.nom }}" class="bp-server-establishment-logo">
+                        {% else %}
+                        <span class="bp-server-establishment-logo bp-server-establishment-fallback" aria-hidden="true">
+                            <span class="material-symbols-outlined">storefront</span>
+                        </span>
+                        {% endif %}
+                        <span class="bp-server-establishment-name">{{ bar.nom }}</span>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
             
             <nav class="bp-server-primary-nav flex-1 space-y-1 py-4" aria-label="Navigation principale serveur">
