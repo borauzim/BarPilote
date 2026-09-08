@@ -45,6 +45,13 @@ class ClientTableMenuIsolationTests(TestCase):
         self.assertContains(response, "Produit exclusif Alpha")
         self.assertNotContains(response, "Produit exclusif Beta")
 
+    @override_settings(SITE_URL="https://barpilote.com")
+    def test_qr_url_uses_the_www_host_serving_the_application(self):
+        self.assertEqual(
+            self.table_one.client_menu_url,
+            f"https://www.barpilote.com/client/{self.table_one.id}/",
+        )
+
 
 class ClientReleaseTableTests(TestCase):
     def setUp(self):

@@ -295,7 +295,15 @@ class Table(models.Model):
         path = reverse('client_menu', args=[self.id])
         # SITE_URL peut être fourni par l'environnement de déploiement.
         # Normaliser uniquement les slashs finaux pour éviter les URLs `//client/...`.
-        site_url = str(getattr(settings, 'SITE_URL', '') or '').strip().rstrip('/')
+        site_url = str(getattr(settings, 'SITE_URL', '') or '').strip().rstrip('/,')
+        # Le domaine racine est servi par un autre hébergement et renvoie une 404.
+        # Les QR de BarPilote doivent toujours viser l'application sur le sous-domaine www.
+        if site_url.lower() in ('http://barpilote.com', 'https://barpilote.com'):
+            site_url = 'https://www.barpilote.com'
+        # Ne jamais imprimer une adresse de développement dans un QR de production.
+        local_hosts = ('http://localhost', 'https://localhost', 'http://127.0.0.1', 'https://127.0.0.1')
+        if site_url.lower().startswith(local_hosts):
+            site_url = 'https://www.barpilote.com'
         return f"{site_url}{path}" if site_url else path
 
     class Meta:
