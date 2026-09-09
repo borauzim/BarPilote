@@ -178,3 +178,27 @@ Création de `static/barpilote_compteur.json` au format Lottie 5.12.2 (512×512,
 Prompt : « comment faire pour que ça se charge »
 
 Vérification : Django trouve `barpilote_compteur.json` via `findstatic`. Pour PythonAnywhere, il faut pousser les fichiers, exécuter `collectstatic --noinput` dans l’environnement virtuel puis recharger l’application Web. Le fichier doit répondre sur `/static/barpilote_compteur.json`; le lecteur Lottie vient de cdnjs.
+
+## 2026-09-09 — Erreur git pull sur PythonAnywhere
+
+Prompt : « c'est quoi l'erreur [sortie git pull avec modifications locales et db.sqlite3 bloquante] »
+
+Explication à fournir : PythonAnywhere a des modifications locales, surtout `db.sqlite3`, et le dépôt distant contient des changements qui risqueraient de les écraser. Git a téléchargé les références distantes mais a annulé la fusion. Recommander une sauvegarde de la base puis un stash avant le pull, sans restaurer ou supprimer `db.sqlite3` aveuglément.
+
+## 2026-09-09 — Pull PythonAnywhere réussi
+
+Prompt : « On branch main ... nothing to commit, working tree clean ... stash@{0} ... »
+
+État confirmé : le dépôt PythonAnywhere est propre et synchronisé avec `origin/main`. Quatre stashes existent comme sauvegardes de configurations/modifications précédentes. Ils ne doivent pas être appliqués globalement sans inspection, surtout à cause de `db.sqlite3` et `settings.py`.
+
+## 2026-09-09 — Erreur pipreqs sur PythonAnywhere
+
+Prompt : « regarde moi cette erreur [échec d'installation de pipreqs==0.5.0] »
+
+Diagnostic : PythonAnywhere utilise Python 3.13, tandis que `pipreqs==0.5.0` exige Python >=3.8.1 et <3.13. Aucune utilisation de pipreqs n'a été trouvée dans le projet ; c'est un outil de développement qui peut être retiré des dépendances de déploiement. Les migrations et `collectstatic` ont réussi, mais la commande `pip install -r requirements.txt` reste en échec tant que cette ligne est présente.
+
+## 2026-09-09 — Compatibilité pipreqs avec Python 3.13
+
+Prompt : « modifie ici que ça soit egal à 3.13 »
+
+`requirements.txt` utilise maintenant `pipreqs==0.4.13`, dernière version proposée compatible avec Python 3.13, à la place de `pipreqs==0.5.0`.
