@@ -878,6 +878,12 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
+                    const updatedIds = new Set(String(orderId).split(',').map(id => id.trim()));
+                    ownerLiveOrders = ownerLiveOrders
+                        .map(order => updatedIds.has(String(order.id)) ? {...order, statut: newStatus} : order)
+                        .filter(order => order.statut !== 'PAID' && order.statut !== 'CANCELLED');
+                    renderLiveOrders(ownerLiveOrders);
+                    fetchLiveOrders();
                     if (window.BarPiloteLiveActions) {
                         window.BarPiloteLiveActions.flashMessage('Commande mise a jour.');
                     }
