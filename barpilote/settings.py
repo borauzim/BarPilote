@@ -45,8 +45,22 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-development-on
 if not DEBUG and SECRET_KEY == 'django-insecure-development-only-change-me':
     raise RuntimeError('DJANGO_SECRET_KEY must be configured when DJANGO_DEBUG=false')
 
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        'DJANGO_ALLOWED_HOSTS',
+        'localhost,127.0.0.1,barpilote.com,www.barpilote.com',
+    ).split(',')
+    if host.strip()
+]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        'DJANGO_CSRF_TRUSTED_ORIGINS',
+        'https://barpilote.com,https://www.barpilote.com',
+    ).split(',')
+    if origin.strip()
+]
 
 SITE_URL = os.environ.get('SITE_URL', 'https://www.barpilote.com').strip().rstrip('/,')
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
