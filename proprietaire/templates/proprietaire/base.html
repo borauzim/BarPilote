@@ -506,6 +506,7 @@
                     const payload = await response.json();
                     if (!response.ok || !payload.success) throw new Error(payload.error || 'Action impossible.');
                     closeBubble(order.id);
+                    window.dispatchEvent(new CustomEvent('barpilote:owner-order-action', {detail: {order_id: order.id, status: payload.new_status}}));
                     window.BarPiloteLiveActions?.flashMessage(action === 'accept' ? 'Commande acceptée.' : 'Commande refusée.');
                     if (action === 'accept') {
                         const journal = document.getElementById('journal-commandes');

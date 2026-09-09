@@ -4,6 +4,8 @@
 
 {% block extra_head %}
 <style>
+    #liveOrdersContainer .bp-order-actions button { min-height: 44px; }
+    #liveOrdersContainer .bp-order-actions button:focus-visible { outline: 2px solid #c2410c; outline-offset: 3px; }
     @media (max-width: 768px) {
         .text-6xl { font-size: 2.5rem !important; }
         .text-5xl { font-size: 2rem !important; }
@@ -20,6 +22,8 @@
     }
 
     @media (max-width: 640px) {
+        #paymentModalContent > .p-6 > .flex { flex-direction: column; }
+        #paymentModalContent > .p-6 button { width: 100%; min-height: 44px; }
         section.rounded-\[40px\],
         .rounded-\[40px\] { border-radius: 1.5rem !important; }
         .rounded-\[32px\] { border-radius: 1.25rem !important; }
@@ -222,7 +226,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                     <div>
                         <h2 class="text-2xl font-black tracking-tight text-on-surface">Journal de Bord</h2>
-                        <p class="text-xs text-on-surface-variant/40 font-bold uppercase tracking-widest mt-1">Flux de commandes en temps réel</p>
+                        <p class="text-xs text-on-surface-variant/40 font-bold uppercase tracking-widest mt-1">Accepter ou refuser · Préparer · Servir · Encaisser ou accepter une dette</p>
                     </div>
                     <div class="flex items-center gap-4">
                         <!-- Toggle Button -->
@@ -257,15 +261,17 @@
                                 {% if order.statut == 'PENDING' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>
                                 <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'ACCEPTEE')" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter</button>
+                                <button type="button" onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'CANCELLED')" class="px-4 py-2 rounded-full text-xs font-bold border border-red-100 text-red-600">Refuser</button>
                                 {% elif order.statut == 'ACCEPTEE' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">Acceptée</span>
                                 <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'PREPARING')" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Préparer</button>
                                 {% elif order.statut == 'PREPARING' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>
-                                <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'SERVED')" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>
+                                <button onclick="event.stopPropagation(); updateOrderStatus('{{ order.id }}', 'SERVED')" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Servir</button>
                                 {% elif order.statut == 'SERVED' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Servi</span>
-                                <button onclick="event.stopPropagation(); openPaymentModal('{{ order.id }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'f' }}, {{ order.total_cdf|stringformat:'f' }})" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>
+                                <button onclick="event.stopPropagation(); openPaymentModal('{{ order.id }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'f' }}, {{ order.total_cdf|stringformat:'f' }})" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Encaisser le cash</button>
+                                <button type="button" onclick="event.stopPropagation(); openPaymentModal('{{ order.id }}', '{{ order|jsonify_order_items }}', {{ order.total_usd|stringformat:'f' }}, {{ order.total_cdf|stringformat:'f' }}, true)" class="px-4 py-2 rounded-full text-xs font-bold border border-surface-container text-on-surface">Accepter une dette</button>
                                 {% elif order.statut == 'PAID' %}
                                 <span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-600 uppercase tracking-widest border border-emerald-100">Réglé</span>
                                 {% else %}
@@ -402,7 +408,7 @@
                         <span class="material-symbols-outlined">payments</span>
                     </div>
                     <div>
-                        <h3 class="text-2xl font-black text-on-surface tracking-tight">Encaissement</h3>
+                        <h3 class="text-2xl font-black text-on-surface tracking-tight">Encaissement ou dette</h3>
                         <p class="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest mt-1">Finalisation de la commande</p>
                     </div>
                 </div>
@@ -485,7 +491,7 @@
                         <span class="material-symbols-outlined text-sm">lock</span> Enregistrer en Dette
                     </button>
                     <button onclick="submitPayment()" class="w-2/3 bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-emerald-700 active:scale-[0.96] transition-all">
-                        Valider le Paiement
+                        Confirmer le cash reçu
                     </button>
                 </div>
             </div>
@@ -866,40 +872,52 @@
         window.__barpiloteOwnerDashboardHandler = handleOwnerDashboardMessage;
         window.addEventListener('barpilote:owner-dashboard-message', handleOwnerDashboardMessage);
 
-        function updateOrderStatus(orderId, newStatus) {
-            fetch('/proprietaire/api/update-order-status/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: `order_id=${orderId}&status=${newStatus}`
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    const updatedIds = new Set(String(orderId).split(',').map(id => id.trim()));
-                    ownerLiveOrders = ownerLiveOrders
-                        .map(order => updatedIds.has(String(order.id)) ? {...order, statut: newStatus} : order)
-                        .filter(order => order.statut !== 'PAID' && order.statut !== 'CANCELLED');
-                    renderLiveOrders(ownerLiveOrders);
-                    fetchLiveOrders();
-                    if (window.BarPiloteLiveActions) {
-                        window.BarPiloteLiveActions.flashMessage('Commande mise a jour.');
-                    }
-                    if (newStatus === 'ACCEPTEE') {
-                        const journal = document.getElementById('journal-commandes');
-                        history.replaceState(null, '', '#journal-commandes');
-                        journal?.scrollIntoView({behavior: 'smooth', block: 'start'});
-                    }
-                }
-            });
+        function applyOwnerOrderStatus(orderId, newStatus) {
+            const updatedIds = new Set(String(orderId).split(',').map(id => id.trim()));
+            ownerLiveOrders = ownerLiveOrders
+                .map(order => updatedIds.has(String(order.id)) ? {...order, statut: newStatus} : order)
+                .filter(order => !['PAID', 'CANCELLED'].includes(order.statut));
+            renderLiveOrders(ownerLiveOrders);
+            fetchLiveOrders();
         }
 
+        window.removeEventListener('barpilote:owner-order-action', window.__barpiloteOwnerOrderActionHandler);
+        window.__barpiloteOwnerOrderActionHandler = event => applyOwnerOrderStatus(event.detail.order_id, event.detail.status);
+        window.addEventListener('barpilote:owner-order-action', window.__barpiloteOwnerOrderActionHandler);
+
+        const ownerActionsInFlight = new Set();
+        async function updateOrderStatus(orderId, newStatus) {
+            if (ownerActionsInFlight.has(orderId)) return;
+            ownerActionsInFlight.add(orderId);
+            try {
+                const response = await fetch('/proprietaire/api/update-order-status/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken')},
+                    body: new URLSearchParams({order_id: orderId, status: newStatus}).toString()
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.error || 'Impossible de modifier la commande.');
+                applyOwnerOrderStatus(orderId, data.new_status);
+                window.BarPiloteLiveActions?.flashMessage('Commande mise à jour.');
+                if (newStatus === 'ACCEPTEE') {
+                    history.replaceState(null, '', '#journal-commandes');
+                    document.getElementById('journal-commandes')?.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }
+            } catch (error) {
+                alert(error.message || 'Erreur de connexion. Réessayez.');
+                fetchLiveOrders();
+            } finally {
+                ownerActionsInFlight.delete(orderId);
+            }
+        }
+
+        let ownerOrdersRequest = 0;
         function fetchLiveOrders() {
-            fetch('/proprietaire/api/live-orders/')
+            const requestNumber = ++ownerOrdersRequest;
+            return fetch('/proprietaire/api/live-orders/')
             .then(res => res.json())
             .then(data => {
+                if (requestNumber !== ownerOrdersRequest) return;
                 if (data.orders) {
                     ownerLiveOrders = data.orders;
                     renderLiveOrders(ownerLiveOrders);
@@ -913,7 +931,7 @@
                         }
                     }
                 }
-            });
+            }).catch(error => console.error("Actualisation des commandes impossible", error));
         }
 
         function renderLiveOrders(orders) {
@@ -931,11 +949,12 @@
 
             let html = '';
             
-            // 1. Group orders by table
+            // Regrouper uniquement les commandes de la même table et de la même étape.
             const groupedOrders = {};
             orders.forEach(o => {
-                if (!groupedOrders[o.table_nom]) {
-                    groupedOrders[o.table_nom] = {
+                const groupKey = JSON.stringify([o.table_nom, o.statut]);
+                if (!groupedOrders[groupKey]) {
+                    groupedOrders[groupKey] = {
                         table_nom: o.table_nom,
                         orders: [],
                         total_usd: 0,
@@ -944,7 +963,7 @@
                         timestamp: o.timestamp
                     };
                 }
-                const group = groupedOrders[o.table_nom];
+                const group = groupedOrders[groupKey];
                 group.orders.push(o);
                 group.total_usd += o.total_usd;
                 group.total_cdf += o.total_cdf;
@@ -989,7 +1008,7 @@
                 if (hasPending) {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-50 text-red-600 uppercase tracking-widest border border-red-100">En attente</span>';
                     const pendingIds = group.orders.filter(o => o.statut === 'PENDING').map(o => o.id).join(',');
-                    actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${pendingIds}', 'ACCEPTEE')" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter tournée</button>`;
+                    actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${pendingIds}', 'ACCEPTEE')" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Accepter</button><button type="button" onclick="event.stopPropagation(); updateOrderStatus('${pendingIds}', 'CANCELLED')" class="px-4 py-2 rounded-full text-xs font-bold border border-red-100 text-red-600">Refuser</button>`;
                 } else if (hasAccepted) {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">Acceptée</span>';
                     const acceptedIds = group.orders.filter(o => o.statut === 'ACCEPTEE').map(o => o.id).join(',');
@@ -997,13 +1016,12 @@
                 } else if (hasPreparing) {
                     statusBadge = '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-orange-50 text-orange-600 uppercase tracking-widest border border-orange-100">En préparation</span>';
                     const preparingIds = group.orders.filter(o => o.statut === 'PREPARING').map(o => o.id).join(',');
-                    actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${preparingIds}', 'SERVED')" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Livrer au client</button>`;
+                    actionBtn = `<button onclick="event.stopPropagation(); updateOrderStatus('${preparingIds}', 'SERVED')" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Servir</button>`;
                 } else {
                     statusBadge = cashPending ? cashConfirmationBadgeFromStart(cashStartMs) : '<span class="px-4 py-1.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">Servi</span>';
                     const allIds = group.orders.map(o => o.id).join(',');
-                    actionBtn = cashPending
-                        ? `<button onclick="event.stopPropagation(); updateOrderStatus('${allIds}', 'PAID')" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Cash reçu</button>`
-                        : `<button onclick="event.stopPropagation(); openPaymentModal('${allIds}', '${groupItemsJson}', ${group.total_usd}, ${group.total_cdf})" class="block px-4 py-1.5 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest hover:scale-105 transition-all">Libérer la table</button>`;
+                    actionBtn = `<button type="button" onclick="event.stopPropagation(); openPaymentModal('${allIds}', '${groupItemsJson}', ${group.total_usd}, ${group.total_cdf})" class="px-4 py-2 rounded-full text-xs font-bold bg-emerald-600 text-white">${cashPending ? 'Confirmer le cash' : 'Encaisser le cash'}</button>
+                        <button type="button" onclick="event.stopPropagation(); openPaymentModal('${allIds}', '${groupItemsJson}', ${group.total_usd}, ${group.total_cdf}, true)" class="px-4 py-2 rounded-full text-xs font-bold border border-surface-container text-on-surface">Accepter une dette</button>`;
                 }
 
                 // Chronometer Logic
@@ -1364,6 +1382,7 @@
             .then(data => {
                 if (data.success) {
                     closePaymentModal();
+                    applyOwnerOrderStatus(orderId, 'PAID');
                     if (window.BarPiloteLiveActions) {
                         window.BarPiloteLiveActions.flashMessage('Dette enregistree.');
                     }
@@ -1377,7 +1396,7 @@
             });
         }
 
-        function openPaymentModal(orderId, itemsJsonStr, totalUsd, totalCdf) {
+        function openPaymentModal(orderId, itemsJsonStr, totalUsd, totalCdf, debtMode = false) {
             document.getElementById('paymentOrderId').value = orderId;
             document.getElementById('paymentClientName').value = '';
             document.getElementById('paymentClientPhone').value = '';
@@ -1389,6 +1408,7 @@
             
             isEligibleForDebt = false;
             updatePayLaterButtonState();
+            if (debtMode) setTimeout(() => document.getElementById('paymentClientName').focus(), 150);
             
             // Set listener if not set already
             const nameInput = document.getElementById('paymentClientName');
@@ -1485,13 +1505,14 @@
             .then(data => {
                 if(data.success) {
                     closePaymentModal();
+                    applyOwnerOrderStatus(orderId, 'PAID');
                     if (window.BarPiloteLiveActions) {
                         window.BarPiloteLiveActions.flashMessage('Paiement enregistre.');
                     }
                 } else {
-                    alert("Erreur lors du paiement");
+                    alert(data.error || "Erreur lors du paiement");
                 }
-            });
+            }).catch(() => alert("Erreur de connexion. Réessayez."));
         }
 
         // Modal Logic

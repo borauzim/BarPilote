@@ -8,7 +8,7 @@ import os
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum, Q, Count, F
 from django.core.paginator import Paginator
-from django.db import IntegrityError, OperationalError, close_old_connections
+from django.db import IntegrityError, OperationalError, close_old_connections, transaction
 from django.utils import timezone
 from datetime import timedelta
 import time
@@ -294,8 +294,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 # Recent Transactions
                 context['recent_orders'] = Order.objects.filter(
                     bar=bar,
-                    date_creation__date=today,
-                ).order_by('-date_creation')[:10]
+                    statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED'],
+                ).select_related('table').order_by('-date_creation')
                 
                 context['order_assignment_mode'] = bar.order_assignment_mode
                 context['tables'] = Table.objects.filter(bar=bar).select_related('assigned_server').order_by('nom')
@@ -1992,7 +1992,6 @@ class LiveOrdersAPIView(LoginRequiredMixin, View):
                 
             active_orders = Order.objects.filter(
                 bar=bar,
-                date_creation__date=timezone.localdate(),
                 statut__in=['PENDING', 'ACCEPTEE', 'PREPARING', 'SERVED']
             ).select_related('table', 'serveur', 'client_meta').prefetch_related(
                 'items__product_item__produit',
@@ -2049,22 +2048,74 @@ class LiveOrdersAPIView(LoginRequiredMixin, View):
 
 class UpdateOrderStatusView(LoginRequiredMixin, View):
     """API pour mettre à jour le statut d'une commande via AJAX"""
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         try:
             profile = PilotProfile.objects.get(user=request.user)
             order_ids_raw = request.POST.get('order_id')
             new_status = request.POST.get('status')
+            deferred = request.POST.get('deferred') == 'true'
+            if profile.role != 'PROPRIETAIRE' or not profile.bar_id:
+                return JsonResponse({'error': 'Accès réservé au propriétaire.'}, status=403)
             
-            client_name = request.POST.get('client_name')
-            client_phone = request.POST.get('client_phone')
+            client_name = request.POST.get('client_name', '').strip()
+            client_phone = request.POST.get('client_phone', '').strip()
             
             if not order_ids_raw or not new_status:
                 return JsonResponse({'error': 'Missing parameters'}, status=400)
                 
             order_ids = [oid.strip() for oid in order_ids_raw.split(',') if oid.strip()]
             
-            orders = Order.objects.filter(id__in=order_ids, bar=profile.bar)
+            try:
+                order_ids = set(uuid.UUID(oid) for oid in order_ids)
+            except ValueError:
+                return JsonResponse({'error': 'Identifiant de commande invalide.'}, status=400)
+            orders = list(Order.objects.select_for_update().filter(id__in=order_ids, bar=profile.bar))
+            if not orders or len(orders) != len(order_ids):
+                return JsonResponse({'error': 'Commande introuvable.'}, status=404)
+            transitions = {
+                'PENDING': {'ACCEPTEE', 'CANCELLED'},
+                'ACCEPTEE': {'PREPARING', 'CANCELLED'},
+                'PREPARING': {'SERVED'},
+                'SERVED': {'PAID'},
+            }
+            if any(new_status not in transitions.get(order.statut, set()) for order in orders):
+                return JsonResponse({'error': 'La commande a changé. Actualisez la liste avant de continuer.'}, status=409)
+            if deferred and new_status != 'PAID':
+                return JsonResponse({'error': 'La dette doit concerner une commande servie.'}, status=400)
             
+            guarantor = request.POST.get('guarantor', '').strip()
+            if deferred:
+                from serveur.html_views import _client_debt_eligibility
+                if guarantor not in {'', 'proprietaire', 'serveur'}:
+                    return JsonResponse({'error': 'Garant invalide.'}, status=400)
+                if guarantor == 'serveur':
+                    server_ids = {order.serveur_id for order in orders}
+                    if len(server_ids) != 1 or None in server_ids or orders[0].serveur.role != 'SERVEUR':
+                        return JsonResponse({'error': 'Sélectionnez le propriétaire comme garant : aucun serveur unique ne couvre ces commandes.'}, status=400)
+                if not guarantor and not _client_debt_eligibility(bar=profile.bar, name=client_name, phone=client_phone)['eligible']:
+                    return JsonResponse({'error': 'Client non éligible. Désignez un garant pour accepter la dette.'}, status=403)
+
+            from client.models import ClientOrderMeta, TableSession
+            settlement_invoices = []
+            if new_status == 'PAID':
+                # An existing shared bill must be settled as a whole.
+                existing_invoices = list(Facture.objects.select_for_update().filter(
+                    bar=profile.bar, type_facture='CLIENT', orders__in=orders,
+                ).distinct())
+                covered_ids = set()
+                for invoice in existing_invoices:
+                    invoice_ids = set(invoice.orders.exclude(statut='CANCELLED').values_list('id', flat=True))
+                    if not invoice_ids.issubset(order_ids):
+                        return JsonResponse({'error': 'Servez toutes les commandes de cette addition avant de la régler.'}, status=409)
+                    if covered_ids & invoice_ids:
+                        return JsonResponse({'error': 'Plusieurs factures couvrent la même commande. Vérifiez les factures avant de régler.'}, status=409)
+                    covered_ids.update(invoice_ids)
+                    settlement_invoices.append((invoice, [order for order in orders if order.id in invoice_ids]))
+                remaining = [order for order in orders if order.id not in covered_ids]
+                if remaining:
+                    settlement_invoices.append((None, remaining))
+
             status_now = timezone.now()
             for order in orders:
                 order.statut = new_status
@@ -2076,22 +2127,24 @@ class UpdateOrderStatusView(LoginRequiredMixin, View):
                     order.client_phone = client_phone
                 order.save()
 
-            if new_status == 'PAID' and orders.exists():
-                try:
-                    from client.models import ClientOrderMeta
-                    ClientOrderMeta.objects.filter(order__in=orders).update(payment_requested=False, payment_confirmed_by=profile, payment_confirmed_at=status_now, updated_at=status_now)
-                    mark_table_session_paid(orders.first(), confirmed_by=profile)
-                except Exception:
-                    pass
-            
+            if new_status in {'PAID', 'CANCELLED'}:
+                for order in orders:
+                    meta, _ = ClientOrderMeta.objects.get_or_create(order=order)
+                    meta.payment_requested = False
+                    if new_status == 'CANCELLED':
+                        meta.cancelled_by = 'PROPRIETAIRE'
+                    elif deferred:
+                        meta.debt_status = 'ACCEPTED'
+                        meta.debt_handled_by = profile
+                        meta.debt_handled_at = status_now
+                    else:
+                        meta.payment_confirmed_by = profile
+                        meta.payment_confirmed_at = status_now
+                    meta.save()
+
             # Auto-generate Facture if PAID
-            if new_status == 'PAID' and orders.exists():
-                deferred = request.POST.get('deferred') == 'true'
-                guarantor = request.POST.get('guarantor', '').strip()
-                
-                total_usd = sum(order.total_usd for order in orders)
-                total_cdf = sum(order.total_cdf for order in orders)
-                table_nom = orders.first().table.nom if orders.first().table else "Comptoir"
+            if new_status == 'PAID':
+                table_nom = orders[0].table.nom if orders[0].table else "Comptoir"
                 
                 # Format du nom du client
                 if client_name and client_phone:
@@ -2103,37 +2156,46 @@ class UpdateOrderStatusView(LoginRequiredMixin, View):
                 else:
                     client_nom_complet = f"Client - {table_nom}"
                 
-                # Générer un numéro de facture unique court (ex: FAC-260517-A1B2)
-                short_uuid = str(uuid.uuid4())[:4].upper()
                 date_str = timezone.now().strftime("%y%m%d")
-                numero_facture = f"FAC-{date_str}-{short_uuid}"
                 
                 facture_status = 'IMPAYEE' if deferred else 'PAYEE'
                 
-                notes_lines = [f"Paiement différé (Dette) de {orders.count()} commande(s) pour la {table_nom}" if deferred else f"Paiement de {orders.count()} commande(s) pour la {table_nom}"]
+                notes_lines = [f"Paiement différé (Dette) de {len(orders)} commande(s) pour la {table_nom}" if deferred else f"Paiement de {len(orders)} commande(s) pour la {table_nom}"]
                 guaranteed_by = None
                 if deferred and guarantor:
                     guarantor_label = "Propriétaire" if guarantor == 'proprietaire' else "Serveur"
                     notes_lines.append(f"Garant: {guarantor_label}")
                     guaranteed_by = profile
+                    if guarantor == 'serveur':
+                        guaranteed_by = orders[0].serveur
                 
-                facture = Facture.objects.create(
-                    bar=profile.bar,
-                    numero=numero_facture,
-                    client_fournisseur=client_nom_complet,
-                    montant_usd=total_usd,
-                    montant_cdf=total_cdf,
-                    type_facture='CLIENT',
-                    statut=facture_status,
-                    guaranteed_by=guaranteed_by,
-                    notes="\n".join(notes_lines)
-                )
-                facture.orders.set(orders)
-                if facture.statut == 'IMPAYEE':
-                    notify_debt_created(facture, actor=request.user)
+                for facture, invoice_orders in settlement_invoices:
+                    values = dict(
+                        client_fournisseur=client_nom_complet,
+                        montant_usd=sum(order.total_usd for order in invoice_orders),
+                        montant_cdf=sum(order.total_cdf for order in invoice_orders),
+                        statut=facture_status,
+                        guaranteed_by=guaranteed_by,
+                        notes="\n".join(notes_lines),
+                        date_paiement=None if deferred else status_now,
+                    )
+                    if facture is None:
+                        facture = Facture.objects.create(
+                            bar=profile.bar, numero=f"FAC-{date_str}-{uuid.uuid4().hex[:8].upper()}",
+                            type_facture='CLIENT', **values,
+                        )
+                        facture.orders.set(invoice_orders)
+                    else:
+                        for field, value in values.items():
+                            setattr(facture, field, value)
+                        facture.save(update_fields=list(values))
+                    if not deferred:
+                        TableSession.objects.filter(facture=facture).update(statut='PAID', paid_at=status_now)
+                    if deferred:
+                        notify_debt_created(facture, actor=request.user)
 
             for order in orders:
-                notify_order_status(order, actor=request.user, status_label=order.get_statut_display())
+                notify_order_status(order, actor=request.user, status_label='Dette acceptée' if deferred else order.get_statut_display())
             
             return JsonResponse({'success': True, 'new_status': new_status})
         except PilotProfile.DoesNotExist:

@@ -119,7 +119,8 @@ def _sync_table_session_facture(table_session):
     total_usd = sum((order.total_usd for order in orders), Decimal('0'))
     total_cdf = sum((order.total_cdf for order in orders), Decimal('0'))
     facture = table_session.facture
-    status = 'PAYEE' if table_session.statut == 'PAID' else 'IMPAYEE'
+    has_accepted_debt = ClientOrderMeta.objects.filter(order__in=orders, debt_status='ACCEPTED', payment_confirmed_at__isnull=True).exists()
+    status = 'PAYEE' if table_session.statut == 'PAID' and not has_accepted_debt else 'IMPAYEE'
     if facture is None:
         facture = Facture.objects.create(
             bar=table_session.table.bar,
@@ -158,7 +159,8 @@ def _facture_for_order(order):
             facture.date_paiement = None
             facture.save(update_fields=['statut', 'date_paiement'])
         return facture
-    status = 'PAYEE' if order.statut == 'PAID' else 'IMPAYEE'
+    accepted_debt = bool(meta and meta.debt_status == 'ACCEPTED' and not meta.payment_confirmed_at)
+    status = 'PAYEE' if order.statut == 'PAID' and not accepted_debt else 'IMPAYEE'
 
     if facture:
         update_fields = []
@@ -170,7 +172,7 @@ def _facture_for_order(order):
             if getattr(facture, field) != value:
                 setattr(facture, field, value)
                 update_fields.append(field)
-        if order.statut == 'PAID' and facture.statut != 'PAYEE':
+        if status == 'PAYEE' and facture.statut != 'PAYEE':
             facture.statut = 'PAYEE'
             facture.date_paiement = timezone.now()
             update_fields.extend(['statut', 'date_paiement'])
