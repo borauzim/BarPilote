@@ -95,3 +95,33 @@ class EmailLoginCodeTests(TestCase):
         old_code.refresh_from_db()
         self.assertIsNotNone(old_code.used_at)
         self.assertEqual(EmailLoginCode.objects.filter(email=email, used_at__isnull=True).count(), 1)
+
+
+class PublicHomeRoutingTests(TestCase):
+    def test_anonymous_root_shows_presentation_with_login_link(self):
+        response = self.client.get(reverse('root'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'authentification/home.html')
+        self.assertContains(response, 'Bienvenue dans')
+        self.assertContains(response, reverse('login_html'))
+
+    def test_login_page_remains_directly_accessible(self):
+        response = self.client.get(reverse('login_html'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'authentification/login.html')
+
+    def test_authenticated_users_keep_their_role_destination(self):
+        for role, destination in [('PROPRIETAIRE', 'dashboard_html'), ('SERVEUR', 'serveur_dashboard')]:
+            with self.subTest(role=role):
+                user = User.objects.create_user(username='home-' + role)
+                profile = user.pilot_profile
+                profile.role = role
+                profile.save(update_fields=['role'])
+                self.client.force_login(user)
+                self.assertRedirects(self.client.get(reverse('root')), reverse(destination), fetch_redirect_response=False)
+                self.client.logout()
+
+    def test_administrator_keeps_administration_destination(self):
+        user = User.objects.create_user(username='home-admin', is_superuser=True, is_staff=True)
+        self.client.force_login(user)
+        self.assertRedirects(self.client.get(reverse('root')), reverse('administration_dashboard'), fetch_redirect_response=False)

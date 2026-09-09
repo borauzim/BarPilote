@@ -3,7 +3,7 @@
   "name": "BarPilote",
   "short_name": "BarPilote",
   "description": "Gestion de bar, commandes, équipe, stock et finances.",
-  "start_url": "/auth/login/",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
